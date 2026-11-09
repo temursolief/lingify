@@ -1,0 +1,73 @@
+{
+  "slug": "a-week-without-phones",
+  "title": "A Week Without Phones",
+  "summary": "A school asked its students to live without smartphones for seven days. The results surprised everyone.",
+  "genre": "News",
+  "topics": ["technology", "school", "health"],
+  "paragraphs": [
+    "Last month, a secondary school in the north of England tried an unusual experiment. For one week, more than three hundred students agreed to leave their smartphones at home. They could use a simple phone to call their parents, but no social media, no games and no videos.",
+    "At first, many students were worried. “I thought I was going to be really bored,” said Emma, who is fifteen. “I usually spend about six hours a day on my phone. I didn't know what I was going to do with all that time.” Some students said they felt nervous because they could not check their messages.",
+    "The first two days were the hardest. Teachers noticed that students kept touching their pockets, looking for phones that were not there. During breaks, some students did not know what to do and simply stood in the hallway. But by the third day, things started to change.",
+    "Students began talking to each other more. They played football and card games at lunchtime. The school library, which was usually almost empty, became busy. “I read a whole book in three days,” said Daniel, aged fourteen. “I haven't done that since I was a little kid.”",
+    "Many students also said they slept better. Without a phone next to their bed, they went to sleep earlier and woke up feeling less tired. Several parents told the school that their children were more relaxed and more willing to help at home.",
+    "Not everything was positive. Some students found it difficult to organise their homework without their usual apps. Others missed music on the way to school. And a few admitted that they secretly used a family member's phone in the evening.",
+    "When the week ended, the school asked students to write about their experience. More than half said they wanted to spend less time on their phones in the future. The head teacher, Mrs Patel, was pleased. “We are not saying that phones are bad,” she explained. “They are useful tools. But it is important to control how we use them, so they do not control us.”",
+    "The school is now planning to repeat the experiment every year. Other schools in the area have also shown interest."
+  ],
+  "questions": [
+    {
+      "question": "What did the students agree to do?",
+      "options": ["Stop using all phones completely", "Leave their smartphones at home for a week", "Use their phones only at school", "Give their phones to their teachers for a month"],
+      "answer": 1,
+      "explanation": "They left smartphones at home for one week but could still use a simple phone to call parents."
+    },
+    {
+      "question": "When did things start to change?",
+      "options": ["On the first day", "On the second day", "On the third day", "After the week ended"],
+      "answer": 2,
+      "explanation": "The text says the first two days were the hardest and things started to change by the third day."
+    },
+    {
+      "question": "What happened to the school library?",
+      "options": ["It closed for the week", "It became busy", "It bought new computers", "It stayed empty"],
+      "answer": 1,
+      "explanation": "The library was usually almost empty, but during the experiment it became busy."
+    },
+    {
+      "question": "Which problem did some students have?",
+      "options": ["They could not call their parents", "They lost their phones", "They found it hard to organise homework", "They could not play football"],
+      "answer": 2,
+      "explanation": "Some students found it difficult to organise homework without their usual apps."
+    },
+    {
+      "question": "What is Mrs Patel's opinion about phones?",
+      "options": ["Phones are dangerous and should be banned", "Phones are useful, but we should control how we use them", "Students should use phones more for homework", "Phones help students sleep better"],
+      "answer": 1,
+      "explanation": "She says phones are useful tools, but it is important to control how we use them."
+    }
+  ],
+  "grammar": [
+    {
+      "structure": "Present perfect with since",
+      "explanation": "We use have/has + past participle with since to talk about a period from a point in the past until now.",
+      "example": "I haven't done that since I was a little kid.",
+      "exercise": {
+        "question": "Choose the correct sentence.",
+        "options": ["I don't see him since Monday.", "I didn't see him since Monday.", "I haven't seen him since Monday.", "I am not seeing him since Monday."],
+        "answer": 2,
+        "explanation": "With since and a period that continues until now, we use the present perfect: haven't seen."
+      }
+    },
+    {
+      "structure": "was/were going to (future in the past)",
+      "explanation": "We use was/were going to to talk about what someone expected or planned in the past.",
+      "example": "I thought I was going to be really bored.",
+      "exercise": {
+        "question": "Choose the best ending: Daniel thought the week ___",
+        "options": ["is going to be easy.", "was going to be easy.", "will be easy yesterday.", "goes to be easy."],
+        "answer": 1,
+        "explanation": "His expectation was in the past, so we use was going to."
+      }
+    }
+  ]
+}

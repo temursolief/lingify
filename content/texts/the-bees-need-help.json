@@ -1,0 +1,95 @@
+{
+  "slug": "the-bees-need-help",
+  "title": "The Bees Need Help",
+  "summary": "Bees are small, but much of our food depends on them. Why are their numbers falling, and what can we do?",
+  "genre": "Science",
+  "topics": [
+    "nature",
+    "animals",
+    "environment"
+  ],
+  "paragraphs": [
+    "When most people think of bees, they think of honey. But these small animals do something much more important for us. They help plants make fruit and seeds. Without them, our food would be very different.",
+    "Here is how it works. A flower produces a fine yellow powder called pollen. To make fruit, the pollen must move from one flower to another flower of the same kind. Bees fly from flower to flower to collect something sweet to eat, and while they do this, pollen sticks to their bodies. In this way, they carry it from plant to plant.",
+    "Scientists say that about one third of the food we eat depends on bees and other insects. Apples, oranges, coffee and many kinds of fruit and vegetables all need them. If they disappeared, these foods would become much more expensive, and some might become very difficult to find.",
+    "Unfortunately, in many parts of the world, their number is falling. There are several reasons for this. First, many farmers use chemicals to kill insects that damage their crops. These chemicals can also harm or kill them. Second, wild flowers are disappearing as towns grow and farms get bigger. Large fields with only one type of crop do not give them enough food all year. Third, changes in the weather, such as very hot summers and warm winters, cause problems for them and for the plants they visit.",
+    "The good news is that people are starting to act. Some countries have banned the most dangerous chemicals. Many cities now stop cutting the grass in some areas so that wild flowers can grow. In some places, people even keep bees on the roofs of office buildings and hotels.",
+    "You can help too, even if you live in a city. If you have a garden, plant the kind of flowers that they like. Try not to use chemicals on your plants. You can even make a simple home for them from small pieces of wood. And if you see a tired bee on the ground, you can give it a little sugar and water.",
+    "They have lived on Earth for millions of years. With a little help from us, they can continue to do their important work for many more."
+  ],
+  "questions": [
+    {
+      "question": "What is the most important thing bees do for people, according to the text?",
+      "options": [
+        "They make honey",
+        "They help plants make fruit and seeds",
+        "They clean flowers",
+        "They eat harmful insects"
+      ],
+      "answer": 1,
+      "explanation": "The text says bees do something more important than honey: they help plants make fruit and seeds."
+    },
+    {
+      "question": "How does pollen move from one flower to another?",
+      "options": [
+        "The wind carries it",
+        "It sticks to bees' bodies",
+        "Farmers move it by hand",
+        "It falls into the soil"
+      ],
+      "answer": 1,
+      "explanation": "Pollen sticks to bees' bodies and they carry it from plant to plant."
+    },
+    {
+      "question": "Which is NOT a reason why bee numbers are falling?",
+      "options": [
+        "Chemicals used by farmers",
+        "Fewer wild flowers",
+        "Changes in the weather",
+        "People eating too much honey"
+      ],
+      "answer": 3,
+      "explanation": "The three reasons are chemicals, disappearing wild flowers and weather changes. Honey is not mentioned as a reason."
+    },
+    {
+      "question": "Why do some cities stop cutting the grass in some areas?",
+      "options": [
+        "To save money",
+        "So that wild flowers can grow",
+        "Because workers are on strike",
+        "To keep the city cool"
+      ],
+      "answer": 1,
+      "explanation": "Cities stop cutting the grass so that wild flowers can grow for bees."
+    },
+    {
+      "question": "What is the writer's attitude at the end of the text?",
+      "options": [
+        "Hopeful",
+        "Angry",
+        "Bored",
+        "Afraid"
+      ],
+      "answer": 0,
+      "explanation": "The writer says that with a little help, bees can continue their work for many more years."
+    }
+  ],
+  "grammar": [
+    {
+      "structure": "Second conditional (if + past, would + verb)",
+      "explanation": "We use the second conditional for imaginary or unlikely situations in the present or future.",
+      "example": "If they disappeared, these foods would become much more expensive, and some might become very difficult to find.",
+      "exercise": {
+        "question": "Choose the correct sentence.",
+        "options": [
+          "If I have a garden, I would plant flowers.",
+          "If I had a garden, I would plant flowers.",
+          "If I had a garden, I will plant flowers.",
+          "If I would have a garden, I planted flowers."
+        ],
+        "answer": 1,
+        "explanation": "Second conditional: if + past simple, would + verb."
+      }
+    }
+  ]
+}

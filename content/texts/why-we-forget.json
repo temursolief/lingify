@@ -1,0 +1,72 @@
+{
+  "slug": "why-we-forget",
+  "title": "Why Do We Forget?",
+  "summary": "You learn twenty new words today. In a week, most of them are gone. A scientist from the 1880s discovered why, and how to stop it.",
+  "genre": "Science",
+  "topics": ["school", "science", "health"],
+  "paragraphs": [
+    "Have you ever studied hard for a test, done well, and then a few weeks later realised that you had forgotten almost everything? You are not alone. Forgetting is a normal part of how the human brain works. But scientists have discovered some simple ways to remember things for much longer.",
+    "In the 1880s, a German scientist called Hermann Ebbinghaus did an unusual experiment on himself. He created long lists of nonsense words, such as “wid” and “zof”, which had no meaning. He chose these words because he did not want his old knowledge to help him. Then he learned the lists and tested himself after different periods of time.",
+    "The results were surprising. Ebbinghaus forgot information very quickly at first. After just twenty minutes, he had forgotten almost half of a list. After one day, he remembered only about a third. After that, the forgetting slowed down. He drew his results as a line on a graph, which is now known as the “forgetting curve”.",
+    "Ebbinghaus also discovered how to fight the forgetting curve. Each time he reviewed a list, he forgot it more slowly than the time before. And the best moment to review was not immediately, but just before he was about to forget. Today this idea is called spaced repetition. Instead of studying something ten times in one evening, it is much more effective to study it a few times with longer and longer breaks in between: after one day, then three days, then a week, then a month.",
+    "Later research found another important idea. Simply reading information again is not very helpful. It is much better to test yourself and try to remember the answer without looking. This is called retrieval practice. When you work hard to bring something out of your memory, the memory becomes stronger. Even if you get the answer wrong, the effort still helps, as long as you check the correct answer afterwards.",
+    "Context also matters. We remember a new word more easily if we meet it in an interesting sentence or story than if we see it alone on a list. And we need to meet a word many times, perhaps eight or ten, in different places before it really becomes ours. This is one reason why reading a lot is such a powerful way to learn a language.",
+    "So, if you want to remember the new words in this text, do not just read them again tonight. Try to remember them tomorrow, then again in a few days. Read more stories where they appear. Your brain will do the rest."
+  ],
+  "questions": [
+    {
+      "question": "Why did Ebbinghaus use nonsense words?",
+      "options": ["They were easier to learn", "He did not want his old knowledge to help him", "They were in German", "He wanted to invent a new language"],
+      "answer": 1,
+      "explanation": "He chose words without meaning so that his old knowledge would not help him."
+    },
+    {
+      "question": "When did Ebbinghaus forget information most quickly?",
+      "options": ["After a month", "At the beginning, soon after learning", "After a week", "He never forgot it"],
+      "answer": 1,
+      "explanation": "He forgot very quickly at first: almost half after twenty minutes."
+    },
+    {
+      "question": "According to the text, what is the best time to review something?",
+      "options": ["Immediately after learning", "Just before you are about to forget it", "Only once a year", "Ten times in one evening"],
+      "answer": 1,
+      "explanation": "The best moment to review was just before he was about to forget."
+    },
+    {
+      "question": "What is retrieval practice?",
+      "options": ["Reading information again and again", "Testing yourself by trying to remember without looking", "Writing new words on a list", "Studying with friends"],
+      "answer": 1,
+      "explanation": "Retrieval practice means trying to remember the answer without looking."
+    },
+    {
+      "question": "Why does the text say reading a lot is a powerful way to learn a language?",
+      "options": ["Books are cheap", "We meet words many times in interesting contexts", "Reading is faster than speaking", "Teachers prefer it"],
+      "answer": 1,
+      "explanation": "We need to meet a word many times in different contexts, and reading provides this."
+    }
+  ],
+  "grammar": [
+    {
+      "structure": "Present perfect questions with ever",
+      "explanation": "Have you ever + past participle asks about experiences at any time in your life.",
+      "example": "Have you ever studied hard for a test, done well, and then a few weeks later realised that you had forgotten almost everything?",
+      "exercise": {
+        "question": "Choose the correct question.",
+        "options": ["Did you ever have visited London?", "Have you ever visited London?", "Have you ever visit London?", "Are you ever visited London?"],
+        "answer": 1,
+        "explanation": "Have you ever + past participle (visited)."
+      }
+    },
+    {
+      "structure": "Comparatives: much more + adjective",
+      "explanation": "With longer adjectives we use more; much makes the comparison stronger.",
+      "example": "Instead of studying something ten times in one evening, it is much more effective to study it a few times with longer and longer breaks in between: after one day, then three days, then a week, then a month.",
+      "exercise": {
+        "question": "Choose the correct option: Testing yourself is ___ than reading again.",
+        "options": ["much more useful", "much usefuller", "more much useful", "very more useful"],
+        "answer": 0,
+        "explanation": "For long adjectives: more + adjective; much goes before more."
+      }
+    }
+  ]
+}

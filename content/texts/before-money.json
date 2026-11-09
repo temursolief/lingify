@@ -1,0 +1,72 @@
+{
+  "slug": "before-money",
+  "title": "Before There Was Money",
+  "summary": "How did people buy things before coins and paper money? The answer involves shells, salt and giant stones.",
+  "genre": "Non-fiction",
+  "topics": ["money", "history"],
+  "paragraphs": [
+    "Today we pay for things with coins, notes, cards and phones. It is hard to imagine life without money. But for most of human history, there was no money at all. So how did people get the things they needed?",
+    "The simplest answer is that they exchanged things directly. A farmer with too much grain might exchange some of it for a pair of shoes. A fisherman might give fish to a builder in return for help with his house. This kind of exchange is called barter.",
+    "Barter has one big problem. Imagine you have chickens and you want a new knife. You find a man who makes knives, but he does not want chickens. He wants rice. Now you have to find someone who has rice and wants chickens, and then go back to the knife maker. This takes a lot of time and effort.",
+    "To solve this problem, many societies began to use objects that everybody agreed had value. These objects became the first kinds of money. They were usually things that were useful, rare or beautiful, and easy to carry. In parts of Africa and Asia, people used small shells called cowries. In China, people used tools made of metal. In some places, people even used salt, which was very valuable because it kept food fresh. Some people believe the word “salary” comes from the Latin word for salt.",
+    "One of the most unusual kinds of money comes from the island of Yap in the Pacific Ocean. There, people used huge round stones with a hole in the middle. Some of the stones were taller than a person and weighed several tonnes. They were far too heavy to move, so when a stone was used to pay for something, it often stayed in the same place. Everybody simply remembered who the new owner was. In a way, this was similar to how bank accounts work today.",
+    "The first coins were made about two thousand seven hundred years ago in Lydia, a country in what is now Turkey. They were made of a mixture of gold and silver and stamped with a picture to show their value. Coins were a great success, because they were all the same and easy to count. Later, the Chinese started using paper money, which was much lighter to carry than coins.",
+    "Now, money is changing again. In many countries, people rarely use cash. They pay with cards and phones, and the money exists only as numbers on a computer. Who knows what money will look like in another hundred years?"
+  ],
+  "questions": [
+    {
+      "question": "What is barter?",
+      "options": ["Paying with coins", "Exchanging things directly without money", "Borrowing money from a bank", "Selling things at a market"],
+      "answer": 1,
+      "explanation": "Barter is exchanging things directly, like grain for shoes."
+    },
+    {
+      "question": "What is the main problem with barter?",
+      "options": ["It is illegal", "The other person may not want what you have", "Animals are expensive", "Nobody likes it"],
+      "answer": 1,
+      "explanation": "You might have chickens, but the knife maker wants rice, so exchange becomes difficult."
+    },
+    {
+      "question": "Why was salt valuable?",
+      "options": ["It was beautiful", "It kept food fresh", "It was heavy", "It was used to build houses"],
+      "answer": 1,
+      "explanation": "Salt was valuable because it kept food fresh."
+    },
+    {
+      "question": "Why did the stones on Yap often stay in the same place?",
+      "options": ["They were too heavy to move", "People wanted to hide them", "They were in the sea", "The king did not allow it"],
+      "answer": 0,
+      "explanation": "The stones were far too heavy to move, so people remembered who the new owner was."
+    },
+    {
+      "question": "Why were coins a great success?",
+      "options": ["They were all the same and easy to count", "They were made of paper", "They were very large", "They were free"],
+      "answer": 0,
+      "explanation": "Coins were all the same and easy to count."
+    }
+  ],
+  "grammar": [
+    {
+      "structure": "Modal verbs of possibility: might",
+      "explanation": "We use might + verb to say that something is possible, or to give an example of what could happen.",
+      "example": "A farmer with too much grain might exchange some of it for a pair of shoes.",
+      "exercise": {
+        "question": "Choose the correct sentence.",
+        "options": ["Money might looks different in the future.", "Money might look different in the future.", "Money might to look different in the future.", "Money mights look different in the future."],
+        "answer": 1,
+        "explanation": "After might, we use the base form of the verb without to: might look."
+      }
+    },
+    {
+      "structure": "too + adjective + to",
+      "explanation": "Too + adjective + to + verb means something is more than is possible for an action.",
+      "example": "They were far too heavy to move, so when a stone was used to pay for something, it often stayed in the same place.",
+      "exercise": {
+        "question": "Choose the correct sentence.",
+        "options": ["The box was too heavy to carry.", "The box was too heavy for carry.", "The box was very heavy to carry it.", "The box was so heavy to carry."],
+        "answer": 0,
+        "explanation": "too + adjective + to + verb: too heavy to carry."
+      }
+    }
+  ]
+}

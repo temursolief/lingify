@@ -1,0 +1,73 @@
+{
+  "slug": "the-quiet-musician",
+  "title": "The Quiet Musician",
+  "summary": "Every evening an old man plays the violin in a train station. Nobody knows who he is, until a young journalist asks.",
+  "genre": "Short story",
+  "topics": ["music", "cities"],
+  "paragraphs": [
+    "Every evening at six o'clock, an old man arrived at the central train station with a violin case. He always stood in the same place, next to the flower shop, and he always wore the same dark blue jacket. He opened the case, took out the violin and began to play.",
+    "Most people walked past without stopping. They were tired after work and in a hurry to catch their trains. Some dropped a few coins into the open case. Children sometimes stood and listened with their mouths open, until their parents pulled them away. The old man never spoke. When he finished, at exactly eight o'clock, he put the violin away and left.",
+    "Rosa noticed him for the first time in October. She was a young journalist at a local newspaper, and she took the train home from the station every day. At first she did not pay much attention. But slowly she began to realise that his music was special. It was not like the music of other street players. It was beautiful and sad, and sometimes it made her stop in the middle of the busy station and close her eyes.",
+    "One evening in December, Rosa waited until he finished playing. “Excuse me,” she said. “Your music is wonderful. Can I ask where you learned to play like that?”",
+    "The old man looked at her for a long moment. Then he smiled for the first time. “Would you like a cup of tea?” he asked.",
+    "In a small café across the street, he told her his story. His name was Viktor. Forty years ago he had been a famous violinist. He had played in the best concert halls in Europe, in Vienna, Paris and London. But after his wife died, he stopped performing. He could not play in front of crowds any more. For years his violin stayed in its case.",
+    "“Then one day I realised that music is not for concert halls,” Viktor said. “It is for people. At the station, nobody knows who I am. Nobody expects anything. I play for the people who are tired, the people who are sad, the people who need something beautiful in their day. If one person stops and listens, that is enough for me.”",
+    "Rosa wrote an article about Viktor, and it appeared in the newspaper the following week. After that, more and more people stopped to listen at the station. Some evenings, a large crowd stood around him in silence. Viktor did not seem to mind. He still arrived at six, stood next to the flower shop and played until eight. But now, when he finished, people clapped."
+  ],
+  "questions": [
+    {
+      "question": "What did most people do when the old man played?",
+      "options": ["They stopped and listened", "They walked past without stopping", "They asked him to stop", "They took photos"],
+      "answer": 1,
+      "explanation": "Most people walked past because they were tired and in a hurry."
+    },
+    {
+      "question": "Why did Rosa start to notice the music?",
+      "options": ["It was very loud", "It was special and beautiful", "Her editor told her to", "He played her favourite song"],
+      "answer": 1,
+      "explanation": "She realised his music was special, beautiful and sad."
+    },
+    {
+      "question": "Why did Viktor stop performing in concert halls?",
+      "options": ["He lost his violin", "His wife died", "He became ill", "He did not earn enough money"],
+      "answer": 1,
+      "explanation": "After his wife died, he could not play in front of crowds any more."
+    },
+    {
+      "question": "Why does Viktor play at the station?",
+      "options": ["He needs money", "He wants to become famous again", "He believes music is for people who need something beautiful", "He is practising for a concert"],
+      "answer": 2,
+      "explanation": "He plays for tired and sad people who need something beautiful in their day."
+    },
+    {
+      "question": "What changed after Rosa's article?",
+      "options": ["Viktor stopped playing", "Viktor moved to a concert hall", "More people stopped to listen", "The station banned music"],
+      "answer": 2,
+      "explanation": "After the article, more and more people stopped to listen."
+    }
+  ],
+  "grammar": [
+    {
+      "structure": "Past perfect in storytelling",
+      "explanation": "When we tell a story in the past, we use had + past participle for events further back in time.",
+      "example": "Forty years ago he had been a famous violinist.",
+      "exercise": {
+        "question": "Choose the correct form: Before he came to the station, Viktor ___ in Vienna and Paris.",
+        "options": ["has played", "had played", "plays", "is playing"],
+        "answer": 1,
+        "explanation": "The concerts happened before the time of the story, so we use had played."
+      }
+    },
+    {
+      "structure": "Reported questions with where / how",
+      "explanation": "In a question inside another sentence, the word order is like a normal statement: where you learned, not where did you learn.",
+      "example": "Can I ask where you learned to play like that?",
+      "exercise": {
+        "question": "Choose the correct sentence.",
+        "options": ["Can I ask where do you live?", "Can I ask where you live?", "Can I ask where you do live?", "Can I ask where live you?"],
+        "answer": 1,
+        "explanation": "After Can I ask, we use statement word order: where you live."
+      }
+    }
+  ]
+}

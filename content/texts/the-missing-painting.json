@@ -1,0 +1,75 @@
+{
+  "slug": "the-missing-painting",
+  "title": "The Missing Painting",
+  "summary": "A valuable painting disappears from a small museum overnight. Detective Hale has three suspects and one strange clue.",
+  "genre": "Mystery",
+  "topics": ["art", "culture"],
+  "paragraphs": [
+    "On Monday morning, the director of the town museum, Mr Grant, unlocked the front door and walked into the main room. He stopped. On the wall where the museum's most famous painting usually hung, there was only an empty space. The painting, a small picture of a girl with a red umbrella, was worth more than a million pounds.",
+    "Detective Hale arrived an hour later. She walked slowly around the room. There were no broken windows, and the alarm had not gone off. “Whoever took the painting had a key,” she said. “Who has keys to this building?”",
+    "Mr Grant gave her three names. The first was Paula, the cleaner, who came every evening after the museum closed. The second was David, a young guard who worked at night. The third was Mrs Bell, an art expert who was repairing some old paintings in a room upstairs.",
+    "Hale spoke to each of them. Paula said she had cleaned the main room at seven o'clock on Sunday evening and that the painting was there. She had finished at nine and gone home to her children. David said he had arrived at ten and checked every room. “The painting was gone when I arrived,” he said. “I thought it was being repaired upstairs, so I did not worry.” Mrs Bell said she had left the museum at six and spent the evening at a concert. She showed Hale her ticket.",
+    "Hale went back to the main room and looked carefully at the floor below the empty space. She noticed something small and white: a few grains of sand. She bent down and touched them. They were still slightly wet.",
+    "“It hasn't rained for a week,” she said to Mr Grant. “Where would wet sand come from?”",
+    "Mr Grant thought for a moment. “Paula always brings sand from the beach for her children's garden,” he said. “But that does not prove anything.”",
+    "Hale walked to the cleaner's cupboard and opened it. Inside was a large plastic bucket full of cleaning bottles. She lifted the bottles out. Underneath them, wrapped carefully in a towel, was the girl with the red umbrella.",
+    "When Hale showed her the painting, Paula began to cry. She explained that a man had offered her a lot of money to take it. She needed the money badly for her son's school fees. She had planned to carry the painting out in her bucket that evening, after the police had left.",
+    "“You told me the painting was on the wall at seven,” Hale said quietly. “But the sand fell from your shoes when you took it down. It was the only mistake you made.”"
+  ],
+  "questions": [
+    {
+      "question": "Why did Detective Hale think the thief had a key?",
+      "options": ["A key was found on the floor", "There were no broken windows and the alarm did not go off", "The door was open in the morning", "Mr Grant told her so"],
+      "answer": 1,
+      "explanation": "Nothing was broken and the alarm had not gone off, so the thief must have had a key."
+    },
+    {
+      "question": "What did David think when he saw the painting was gone?",
+      "options": ["That it had been stolen", "That it was being repaired upstairs", "That Paula had cleaned it", "That Mr Grant had sold it"],
+      "answer": 1,
+      "explanation": "He thought it was being repaired upstairs, so he did not worry."
+    },
+    {
+      "question": "What clue did Hale find?",
+      "options": ["A broken frame", "A wet umbrella", "Wet sand under the empty space", "A concert ticket"],
+      "answer": 2,
+      "explanation": "She found a few grains of slightly wet sand below the empty space."
+    },
+    {
+      "question": "Where was the painting hidden?",
+      "options": ["Upstairs in the repair room", "In the cleaner's bucket under cleaning bottles", "In David's car", "At the beach"],
+      "answer": 1,
+      "explanation": "It was wrapped in a towel under the bottles in a bucket in the cleaner's cupboard."
+    },
+    {
+      "question": "Why did Paula take the painting?",
+      "options": ["She loved the picture", "She needed money for her son's school fees", "Mr Grant asked her to", "She wanted to repair it"],
+      "answer": 1,
+      "explanation": "A man offered her money, and she needed it for her son's school fees."
+    }
+  ],
+  "grammar": [
+    {
+      "structure": "Reported speech (say + that + past tense)",
+      "explanation": "When we report what someone said, the verb usually moves one step back in time: is → was, cleaned → had cleaned.",
+      "example": "Paula said she had cleaned the main room at seven o'clock on Sunday evening and that the painting was there.",
+      "exercise": {
+        "question": "David said: “I arrived at ten.” Choose the reported sentence.",
+        "options": ["David said he arrives at ten.", "David said he had arrived at ten.", "David said he has arrived at ten.", "David said I arrived at ten."],
+        "answer": 1,
+        "explanation": "Past simple usually becomes past perfect in reported speech: arrived → had arrived."
+      }
+    },
+    {
+      "structure": "Past continuous passive (was being + past participle)",
+      "explanation": "Was/were being + past participle describes an action that was happening to something at a time in the past.",
+      "example": "I thought it was being repaired upstairs, so I did not worry.",
+      "exercise": {
+        "question": "Choose the correct form: When I visited, the museum ___",
+        "options": ["was painting.", "was being painted.", "was been painted.", "being painted."],
+        "answer": 1,
+        "explanation": "The museum received the action while it was in progress: was being painted."
+      }
+    }
+  ]
+}

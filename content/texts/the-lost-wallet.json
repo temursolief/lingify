@@ -1,0 +1,96 @@
+{
+  "slug": "the-lost-wallet",
+  "title": "The Lost Wallet",
+  "summary": "Aziz finds a wallet full of money on the bus. Should he keep it or try to find the owner?",
+  "genre": "Short story",
+  "topics": [
+    "cities",
+    "money",
+    "daily-life"
+  ],
+  "paragraphs": [
+    "It was a cold Tuesday morning, and the bus was crowded as usual. Aziz was on his way to the university, where he studied engineering. He was tired because he had worked late at the restaurant the night before. He found an empty seat at the back and closed his eyes.",
+    "When the bus stopped near the city park, an older man in a grey coat got off in a hurry. A minute later, Aziz noticed something on the floor under the seat where the man had been sitting. It was a brown leather wallet. He picked it up and looked inside. There were several bank cards, a photo of two smiling children and a large amount of cash, more money than Aziz earned in a month.",
+    "For a moment, Aziz did not know what to do. He thought about the rent that he still had to pay and the new laptop he needed for his studies. Nobody had seen him pick up the wallet. It would be easy to put it in his bag and say nothing.",
+    "But then he looked again at the photo of the children. He imagined how the man would feel when he discovered that his wallet was gone. Aziz remembered something his grandfather often said: “What you do when nobody is watching shows who you really are.”",
+    "Inside the wallet, he found a business card with a name, Mr Karimov, and an address in the city centre. Aziz missed his first class and took another bus into the centre. The address belonged to a small bookshop. When he walked in, he saw the man in the grey coat standing behind the counter, looking very worried and searching through his pockets.",
+    "“Excuse me,” Aziz said. “I think you lost this on the bus.” Mr Karimov's face changed completely. He thanked Aziz again and again. The money, he explained, was for his daughter's operation the following week.",
+    "Mr Karimov tried to give Aziz some of the money as a reward, but Aziz refused. Instead, the old man asked him a few questions about his studies. When he heard that Aziz needed a laptop, he smiled. “My son works for a computer company,” he said. “Leave it to me.”",
+    "Two weeks later, a package arrived at Aziz's flat. Inside was a new laptop and a short note: “For an honest young man. Your grandfather would be proud.”"
+  ],
+  "questions": [
+    {
+      "question": "Why was Aziz tired that morning?",
+      "options": [
+        "He had studied all night",
+        "He had worked late at a restaurant",
+        "He had walked to the bus stop",
+        "He was ill"
+      ],
+      "answer": 1,
+      "explanation": "He was tired because he had worked late at the restaurant the night before."
+    },
+    {
+      "question": "Why did Aziz think about keeping the wallet?",
+      "options": [
+        "He needed money for rent and a laptop",
+        "He did not like the old man",
+        "He thought it was his own wallet",
+        "His friends told him to"
+      ],
+      "answer": 0,
+      "explanation": "He thought about the rent he had to pay and the new laptop he needed."
+    },
+    {
+      "question": "What helped Aziz decide to return the wallet?",
+      "options": [
+        "A police officer saw him",
+        "The bus driver asked about it",
+        "The photo of the children and his grandfather's words",
+        "He could not open the wallet"
+      ],
+      "answer": 2,
+      "explanation": "He looked at the photo of the children and remembered his grandfather's saying."
+    },
+    {
+      "question": "What was the money for?",
+      "options": [
+        "A new bookshop",
+        "His daughter's operation",
+        "A holiday",
+        "A laptop for his son"
+      ],
+      "answer": 1,
+      "explanation": "Mr Karimov explained that the money was for his daughter's operation."
+    },
+    {
+      "question": "What does the grandfather's saying mean?",
+      "options": [
+        "You should always be watched",
+        "Your true character shows in your private actions",
+        "Nobody can see what you do",
+        "Money is more important than honesty"
+      ],
+      "answer": 1,
+      "explanation": "The way you act when no one is watching shows your real character."
+    }
+  ],
+  "grammar": [
+    {
+      "structure": "Past perfect for an earlier past action",
+      "explanation": "We use had + past participle to show that one past action happened before another.",
+      "example": "He was tired because he had worked late at the restaurant the night before.",
+      "exercise": {
+        "question": "Choose the correct form: When Aziz arrived at the bookshop, Mr Karimov ___ that his wallet was gone.",
+        "options": [
+          "already discovers",
+          "had already discovered",
+          "has already discovered",
+          "already discovering"
+        ],
+        "answer": 1,
+        "explanation": "He discovered it before Aziz arrived, so we use the past perfect: had already discovered."
+      }
+    }
+  ]
+}

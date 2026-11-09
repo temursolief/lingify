@@ -1,0 +1,72 @@
+{
+  "slug": "how-coffee-changed-the-world",
+  "title": "How Coffee Changed the World",
+  "summary": "From a legend about dancing goats to the coffee shops on every corner, coffee has a surprising history.",
+  "genre": "Non-fiction",
+  "topics": ["food", "history", "culture"],
+  "paragraphs": [
+    "Every day, people around the world drink more than two billion cups of coffee. For many of us, the day cannot start without it. But coffee has not always been part of our lives. Its story begins about a thousand years ago in the mountains of Ethiopia, in East Africa.",
+    "According to an old story, a young man called Kaldi was looking after his goats when he noticed something strange. After eating red fruit from a certain bush, the goats became full of energy. They jumped and danced and did not want to sleep at night. Kaldi tried the fruit himself and felt the same energy. Nobody knows if this story is true, but it is a nice way to explain how people discovered coffee.",
+    "From Ethiopia, coffee travelled across the sea to Yemen. There, people began to dry and cook the beans and make a hot drink from them. Religious men drank coffee to help them stay awake during long night prayers. By the fifteenth century, coffee was popular across the Middle East.",
+    "Soon, the first coffee houses opened in cities such as Cairo and Istanbul. These were not just places to drink coffee. People went there to talk, listen to music, play games and discuss the news. Coffee houses became so important for sharing ideas that they were sometimes called “schools of the wise”. Some rulers did not like this, because they were afraid that people were discussing politics, and they tried to close them.",
+    "In the seventeenth century, coffee arrived in Europe. At first some people were suspicious of the new black drink, but it quickly became fashionable. Coffee houses opened in London, Paris and Vienna. In London, a coffee house owned by a man called Edward Lloyd was a meeting place for people who worked with ships. It later grew into one of the most famous insurance companies in the world.",
+    "As demand grew, European countries started growing coffee in their colonies in Asia, Africa and South America. This part of the story is darker. Much of the coffee was produced by enslaved people or workers who were paid very little. Today, Brazil is the largest coffee producer in the world, and coffee is still an important part of the economy for millions of farmers.",
+    "Now, coffee shops can be found on almost every street. People drink coffee to wake up, to meet friends and to work. A thousand years after Kaldi's goats danced in the mountains, coffee still brings people together."
+  ],
+  "questions": [
+    {
+      "question": "According to the old story, how was coffee discovered?",
+      "options": ["A farmer planted it by mistake", "Goats became full of energy after eating the fruit", "A king ordered his scientists to find it", "Sailors brought it from the sea"],
+      "answer": 1,
+      "explanation": "Kaldi saw his goats jumping and dancing after they ate red fruit from a bush."
+    },
+    {
+      "question": "Why did religious men in Yemen drink coffee?",
+      "options": ["To stay awake during night prayers", "Because it was cheap", "To feel calm", "Because water was dirty"],
+      "answer": 0,
+      "explanation": "They drank coffee to stay awake during long night prayers."
+    },
+    {
+      "question": "Why did some rulers try to close coffee houses?",
+      "options": ["Coffee was bad for health", "They were afraid people were discussing politics", "Coffee houses were too noisy", "They wanted to sell tea"],
+      "answer": 1,
+      "explanation": "Rulers were afraid that people were discussing politics there."
+    },
+    {
+      "question": "What did Edward Lloyd's coffee house later become?",
+      "options": ["A famous restaurant", "A ship company", "An insurance company", "A school"],
+      "answer": 2,
+      "explanation": "It grew into one of the most famous insurance companies in the world."
+    },
+    {
+      "question": "Why does the writer call one part of the story 'darker'?",
+      "options": ["Coffee is a dark drink", "Much coffee was produced by enslaved or badly paid workers", "Coffee houses were dark inside", "Coffee was drunk at night"],
+      "answer": 1,
+      "explanation": "Much of the coffee was produced by enslaved people or workers paid very little."
+    }
+  ],
+  "grammar": [
+    {
+      "structure": "Past continuous interrupted by past simple",
+      "explanation": "A longer action in progress (was/were + -ing) is interrupted by a short action (past simple).",
+      "example": "According to an old story, a young man called Kaldi was looking after his goats when he noticed something strange.",
+      "exercise": {
+        "question": "Choose the correct sentence.",
+        "options": ["I drank coffee when my friend was calling.", "I was drinking coffee when my friend called.", "I was drinking coffee when my friend was call.", "I drink coffee when my friend called."],
+        "answer": 1,
+        "explanation": "The long action (was drinking) is interrupted by the short action (called)."
+      }
+    },
+    {
+      "structure": "so + adjective + that",
+      "explanation": "So ... that shows a result: something was very X, and the result was Y.",
+      "example": "Coffee houses became so important for sharing ideas that they were sometimes called “schools of the wise”.",
+      "exercise": {
+        "question": "Choose the correct sentence.",
+        "options": ["The coffee was so hot that I couldn't drink it.", "The coffee was such hot that I couldn't drink it.", "The coffee was so hot what I couldn't drink it.", "The coffee was too hot that I couldn't drink it."],
+        "answer": 0,
+        "explanation": "We say so + adjective + that."
+      }
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "slug": "a-letter-from-grandmother",
+  "title": "A Letter from Grandmother",
+  "summary": "While cleaning her late grandmother's house, Sara finds an old letter addressed to her, written twenty years earlier.",
+  "genre": "Short story",
+  "topics": ["family", "daily-life"],
+  "paragraphs": [
+    "Sara's grandmother died in the spring, at the age of ninety-one. A few months later, Sara and her mother went to the old house in the village to sort through her things. The house was exactly as Sara remembered it from her childhood: the green door, the apple tree in the garden and the smell of bread and dried flowers.",
+    "They worked all day, putting clothes into boxes, packing plates and deciding what to keep. It was sad work. Every object seemed to have a story. Sara found the small wooden horse that her grandfather had made for her when she was four. She found the blue cup that her grandmother always drank her tea from.",
+    "In the evening, while her mother was making dinner, Sara opened the drawer of her grandmother's old desk. Under some photographs and recipes, there was an envelope. On the front, in her grandmother's careful handwriting, it said: “For Sara, when she is grown up.” The envelope was yellow with age. Sara sat down on the bed and opened it slowly.",
+    "“My dear Sara,” the letter began. “Today you are five years old, and you are sleeping in the next room as I write this. This afternoon you asked me why the sky is blue and why people get old. I did not have good answers. So I decided to write you this letter, to give you some answers that I have learned in my long life. Perhaps one day you will read it.”",
+    "The letter continued for three pages. Her grandmother wrote about growing up during difficult years when there was not always enough food. She wrote about meeting Sara's grandfather at a wedding and dancing with him all night. She wrote about the things that had made her happiest: not money or possessions, but cooking for the people she loved, working in her garden and long conversations around the table.",
+    "Near the end, she had written some advice. “Be kind, even when it is difficult. Do not be afraid of making mistakes; that is how we learn. Spend time with the people you love, because time is the only thing you cannot get back. And when you are sad, plant something and watch it grow.”",
+    "Sara read the letter twice. Then she went into the kitchen, where her mother was cutting vegetables, and gave it to her without a word. Her mother read it and began to cry and smile at the same time. “That sounds just like her,” she said.",
+    "Before they left the village the next day, Sara took a small cutting from the apple tree in the garden. She planted it in a pot on her balcony in the city. It is still growing there today, and every spring, when its first white flowers appear, Sara reads her grandmother's letter again."
+  ],
+  "questions": [
+    {
+      "question": "Why did Sara and her mother go to the village?",
+      "options": ["For a holiday", "To sort through her grandmother's things", "To visit her grandmother", "To sell the house"],
+      "answer": 1,
+      "explanation": "They went to the old house to sort through her grandmother's things after she died."
+    },
+    {
+      "question": "Where did Sara find the letter?",
+      "options": ["In a box of clothes", "Under the apple tree", "In the drawer of an old desk", "In the kitchen"],
+      "answer": 2,
+      "explanation": "She found it in the drawer of her grandmother's old desk, under photographs and recipes."
+    },
+    {
+      "question": "Why did the grandmother write the letter?",
+      "options": ["Sara had asked her difficult questions", "She was ill", "She was moving away", "Sara's mother asked her to"],
+      "answer": 0,
+      "explanation": "Sara asked why the sky is blue and why people get old, so her grandmother decided to write her some answers."
+    },
+    {
+      "question": "According to the letter, what made the grandmother happiest?",
+      "options": ["Money and possessions", "Travelling to new places", "Cooking for loved ones, gardening and conversations", "Her job"],
+      "answer": 2,
+      "explanation": "She wrote that cooking for the people she loved, gardening and long conversations made her happiest."
+    },
+    {
+      "question": "Why did Sara take a cutting from the apple tree?",
+      "options": ["To sell it", "To follow her grandmother's advice and remember her", "Because her mother asked", "To make apple juice"],
+      "answer": 1,
+      "explanation": "Her grandmother advised planting something, and the tree helps Sara remember her."
+    }
+  ],
+  "grammar": [
+    {
+      "structure": "Used to / always for past habits",
+      "explanation": "We can use always + past simple to describe a repeated habit in the past.",
+      "example": "She found the blue cup that her grandmother always drank her tea from.",
+      "exercise": {
+        "question": "Choose the sentence about a past habit.",
+        "options": ["My grandmother used to bake bread every Sunday.", "My grandmother is used to bake bread every Sunday.", "My grandmother use to baking bread every Sunday.", "My grandmother used baking bread every Sunday."],
+        "answer": 0,
+        "explanation": "used to + verb describes a past habit."
+      }
+    },
+    {
+      "structure": "Gerunds after prepositions",
+      "explanation": "After a preposition (of, about, before, without), we use the -ing form of the verb.",
+      "example": "Do not be afraid of making mistakes; that is how we learn.",
+      "exercise": {
+        "question": "Choose the correct option: She left the room without ___ a word.",
+        "options": ["say", "to say", "saying", "said"],
+        "answer": 2,
+        "explanation": "After the preposition without, we use the -ing form: saying."
+      }
+    }
+  ]
+}
