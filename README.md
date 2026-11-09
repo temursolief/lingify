@@ -83,6 +83,29 @@ Demo accounts (local only, password `lingify-demo`):
 | 17 | Goals and visible progress | Goals, vocabulary growth curve, time-by-activity charts |
 | 18 | Desirable difficulty | Review switches from multiple choice to typed recall once recent accuracy is above 90% |
 
+## ELT methodology in the lesson flow
+
+Each text is a staged reading lesson, written by hand in `content/lessons/<slug>.json` and merged with the story at seed
+time (`scripts/library.ts` validates that every item matches its text).
+
+| Source | Where |
+|---|---|
+| **CELTA receptive-skills staging** | Before reading: lead-in question, prediction, at most 3 pre-taught words with concept-check questions (CCQs). Gist task shown while reading and asked first afterwards, then the prediction is revealed. Detailed questions with a "look back at the text" panel. Personal response at the end. |
+| **CELTA guided discovery** | Grammar starts with highlighted examples (the first from the text) and a "work it out" question, then the rule, then practice. |
+| **Krashen: input hypothesis** | 95% coverage gate; pleasure reads (98%+) make every stage optional. |
+| **Krashen: affective filter** | Wrong answers shown in amber with "Good try" wording, never red; "Stop reading" at any time with no penalty, and the reason tunes recommendations; text ratings. |
+| **Krashen: natural order** | `src/lib/grammar-sequence.ts` orders 23 B1 structures into 5 stages; structures two or more stages ahead of the student are offered as an optional preview. |
+| **Schmidt: noticing** | On a re-read, "Notice the grammar" highlights the structures in the text. |
+| **Nation: guessing from context** | Tapping a word first asks the student to guess its meaning from the sentence (3 options from the B1 glossary), then shows a learner-friendly definition (`content/glossary.json`). |
+| **Nation: four strands** | Meaning-focused input (reading), language-focused learning (words, phrases, grammar), fluency development (Speed reading: easy texts against a personal target, with a main-idea check so skimming doesn't count). |
+| **Lewis: Lexical Approach** | 3 useful phrases (chunks/collocations) per text: underlined in the reader, practised after reading, saved to review. |
+| **Narrow reading** | 6 topic series; the next part is recommended and shown as "Continue your series". |
+| **DELTA reading sub-skills** | Every question is tagged (gist, detail, inference, reference, vocabulary in context, attitude, organisation). Students and teachers see first-try accuracy per skill; the class page shows the class profile and each student's weakest skill. |
+| **CEFR can-do** | Nine B1 reading can-do statements, judged from the student's answers, reading range, speed and habits. |
+
+To add a text, write `content/texts/<slug>.json` and `content/lessons/<slug>.json`, add B1 definitions for any rare words
+the seed lists, then run `npm run db:seed -- --texts`.
+
 ## Time tracking
 
 Only *active* time counts. The browser adds a second only while the tab is visible and the student interacted recently

@@ -1,6 +1,7 @@
 import "server-only";
 import { db } from "./db";
 import { flagsFor, type Flag } from "./flags";
+import { learningProfile, type SkillScore } from "./profile";
 import { studentStats } from "./stats";
 
 export type StudentRow = {
@@ -21,6 +22,11 @@ export type StudentRow = {
   avgWpm: number | null;
   streak: number;
   flags: Flag[];
+  skills: SkillScore[];
+  weakestSkill: string | null;
+  grammarStage: number;
+  canDoAchieved: number;
+  bestFluency: number | null;
 };
 
 export async function teacherClass(classId: string, teacherId: string) {
@@ -37,6 +43,7 @@ export async function classOverview(classId: string): Promise<StudentRow[]> {
   return Promise.all(
     enrollments.map(async ({ user }) => {
       const [stats, flags] = await Promise.all([studentStats(user.id), flagsFor(user.id)]);
+      const profile = await learningProfile(user.id, stats);
       const recentScores = stats.comprehensionTrend.slice(-5);
       const recentWpm = stats.wpmTrend.slice(-5);
       const m = (s: number) => Math.round(s / 60);
@@ -64,6 +71,11 @@ export async function classOverview(classId: string): Promise<StudentRow[]> {
         avgWpm: recentWpm.length ? Math.round(recentWpm.reduce((n, s) => n + s.value, 0) / recentWpm.length) : null,
         streak: stats.streak,
         flags,
+        skills: profile.skills,
+        weakestSkill: profile.weakest?.label ?? null,
+        grammarStage: profile.grammarStage,
+        canDoAchieved: profile.canDo.filter((c) => c.status === "achieved").length,
+        bestFluency: profile.fluency.best,
       };
     }),
   );

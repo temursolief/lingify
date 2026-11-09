@@ -4,57 +4,23 @@
  *        npm run db:seed -- --texts (library only)
  */
 import "dotenv/config";
-import { readdirSync, readFileSync } from "node:fs";
-import path from "node:path";
 import bcrypt from "bcryptjs";
 import { db } from "../src/lib/db";
 import { lemmaRanks } from "../src/lib/frequency";
-import { tokenize } from "../src/lib/nlp";
 import { firstDue } from "../src/lib/srs";
-import type { GrammarPoint, Question } from "../src/lib/texts";
+import type { Question } from "../src/lib/texts";
+import { loadLibrary } from "./library";
 import { addDays, dayOf } from "../src/lib/time";
-
-type TextFile = {
-  slug: string;
-  title: string;
-  summary: string;
-  genre: string;
-  topics: string[];
-  paragraphs: string[];
-  questions: Question[];
-  grammar: GrammarPoint[];
-};
 
 export const DEMO_PASSWORD = "lingify-demo";
 
 async function seedTexts() {
-  const dir = path.resolve(import.meta.dirname, "../content/texts");
-  const files = readdirSync(dir).filter((f) => f.endsWith(".json"));
-  for (const file of files) {
-    const t: TextFile = JSON.parse(readFileSync(path.join(dir, file), "utf8"));
-    const body = t.paragraphs.join(" ");
-    for (const g of t.grammar) {
-      if (!body.includes(g.example.replace(/[.,!?]$/, ""))) throw new Error(`${t.slug}: grammar example not found in text: ${g.example}`);
-    }
-    for (const q of [...t.questions, ...t.grammar.map((g) => g.exercise)]) {
-      if (q.answer < 0 || q.answer >= q.options.length) throw new Error(`${t.slug}: bad answer index in "${q.question}"`);
-    }
-    const { paragraphs, sentences, lemmaCounts, wordCount } = tokenize(t.paragraphs);
-    const data = {
-      title: t.title,
-      summary: t.summary,
-      genre: t.genre,
-      topics: t.topics,
-      paragraphs,
-      sentences,
-      lemmaCounts,
-      wordCount,
-      questions: t.questions,
-      grammar: t.grammar,
-    };
-    await db.text.upsert({ where: { slug: t.slug }, create: { slug: t.slug, ...data }, update: data });
+  const { rows, seriesTitles, missingGlossary } = loadLibrary();
+  for (const { slug, ...data } of rows) {
+    await db.text.upsert({ where: { slug }, create: { slug, ...data }, update: data });
   }
-  console.log(`library: ${files.length} texts`);
+  console.log(`library: ${rows.length} texts, ${seriesTitles.size} series`);
+  if (missingGlossary.length) console.log(`no B1 definition yet (dictionary fallback): ${missingGlossary.join(", ")}`);
 }
 
 type DemoStudent = {
@@ -66,12 +32,19 @@ type DemoStudent = {
   activeDaysAgo: number[];
   quizAccuracy: number;
   readingWpm: number;
+  weakSkills: string[];
 };
 
+function hashOf(str: string) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619);
+  return h >>> 0;
+}
+
 const DEMO_STUDENTS: DemoStudent[] = [
-  { email: "student@lingify.test", name: "Aisha Karimova", vocab: 2600, topics: ["science", "animals", "history"], activeDaysAgo: [1, 2, 3, 4, 6, 7, 9, 10, 12], quizAccuracy: 0.82, readingWpm: 118 },
-  { email: "jasur@lingify.test", name: "Jasur Aliev", vocab: 2900, topics: ["sports", "technology", "money"], activeDaysAgo: [0, 1, 2, 3, 4, 5, 6, 8, 11, 13], quizAccuracy: 0.9, readingWpm: 135 },
-  { email: "malika@lingify.test", name: "Malika Tursunova", vocab: 2200, topics: ["family", "music", "art"], activeDaysAgo: [9, 11, 12, 15], quizAccuracy: 0.5, readingWpm: 85 },
+  { email: "student@lingify.test", name: "Aisha Karimova", vocab: 2600, topics: ["science", "animals", "history"], activeDaysAgo: [1, 2, 3, 4, 6, 7, 9, 10, 12], quizAccuracy: 0.82, readingWpm: 118, weakSkills: ["vocabulary", "attitude"] },
+  { email: "jasur@lingify.test", name: "Jasur Aliev", vocab: 2900, topics: ["sports", "technology", "money"], activeDaysAgo: [0, 1, 2, 3, 4, 5, 6, 8, 11, 13], quizAccuracy: 0.9, readingWpm: 135, weakSkills: ["organisation"] },
+  { email: "malika@lingify.test", name: "Malika Tursunova", vocab: 2200, topics: ["family", "music", "art"], activeDaysAgo: [9, 11, 12, 15], quizAccuracy: 0.5, readingWpm: 85, weakSkills: ["inference", "reference"] },
 ];
 
 async function seedDemo() {
@@ -129,11 +102,26 @@ async function seedDemo() {
         },
       });
       const questions = text.questions as Question[];
+      const grammarPoints = text.grammar as { key: string }[];
+      const roll = (key: string, chance: number) => (hashOf(key + s.email) % 100) / 100 < chance;
       await db.exerciseAttempt.createMany({
-        data: questions.map((q, i) => ({
-          userId: user.id, textId: text.id, kind: "COMPREHENSION" as const, itemKey: `${text.id}:q${i}`,
-          correct: i / questions.length < quizScore, answeredAt: at,
-        })),
+        data: [
+          ...(questions as (Question & { skill: string })[]).map((q, i) => ({
+            userId: user.id, textId: text.id, kind: "COMPREHENSION" as const, itemKey: `${text.id}:COMPREHENSION:${i}`,
+            skill: q.skill, correct: roll(`${text.id}${i}`, s.quizAccuracy - (s.weakSkills.includes(q.skill) ? 0.35 : 0)), answeredAt: at,
+          })),
+          { userId: user.id, textId: text.id, kind: "GIST" as const, itemKey: `${text.id}:GIST`, skill: "gist", correct: roll(`${text.id}g`, s.quizAccuracy + 0.1), answeredAt: at },
+          ...grammarPoints.map((g, i) => ({
+            userId: user.id, textId: text.id, kind: "GRAMMAR" as const, itemKey: `${text.id}:GRAMMAR:${i}`,
+            skill: g.key, correct: roll(`${text.id}gr${i}`, s.quizAccuracy), answeredAt: at,
+          })),
+        ],
+      });
+      await db.textRating.create({
+        data: {
+          userId: user.id, textId: text.id, enjoyment: 1 + (hashOf(text.slug + s.email) % 3),
+          difficulty: s.vocab < 2400 ? 1 : 0, recommend: hashOf(text.slug + s.name) % 2 === 0,
+        },
       });
       const activities = [
         ["READING", readingSeconds],
@@ -179,6 +167,17 @@ async function seedDemo() {
       create: { userId: user.id, day: startDay, knownCount: s.vocab, learningCount: 0 },
       update: {},
     });
+  }
+
+  const fluencyTexts = texts.slice(0, 3);
+  for (const s of DEMO_STUDENTS.slice(0, 2)) {
+    const user = await db.user.findUniqueOrThrow({ where: { email: s.email } });
+    for (const [i, text] of fluencyTexts.entries()) {
+      const wpm = s.readingWpm + 15 + i * 12;
+      await db.fluencyRun.create({
+        data: { userId: user.id, textId: text.id, wpm, seconds: Math.round((text.wordCount / wpm) * 60), gistCorrect: true, createdAt: addDays(now, -(6 - i * 2)) },
+      });
+    }
   }
 
   await db.assignment.create({

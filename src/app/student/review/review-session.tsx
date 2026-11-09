@@ -3,7 +3,7 @@
 import { useState, useTransition, type FormEvent } from "react";
 import { submitReview, type ReviewResult } from "@/app/actions/review";
 import { ActivityTracker } from "@/components/activity-tracker";
-import { Button, ButtonLink, Card, ProgressBar, cx } from "@/components/ui";
+import { Button, ButtonLink, Card, cx } from "@/components/ui";
 import { GRADUATE_STREAK } from "@/lib/srs";
 import type { ReviewCard } from "@/lib/review-queue";
 
@@ -54,27 +54,27 @@ export function ReviewSession({ cards, mode }: { cards: ReviewCard[]; mode: "typ
   const [before, after] = card.gapped ? card.gapped.split("_____") : [null, null];
 
   return (
-    <Card>
+    <div className="text-center">
       <ActivityTracker activity="REVIEW" />
-      <div className="mb-5 flex items-center gap-3 text-sm text-muted">
-        <span className="whitespace-nowrap tabular-nums">{index + 1} / {cards.length}</span>
-        <ProgressBar value={index / cards.length} label="Review progress" />
-      </div>
+      <p className="mb-6 tabular-nums" aria-label={`${cards.length - index} words left`}>
+        <span className="text-good underline decoration-2 underline-offset-4">{cards.length - index}</span>
+        <span className="ml-3 text-muted">left</span>
+      </p>
 
       {card.gapped ? (
-        <p className="font-serif text-xl leading-relaxed">
+        <p className="text-2xl leading-relaxed">
           {before}
-          <span className={cx("mx-1 inline-block min-w-24 border-b-2 px-1 text-center", result ? (result.correct ? "border-good text-good" : "border-bad text-bad") : "border-accent")}>
+          <span className={cx("mx-1 inline-block min-w-24 border-b-2 px-1 text-center", result ? (result.correct ? "border-good text-good" : "border-warn text-warn") : "border-accent")}>
             {result ? result.expected : `${card.firstLetter}${"·".repeat(Math.max(0, card.length - 1))}`}
           </span>
           {after}
         </p>
       ) : (
-        <p className="text-lg">Which word means: <strong>{card.hint ?? card.lemma}</strong>?</p>
+        <p className="text-2xl">Which word means: <strong>{card.hint ?? card.lemma}</strong>?</p>
       )}
 
       {card.hint && card.gapped && (
-        <div className="mt-3 text-sm">
+        <div className="mt-4">
           {showHint || result ? (
             <p className="text-muted">Meaning: {card.hint}</p>
           ) : (
@@ -84,7 +84,7 @@ export function ReviewSession({ cards, mode }: { cards: ReviewCard[]; mode: "typ
       )}
 
       {mode === "choice" && card.options ? (
-        <div className="mt-5 grid grid-cols-2 gap-2">
+        <div className="mx-auto mt-6 grid max-w-lg grid-cols-2 gap-2 border-t border-line pt-6">
           {card.options.map((option) => (
             <button
               key={option}
@@ -92,12 +92,12 @@ export function ReviewSession({ cards, mode }: { cards: ReviewCard[]; mode: "typ
               disabled={!!result || pending}
               onClick={() => answer(option)}
               className={cx(
-                "rounded-lg border px-4 py-3 font-medium transition",
+                "rounded-md border px-3 py-2 transition-colors",
                 result && option === result.expected.toLowerCase()
                   ? "border-good bg-good-soft text-good"
                   : result && option === chosen
-                    ? "border-bad bg-bad-soft text-bad"
-                    : "border-line hover:border-muted",
+                    ? "border-warn bg-warn-soft text-warn"
+                    : "border-line hover:bg-paper",
               )}
             >
               {option}
@@ -105,7 +105,7 @@ export function ReviewSession({ cards, mode }: { cards: ReviewCard[]; mode: "typ
           ))}
         </div>
       ) : (
-        <form onSubmit={onSubmit} className="mt-5 flex gap-2">
+        <form onSubmit={onSubmit} className="mx-auto mt-6 flex max-w-md gap-2">
           <input
             value={typed}
             onChange={(e) => setTyped(e.target.value)}
@@ -115,20 +115,20 @@ export function ReviewSession({ cards, mode }: { cards: ReviewCard[]; mode: "typ
             autoCapitalize="off"
             spellCheck={false}
             aria-label="Type the missing word"
-            className="flex-1 rounded-lg border border-line bg-surface px-3 py-2 text-lg focus:border-accent focus:outline-none"
+            className="flex-1 rounded-lg border border-line bg-surface px-3 py-2 text-lg focus:border-[#86b7fe] focus:outline-none focus:ring-4 focus:ring-accent/25"
           />
           <Button type="submit" disabled={!!result || pending || !typed.trim()}>Check</Button>
         </form>
       )}
 
       {result && (
-        <div className="mt-5" aria-live="polite">
-          <p className={cx("font-medium", result.correct ? "text-good" : "text-bad")}>
+        <div className="mt-6" aria-live="polite">
+          <p className={cx("font-medium", result.correct ? "text-good" : "text-warn")}>
             {result.graduated
               ? "Correct! You know this word now. 🎉"
               : result.correct
                 ? `Correct! See you again in ${result.nextInDays} day${result.nextInDays === 1 ? "" : "s"}.`
-                : `The answer is “${result.expected}”. It will come back in a few minutes.`}
+                : `Good try. The answer is “${result.expected}”. It will come back in a few minutes.`}
           </p>
           {!result.graduated && (
             <p className="mt-1 text-xs text-muted">
@@ -138,6 +138,6 @@ export function ReviewSession({ cards, mode }: { cards: ReviewCard[]; mode: "typ
           <Button className="mt-4" onClick={next} autoFocus>Next</Button>
         </div>
       )}
-    </Card>
+    </div>
   );
 }

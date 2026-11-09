@@ -1,0 +1,135 @@
+{
+  "series": {
+    "id": "animals",
+    "title": "Amazing animals",
+    "part": 2
+  },
+  "leadIn": "Which animal do you think is the cleverest? Why?",
+  "prediction": {
+    "question": "What do you think an octopus can do?",
+    "options": [
+      "Open containers to get food",
+      "Speak like a parrot",
+      "Fly short distances"
+    ],
+    "answer": 0
+  },
+  "preTeach": [
+    {
+      "word": "octopus",
+      "definition": "a soft sea animal with eight long arms",
+      "ccq": {
+        "question": "Does an octopus live on land?",
+        "options": [
+          "Yes",
+          "No"
+        ],
+        "answer": 1
+      }
+    },
+    {
+      "word": "escaped",
+      "definition": "got away from a place where you were kept",
+      "ccq": {
+        "question": "If an animal escapes, is it still in its cage?",
+        "options": [
+          "Yes",
+          "No"
+        ],
+        "answer": 1
+      }
+    }
+  ],
+  "gist": {
+    "question": "What is the text mainly about?",
+    "options": [
+      "How to keep an octopus at home",
+      "Why octopuses are so clever and unusual",
+      "Animals that live in New Zealand",
+      "Dangerous sea snakes"
+    ],
+    "answer": 1,
+    "explanation": "It gives examples of octopus intelligence and explains how different they are from us."
+  },
+  "skills": [
+    "detail",
+    "detail",
+    "inference",
+    "detail",
+    "inference"
+  ],
+  "extraQuestion": {
+    "question": "Paragraph 6: “It did not do this to anyone else”. What does “this” refer to?",
+    "options": [
+      "Throwing water",
+      "Changing colour",
+      "Opening containers",
+      "Hiding in a shell"
+    ],
+    "answer": 0,
+    "explanation": "The sentence before says the octopus threw water at one worker.",
+    "skill": "reference"
+  },
+  "response": "After reading this, do you think we should treat octopuses differently? Why, or why not?",
+  "phrases": [
+    {
+      "phrase": "get out",
+      "inText": "got out",
+      "meaning": "leave a closed place"
+    },
+    {
+      "phrase": "find your way",
+      "inText": "find their way",
+      "meaning": "discover how to get somewhere"
+    },
+    {
+      "phrase": "in less than",
+      "inText": "in less than",
+      "meaning": "quicker than"
+    }
+  ],
+  "grammar": [
+    {
+      "key": "present-perfect-experience",
+      "examples": [
+        "In experiments, they have learned to open glass containers with food inside, find their way through simple problems and use tools.",
+        "Researchers have watched octopuses play with toys."
+      ],
+      "highlights": [
+        "have learned",
+        "have watched"
+      ],
+      "discovery": {
+        "question": "Does the writer tell us exactly when these things happened?",
+        "options": [
+          "No, only that they have happened up to now",
+          "Yes, on a specific date",
+          "They will happen in the future"
+        ],
+        "answer": 0,
+        "explanation": "have/has + past participle talks about experiences and results up to now, when the time is not important."
+      }
+    },
+    {
+      "key": "linking-contrast",
+      "examples": [
+        "Some are shy, while others are curious and love to play.",
+        "Bees live in large groups, while most octopuses live alone."
+      ],
+      "highlights": [
+        "while",
+        "while"
+      ],
+      "discovery": {
+        "question": "What does “while” show here?",
+        "options": [
+          "A difference between two things",
+          "That two actions happen at the same time",
+          "A reason"
+        ],
+        "answer": 0,
+        "explanation": "while can join two contrasting ideas, like although or but."
+      }
+    }
+  ]
+}

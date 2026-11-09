@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
-type Activity = "READING" | "QUIZ" | "VOCAB" | "GRAMMAR" | "REVIEW" | "PLACEMENT";
+type Activity = "READING" | "QUIZ" | "VOCAB" | "GRAMMAR" | "REVIEW" | "FLUENCY" | "PLACEMENT";
 
 const FLUSH_EVERY_MS = 15_000;
 /** Reading a long paragraph can take a while without touching anything, so reading tolerates longer pauses. */
@@ -12,6 +12,7 @@ const IDLE_AFTER_MS: Record<Activity, number> = {
   VOCAB: 60_000,
   GRAMMAR: 60_000,
   REVIEW: 60_000,
+  FLUENCY: 60_000,
   PLACEMENT: 60_000,
 };
 

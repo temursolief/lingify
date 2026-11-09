@@ -4,8 +4,22 @@ import { z } from "zod";
 import { requireStudent } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { lookupDefinition, type DictionaryData } from "@/lib/dictionary";
-import { coverageOf, MIN_COVERAGE, type GrammarPoint, type LemmaCounts, type Question, type Token } from "@/lib/texts";
-import { markLookedUp, recordSnapshot, wordSets } from "@/lib/vocab";
+import { glossaryEntry, guessOptions, type GlossaryEntry } from "@/lib/glossary";
+import { phraseQuestion } from "@/lib/lesson";
+import { firstDue } from "@/lib/srs";
+import {
+  coverageOf,
+  MIN_COVERAGE,
+  type Choice,
+  type GrammarPoint,
+  type LemmaCounts,
+  type Phrase,
+  type PreTeachWord,
+  type Question,
+  type SkillQuestion,
+  type Token,
+} from "@/lib/texts";
+import { addToLearning, markLookedUp, recordSnapshot, wordSets } from "@/lib/vocab";
 
 const RESUME_WITHIN_MS = 12 * 3_600_000;
 /** Below this much active reading time the WPM figure would be noise. */
@@ -19,6 +33,11 @@ async function ownSession(sessionId: string, userId: string) {
   return session;
 }
 
+function sentenceWith(paragraphs: Token[][], sentences: string[], lemma: string) {
+  const token = paragraphs.flat().find((t) => t.l === lemma);
+  return token ? { sentence: sentences[token.i], word: token.v } : null;
+}
+
 export async function startReading(textId: string): Promise<{ sessionId: string }> {
   const user = await requireStudent();
   const text = await db.text.findUniqueOrThrow({ where: { id: textId } });
@@ -27,7 +46,7 @@ export async function startReading(textId: string): Promise<{ sessionId: string 
   if (coverage < MIN_COVERAGE) throw new Error("This text is above your current level");
 
   const open = await db.readingSession.findFirst({
-    where: { userId: user.id, textId, completedAt: null, startedAt: { gte: new Date(Date.now() - RESUME_WITHIN_MS) } },
+    where: { userId: user.id, textId, completedAt: null, abandonedAt: null, startedAt: { gte: new Date(Date.now() - RESUME_WITHIN_MS) } },
     orderBy: { startedAt: "desc" },
   });
   if (open) return { sessionId: open.id };
@@ -37,6 +56,23 @@ export async function startReading(textId: string): Promise<{ sessionId: string 
   return { sessionId: session.id };
 }
 
+export async function savePrediction(input: { sessionId: string; choice: number }) {
+  const user = await requireStudent();
+  const { sessionId, choice } = z.object({ sessionId: z.string(), choice: z.number().int().min(0).max(5) }).parse(input);
+  await db.readingSession.updateMany({ where: { id: sessionId, userId: user.id }, data: { prediction: choice } });
+}
+
+/** Pre-taught words go into the learning queue with the sentence they appear in, unless already known. */
+export async function addPreTaught(sessionId: string) {
+  const user = await requireStudent();
+  const session = await ownSession(sessionId, user.id);
+  const paragraphs = session.text.paragraphs as Token[][];
+  for (const w of session.text.preTeach as PreTeachWord[]) {
+    const context = sentenceWith(paragraphs, session.text.sentences, w.lemma);
+    await addToLearning(user.id, w.lemma, { sentence: context?.sentence ?? "", word: context?.word ?? w.word, textId: session.textId });
+  }
+}
+
 const lookupSchema = z.object({
   sessionId: z.string(),
   lemma: z.string().min(1).max(60),
@@ -44,23 +80,39 @@ const lookupSchema = z.object({
   sentenceIndex: z.number().int().min(0),
 });
 
-export async function lookupWord(input: z.infer<typeof lookupSchema>): Promise<DictionaryData | null> {
+export type LookupResult = { entry: GlossaryEntry | null; guess: string[] | null };
+
+export async function lookupWord(input: z.infer<typeof lookupSchema>): Promise<LookupResult> {
   const user = await requireStudent();
   const { sessionId, lemma, word, sentenceIndex } = lookupSchema.parse(input);
   const session = await ownSession(sessionId, user.id);
-  const counts = session.text.lemmaCounts as LemmaCounts;
-  if (!(lemma in counts)) throw new Error("Word is not in this text");
+  if (!(lemma in (session.text.lemmaCounts as LemmaCounts))) throw new Error("Word is not in this text");
 
-  await markLookedUp(user.id, lemma, {
-    sentence: session.text.sentences[sentenceIndex] ?? "",
-    word,
-    textId: session.textId,
-  });
+  await markLookedUp(user.id, lemma, { sentence: session.text.sentences[sentenceIndex] ?? "", word, textId: session.textId });
   await Promise.all([
     db.readingSession.update({ where: { id: session.id }, data: { lookupCount: { increment: 1 } } }),
     db.event.create({ data: { userId: user.id, type: "lookup", textId: session.textId, data: { sessionId, lemma, word } } }),
   ]);
-  return lookupDefinition(lemma);
+  return { entry: glossaryEntry(lemma), guess: guessOptions(lemma)?.options ?? null };
+}
+
+/** Checks a "guess the meaning from context" answer before the definition is shown. */
+export async function guessWord(input: { sessionId: string; lemma: string; choice: number }): Promise<{ correct: boolean; answer: number }> {
+  const user = await requireStudent();
+  const { sessionId, lemma, choice } = z.object({ sessionId: z.string(), lemma: z.string(), choice: z.number().int() }).parse(input);
+  const session = await ownSession(sessionId, user.id);
+  const guess = guessOptions(lemma);
+  if (!guess) throw new Error("No guessing exercise for this word");
+  const correct = choice === guess.answer;
+  await db.exerciseAttempt.create({
+    data: { userId: user.id, textId: session.textId, kind: "GUESS", itemKey: `${session.textId}:GUESS:${lemma}`, skill: "vocabulary", correct },
+  });
+  return { correct, answer: guess.answer };
+}
+
+export async function dictionaryFor(lemma: string): Promise<DictionaryData | null> {
+  await requireStudent();
+  return lookupDefinition(z.string().min(1).max(60).parse(lemma));
 }
 
 export async function completeReading(sessionId: string): Promise<{ wpm: number | null }> {
@@ -74,7 +126,7 @@ export async function completeReading(sessionId: string): Promise<{ wpm: number 
   const lemmas = Object.keys(session.text.lemmaCounts as LemmaCounts);
 
   await db.$transaction([
-    db.readingSession.update({ where: { id: session.id }, data: { completedAt: now, wpm } }),
+    db.readingSession.update({ where: { id: session.id }, data: { completedAt: now, wpm, abandonedAt: null, abandonReason: null } }),
     db.lemmaState.updateMany({ where: { userId: user.id, status: "LEARNING", lemma: { in: lemmas } }, data: { exposures: { increment: 1 } } }),
     db.assignmentRecipient.updateMany({
       where: { studentId: user.id, completedAt: null, assignment: { kind: "TEXT", textId: session.textId } },
@@ -87,32 +139,78 @@ export async function completeReading(sessionId: string): Promise<{ wpm: number 
   return { wpm: wpm && Math.round(wpm) };
 }
 
+/** Stopping a text is a normal reader's choice: nothing is marked as failed, and the reason tunes recommendations. */
+export async function abandonReading(input: { sessionId: string; reason: "TOO_HARD" | "NOT_INTERESTED" | "NO_TIME" }) {
+  const user = await requireStudent();
+  const { sessionId, reason } = z
+    .object({ sessionId: z.string(), reason: z.enum(["TOO_HARD", "NOT_INTERESTED", "NO_TIME"]) })
+    .parse(input);
+  await db.readingSession.updateMany({
+    where: { id: sessionId, userId: user.id, completedAt: null },
+    data: { abandonedAt: new Date(), abandonReason: reason },
+  });
+}
+
 export type AnswerFeedback = { correct: boolean; answer: number; explanation: string };
 
 const answerSchema = z.object({
   sessionId: z.string(),
-  kind: z.enum(["COMPREHENSION", "GRAMMAR"]),
+  kind: z.enum(["COMPREHENSION", "GIST", "CCQ", "GRAMMAR", "DISCOVERY", "PHRASE"]),
   index: z.number().int().min(0),
   choice: z.number().int().min(0),
 });
 
-export async function answerQuestion(input: z.infer<typeof answerSchema>): Promise<AnswerFeedback> {
+export async function answerItem(input: z.infer<typeof answerSchema>): Promise<AnswerFeedback> {
   const user = await requireStudent();
   const { sessionId, kind, index, choice } = answerSchema.parse(input);
   const session = await ownSession(sessionId, user.id);
-  const question: Question | undefined =
-    kind === "COMPREHENSION"
-      ? (session.text.questions as Question[])[index]
-      : (session.text.grammar as GrammarPoint[])[index]?.exercise;
-  if (!question) throw new Error("Question not found");
+  const text = session.text;
+  const grammar = text.grammar as GrammarPoint[];
 
-  const correct = choice === question.answer;
+  let item: (Choice & { explanation?: string }) | undefined;
+  let skill: string | null = null;
+  switch (kind) {
+    case "COMPREHENSION": {
+      const q = (text.questions as SkillQuestion[])[index];
+      item = q;
+      skill = q?.skill ?? null;
+      break;
+    }
+    case "GIST":
+      item = text.gist as Question;
+      skill = "gist";
+      break;
+    case "CCQ":
+      item = (text.preTeach as PreTeachWord[])[index]?.ccq;
+      break;
+    case "GRAMMAR":
+      item = grammar[index]?.exercise;
+      skill = grammar[index]?.key ?? null;
+      break;
+    case "DISCOVERY":
+      item = grammar[index]?.discovery;
+      skill = grammar[index]?.key ?? null;
+      break;
+    case "PHRASE": {
+      const phrases = text.phrases as Phrase[];
+      if (phrases[index]) {
+        item = { ...phraseQuestion(phrases, index), explanation: `“${phrases[index].phrase}” means ${phrases[index].meaning}.` };
+      }
+      break;
+    }
+  }
+  if (!item) throw new Error("Question not found");
+
+  const correct = choice === item.answer;
   await db.exerciseAttempt.create({
-    data: { userId: user.id, textId: session.textId, kind, itemKey: `${session.textId}:${kind}:${index}`, correct },
+    data: { userId: user.id, textId: session.textId, kind, itemKey: `${session.textId}:${kind}:${index}`, skill, correct },
   });
 
+  if (kind === "GIST") {
+    await db.readingSession.update({ where: { id: session.id }, data: { gistCorrect: correct } });
+  }
   if (kind === "COMPREHENSION") {
-    const questions = session.text.questions as Question[];
+    const questions = text.questions as Question[];
     const attempts = await db.exerciseAttempt.findMany({
       where: { userId: user.id, textId: session.textId, kind: "COMPREHENSION", answeredAt: { gte: session.startedAt } },
       orderBy: { answeredAt: "asc" },
@@ -124,7 +222,7 @@ export async function answerQuestion(input: z.infer<typeof answerSchema>): Promi
       await db.readingSession.update({ where: { id: session.id }, data: { quizScore: score } });
     }
   }
-  return { correct, answer: question.answer, explanation: question.explanation };
+  return { correct, answer: item.answer, explanation: item.explanation ?? "" };
 }
 
 const vocabSchema = z.object({ sessionId: z.string(), lemma: z.string(), choice: z.string() });
@@ -141,4 +239,52 @@ export async function answerVocab(input: z.infer<typeof vocabSchema>): Promise<{
     data: { userId: user.id, textId: session.textId, kind: "VOCAB", itemKey: `${session.textId}:VOCAB:${lemma}`, correct },
   });
   return { correct, answer: token.v };
+}
+
+/** Saves a useful phrase (a lexical chunk) to the review queue, with the sentence it came from. */
+export async function savePhrase(input: { sessionId: string; index: number }) {
+  const user = await requireStudent();
+  const { sessionId, index } = z.object({ sessionId: z.string(), index: z.number().int().min(0) }).parse(input);
+  const session = await ownSession(sessionId, user.id);
+  const phrase = (session.text.phrases as Phrase[])[index];
+  if (!phrase) throw new Error("Phrase not found");
+  const paragraphs = session.text.paragraphs as Token[][];
+  const mark = phrase.marks[0];
+  const tokens = paragraphs[mark.p].slice(mark.from, mark.to + 1);
+  const surface = tokens.map((t, i) => (i ? t.s : "") + t.v).join("");
+  const key = phrase.phrase.toLowerCase();
+
+  await db.lemmaState.upsert({
+    where: { userId_lemma: { userId: user.id, lemma: key } },
+    create: {
+      userId: user.id,
+      lemma: key,
+      status: "LEARNING",
+      source: "LOOKUP",
+      isPhrase: true,
+      meaning: phrase.meaning,
+      contextSentence: session.text.sentences[tokens[0].i],
+      contextWord: surface,
+      contextTextId: session.textId,
+      srsDue: firstDue(new Date()),
+    },
+    update: { meaning: phrase.meaning, isPhrase: true },
+  });
+}
+
+const ratingSchema = z.object({
+  textId: z.string(),
+  enjoyment: z.number().int().min(1).max(3),
+  difficulty: z.number().int().min(-1).max(1),
+  recommend: z.boolean(),
+});
+
+export async function rateText(input: z.infer<typeof ratingSchema>) {
+  const user = await requireStudent();
+  const data = ratingSchema.parse(input);
+  await db.textRating.upsert({
+    where: { userId_textId: { userId: user.id, textId: data.textId } },
+    create: { userId: user.id, ...data },
+    update: { enjoyment: data.enjoyment, difficulty: data.difficulty, recommend: data.recommend },
+  });
 }

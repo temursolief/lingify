@@ -4,7 +4,7 @@ import { useActionState, useTransition } from "react";
 import { removeGoal, setGoal } from "@/app/actions/student";
 import { Button } from "@/components/ui";
 
-const selectClass = "rounded-lg border border-line bg-surface px-3 py-2 focus:border-accent focus:outline-none";
+const selectClass = "rounded-lg border border-line bg-surface px-3 py-2 focus:border-[#86b7fe] focus:outline-none focus:ring-4 focus:ring-accent/25";
 
 export function GoalForm() {
   const [state, action, pending] = useActionState(setGoal, undefined);

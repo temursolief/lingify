@@ -32,7 +32,7 @@ export function PlacementFlow({ name, initialTopics, retake }: { name: string; i
   if (step.kind === "topics") {
     return (
       <div className="mx-auto max-w-2xl">
-        <h1 className="text-2xl font-semibold tracking-tight">{retake ? "Retake your placement" : `Welcome, ${name.split(" ")[0]}!`}</h1>
+        <h1 className="text-[2.25rem] leading-tight font-semibold">{retake ? "Retake your placement" : `Welcome, ${name.split(" ")[0]}!`}</h1>
         <p className="mt-2 text-muted">First, what do you like reading about? We use this to suggest texts. Choose as many as you like.</p>
         <div className="mt-6 flex flex-wrap gap-2">
           {TOPICS.map((t) => {
@@ -44,8 +44,8 @@ export function PlacementFlow({ name, initialTopics, retake }: { name: string; i
                 aria-pressed={on}
                 onClick={() => setTopics(on ? topics.filter((x) => x !== t) : [...topics, t])}
                 className={cx(
-                  "rounded-full border px-3 py-1.5 text-sm font-medium transition",
-                  on ? "border-accent bg-accent-soft text-accent" : "border-line bg-surface text-muted hover:text-ink",
+                  "rounded-md border px-3 py-1.5 transition-colors",
+                  on ? "border-accent bg-accent text-accent-ink" : "border-accent text-accent hover:bg-accent-soft",
                 )}
               >
                 {topicLabel(t)}
@@ -64,7 +64,7 @@ export function PlacementFlow({ name, initialTopics, retake }: { name: string; i
   if (step.kind === "intro") {
     return (
       <div className="mx-auto max-w-2xl">
-        <h1 className="text-2xl font-semibold tracking-tight">How many words do you know?</h1>
+        <h1 className="text-[2.25rem] leading-tight font-semibold">How many words do you know?</h1>
         <div className="mt-4 space-y-3 text-muted">
           <p>You will see a list of English words. <strong className="text-ink">Tap every word you know the meaning of.</strong></p>
           <p>Some words are not real English words. Do not tap those. Guessing makes your result less accurate, and then the texts we choose for you will be too hard.</p>
@@ -114,7 +114,7 @@ export function PlacementFlow({ name, initialTopics, retake }: { name: string; i
                 onClick={() => toggle(w)}
                 className={cx(
                   "rounded-lg border px-3 py-2.5 text-left font-medium transition",
-                  on ? "border-accent bg-accent-soft text-accent" : "border-line bg-surface hover:border-muted",
+                  on ? "border-accent bg-accent text-accent-ink" : "border-line bg-surface hover:bg-paper",
                 )}
               >
                 <span className="mr-2 inline-block w-4 text-center" aria-hidden>{on ? "✓" : ""}</span>

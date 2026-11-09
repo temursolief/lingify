@@ -5,7 +5,7 @@ import { formatMinutes } from "@/lib/time";
 import { BarList, LineChart, StackedBars, type Series } from "./charts";
 import { Card, Stat } from "./ui";
 
-const CHART_ACTIVITIES: Activity[] = ["READING", "QUIZ", "VOCAB", "GRAMMAR", "REVIEW"];
+const CHART_ACTIVITIES: Activity[] = ["READING", "QUIZ", "VOCAB", "GRAMMAR", "REVIEW", "FLUENCY"];
 const SERIES: Series[] = CHART_ACTIVITIES.map((a, i) => ({ key: a, label: ACTIVITY_LABEL[a], color: `var(--series-${i + 1})` }));
 
 function pct(v: number | null) {

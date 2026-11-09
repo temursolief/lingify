@@ -80,8 +80,8 @@ async function ClassPageContent(props: PageProps<"/teacher/classes/[id]">) {
           <div className="p-5 pt-0"><EmptyState title="No students yet">Share the code {cls.joinCode} with your students.</EmptyState></div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-sm">
-              <thead className="bg-paper text-left text-xs uppercase tracking-wide text-muted">
+            <table className="w-full min-w-[1100px] text-sm">
+              <thead className="bg-paper text-left text-xs text-muted">
                 <tr>
                   <th className="px-5 py-2 font-medium">Student</th>
                   <th className="px-3 py-2 text-right font-medium">Week min</th>
@@ -91,6 +91,8 @@ async function ClassPageContent(props: PageProps<"/teacher/classes/[id]">) {
                   <th className="px-3 py-2 text-right font-medium">Compr.</th>
                   <th className="px-3 py-2 text-right font-medium">WPM</th>
                   <th className="px-3 py-2 text-right font-medium">Streak</th>
+                  <th className="px-3 py-2 font-medium">Weakest skill</th>
+                  <th className="px-3 py-2 text-right font-medium">Grammar</th>
                   <th className="px-5 py-2 font-medium">Last active</th>
                 </tr>
               </thead>
@@ -112,6 +114,8 @@ async function ClassPageContent(props: PageProps<"/teacher/classes/[id]">) {
                       <td className="px-3 py-3 text-right tabular-nums">{r.comprehension === null ? "–" : `${r.comprehension}%`}</td>
                       <td className="px-3 py-3 text-right tabular-nums">{r.avgWpm ?? "–"}</td>
                       <td className="px-3 py-3 text-right tabular-nums">{r.streak}</td>
+                      <td className="px-3 py-3 text-muted">{r.weakestSkill ?? "–"}</td>
+                      <td className="px-3 py-3 text-right tabular-nums">stage {r.grammarStage}</td>
                       <td className="px-5 py-3 text-muted">{ago(r.lastActiveAt)}</td>
                     </tr>
                   );
@@ -121,6 +125,32 @@ async function ClassPageContent(props: PageProps<"/teacher/classes/[id]">) {
           </div>
         )}
       </div>
+
+      {rows.length > 0 && (
+        <Card>
+          <h2 className="font-semibold">Class reading skills</h2>
+          <p className="mb-4 text-sm text-muted">Average first-try accuracy by question type. Plan lessons around the lowest bars.</p>
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {rows[0].skills.map((s) => {
+              const scored = rows.map((r) => r.skills.find((x) => x.skill === s.skill)!).filter((x) => x.total > 0);
+              const correct = scored.reduce((n, x) => n + x.correct, 0);
+              const total = scored.reduce((n, x) => n + x.total, 0);
+              const accuracy = total ? correct / total : null;
+              return (
+                <li key={s.skill}>
+                  <div className="flex justify-between text-sm">
+                    <span>{s.label}</span>
+                    <span className="font-medium tabular-nums">{accuracy === null ? "–" : `${Math.round(accuracy * 100)}%`} <span className="font-normal text-muted">({total})</span></span>
+                  </div>
+                  <div className="mt-1 h-2 rounded-md bg-grid">
+                    {accuracy !== null && <div className="h-full" style={{ width: `${accuracy * 100}%`, background: accuracy < 0.6 ? "var(--warn)" : "var(--series-1)" }} />}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>

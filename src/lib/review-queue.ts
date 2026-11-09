@@ -2,6 +2,8 @@ import "server-only";
 import { db } from "./db";
 import type { DictionaryData } from "./dictionary";
 import { lemmaRanks } from "./frequency";
+import { glossaryEntry } from "./glossary";
+import type { Phrase } from "./texts";
 
 export type ReviewCard = {
   lemma: string;
@@ -13,6 +15,7 @@ export type ReviewCard = {
   options: string[] | null;
   exposures: number;
   streak: number;
+  isPhrase: boolean;
 };
 
 const SESSION_SIZE = 20;
@@ -46,7 +49,11 @@ export async function reviewQueue(userId: string) {
   const accuracy = recent.length ? recent.filter((a) => a.correct).length / recent.length : 0;
   const mode: "typed" | "choice" = recent.length >= MIN_ATTEMPTS_FOR_TYPING && accuracy >= TYPING_THRESHOLD ? "typed" : "choice";
 
-  const entries = await db.dictionaryEntry.findMany({ where: { word: { in: due.map((d) => d.lemma) }, found: true } });
+  const [entries, phraseTexts] = await Promise.all([
+    db.dictionaryEntry.findMany({ where: { word: { in: due.map((d) => d.lemma) }, found: true } }),
+    due.some((d) => d.isPhrase) ? db.text.findMany({ select: { phrases: true } }) : Promise.resolve([]),
+  ]);
+  const allPhrases = [...new Set(phraseTexts.flatMap((t) => (t.phrases as Phrase[]).map((p) => p.inText.toLowerCase())))];
   const definitions = new Map(entries.map((e) => [e.word, (e.data as DictionaryData).meanings[0]?.definition ?? null]));
 
   const cards: ReviewCard[] = due.map((d) => {
@@ -54,11 +61,13 @@ export async function reviewQueue(userId: string) {
     const gapped = d.contextSentence ? d.contextSentence.replace(new RegExp(`\\b${escape(answer)}\\b`), "_____") : null;
     let options: string[] | null = null;
     if (mode === "choice") {
-      const others = due.filter((o) => o.lemma !== d.lemma).map((o) => (o.contextWord ?? o.lemma).toLowerCase());
-      const fillers = lemmaRanks
-        .slice(800, 3000)
-        .filter(([l, , plain]) => plain === 1 && Math.abs(l.length - answer.length) <= 2)
-        .map(([l]) => l);
+      const others = due.filter((o) => o.lemma !== d.lemma && o.isPhrase === d.isPhrase).map((o) => (o.contextWord ?? o.lemma).toLowerCase());
+      const fillers = d.isPhrase
+        ? allPhrases
+        : lemmaRanks
+            .slice(800, 3000)
+            .filter(([l, , plain]) => plain === 1 && Math.abs(l.length - answer.length) <= 2)
+            .map(([l]) => l);
       const pool = [...new Set([...others, ...fillers])].filter((w) => w !== answer.toLowerCase());
       const picks = pool.sort((a, b) => hash(d.lemma + a) - hash(d.lemma + b)).slice(0, 3);
       options = [answer.toLowerCase(), ...picks].sort((a, b) => hash(a + d.lemma) - hash(b + d.lemma));
@@ -66,12 +75,13 @@ export async function reviewQueue(userId: string) {
     return {
       lemma: d.lemma,
       gapped: gapped && gapped !== d.contextSentence ? gapped : null,
-      hint: definitions.get(d.lemma) ?? null,
+      hint: d.isPhrase ? d.meaning : (glossaryEntry(d.lemma)?.definition ?? definitions.get(d.lemma) ?? null),
       firstLetter: answer[0],
       length: answer.length,
       options,
       exposures: d.exposures,
       streak: d.srsStreak,
+      isPhrase: d.isPhrase,
     };
   });
 

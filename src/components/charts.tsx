@@ -223,8 +223,8 @@ export function BarList({ items, unit = "" }: { items: { label: string; value: n
             <span>{item.label}</span>
             <span className="font-medium tabular-nums">{item.value.toLocaleString()}{unit}</span>
           </div>
-          <div className="mt-1 h-2 rounded-full bg-line">
-            <div className="h-full rounded-full" style={{ width: `${(item.value / max) * 100}%`, background: item.color ?? "var(--series-1)" }} />
+          <div className="mt-1 h-2 rounded-md bg-grid">
+            <div className="h-full" style={{ width: `${(item.value / max) * 100}%`, background: item.color ?? "var(--series-1)" }} />
           </div>
         </li>
       ))}

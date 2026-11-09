@@ -1,0 +1,132 @@
+{
+  "series": null,
+  "leadIn": "Do you enjoy detective stories? What makes a good detective?",
+  "prediction": {
+    "question": "Who do you think took the painting?",
+    "options": [
+      "Paula, the cleaner",
+      "David, the guard",
+      "Mrs Bell, the art expert"
+    ],
+    "answer": 0
+  },
+  "preTeach": [
+    {
+      "word": "cupboard",
+      "definition": "a piece of furniture with doors where you keep things",
+      "ccq": {
+        "question": "Does a cupboard have doors?",
+        "options": [
+          "Yes",
+          "No"
+        ],
+        "answer": 0
+      }
+    },
+    {
+      "word": "bucket",
+      "definition": "an open container with a handle, used for carrying water",
+      "ccq": {
+        "question": "Can you carry water in a bucket?",
+        "options": [
+          "Yes",
+          "No"
+        ],
+        "answer": 0
+      }
+    }
+  ],
+  "gist": {
+    "question": "What is the story mainly about?",
+    "options": [
+      "How a detective finds a stolen painting",
+      "The history of a famous painting",
+      "A day in the life of a cleaner",
+      "How museums work"
+    ],
+    "answer": 0,
+    "explanation": "Detective Hale uses a clue to find out who took the painting."
+  },
+  "skills": [
+    "inference",
+    "detail",
+    "detail",
+    "detail",
+    "detail"
+  ],
+  "extraQuestion": {
+    "question": "Why did Hale say “It hasn't rained for a week”?",
+    "options": [
+      "The wet sand could not have come from outside",
+      "She wanted to talk about the weather",
+      "She thought the window was open",
+      "She needed an umbrella"
+    ],
+    "answer": 0,
+    "explanation": "If it had not rained, the wet sand must have come from somewhere else: Paula's beach sand.",
+    "skill": "inference"
+  },
+  "response": "Paula did something wrong for a reason she thought was important. How do you feel about her at the end?",
+  "phrases": [
+    {
+      "phrase": "go off",
+      "inText": "gone off",
+      "meaning": "start ringing or making a noise (an alarm)"
+    },
+    {
+      "phrase": "bend down",
+      "inText": "bent down",
+      "meaning": "move your body lower towards the ground"
+    },
+    {
+      "phrase": "for a moment",
+      "inText": "for a moment",
+      "meaning": "for a very short time"
+    }
+  ],
+  "grammar": [
+    {
+      "key": "reported-speech",
+      "examples": [
+        "Paula said she had cleaned the main room at seven o'clock on Sunday evening and that the painting was there.",
+        "David said he had checked every room."
+      ],
+      "highlights": [
+        "said she had cleaned",
+        "was there",
+        "said he had checked"
+      ],
+      "discovery": {
+        "question": "Paula's actual words were “I cleaned the room. The painting is there.” What happened to the verbs when the writer reported them?",
+        "options": [
+          "They moved one step back in time",
+          "They stayed the same",
+          "They moved into the future"
+        ],
+        "answer": 0,
+        "explanation": "In reported speech: cleaned → had cleaned, is → was."
+      }
+    },
+    {
+      "key": "past-continuous-passive",
+      "examples": [
+        "I thought it was being repaired upstairs, so I did not worry.",
+        "The windows were being cleaned when Hale arrived."
+      ],
+      "highlights": [
+        "was being repaired",
+        "were being cleaned"
+      ],
+      "discovery": {
+        "question": "Was someone doing something to the painting at that time?",
+        "options": [
+          "Yes, an action was in progress and the painting received it",
+          "No, nothing was happening",
+          "The painting was doing something"
+        ],
+        "answer": 0,
+        "explanation": "was/were being + past participle: an action in progress happening to something."
+      }
+    }
+  ]
+}

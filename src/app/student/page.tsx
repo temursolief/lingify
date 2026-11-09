@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { GoalList } from "@/components/goal-list";
-import { TextCard } from "@/components/text-card";
+import { TextTable } from "@/components/text-table";
 import { ButtonLink, Card, Stat, PageSkeleton } from "@/components/ui";
 import { requireStudent } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -24,14 +24,21 @@ async function StudentHomeContent() {
   ]);
   const wpm = stats.wpmTrend.length ? stats.wpmTrend.slice(-5).reduce((n, p) => n + p.value, 0) / Math.min(5, stats.wpmTrend.length) : DEFAULT_WPM;
   const assigned = library.filter((t) => t.assigned && t.level !== "locked");
-  const picks = library.filter((t) => t.level !== "locked" && !t.completed && !t.assigned).slice(0, 3);
+  const startedSeries = new Set(library.filter((t) => t.completed && t.series).map((t) => t.series));
+  const continueSeries = library.filter(
+    (t) => t.series && startedSeries.has(t.series) && !t.completed && t.level !== "locked" &&
+      library.some((o) => o.series === t.series && o.seriesPart === (t.seriesPart ?? 0) - 1 && o.completed),
+  );
+  const picks = library
+    .filter((t) => t.level !== "locked" && !t.completed && !t.assigned && !continueSeries.includes(t))
+    .slice(0, 3);
   const openCount = library.filter((t) => t.level !== "locked").length;
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Hello, {user.name.split(" ")[0]}</h1>
-        <p className="mt-1 text-muted">
+        <h1 className="text-[2.25rem] leading-tight font-semibold">Hello, {user.name.split(" ")[0]}</h1>
+        <p className="mt-2">
           You can read {openCount} of {library.length} texts. {stats.streak > 0 ? `You're on a ${stats.streak}-day streak. Keep it going!` : "Read something today to start a streak."}
         </p>
       </div>
@@ -40,31 +47,37 @@ async function StudentHomeContent() {
         <Stat label="Known words" value={stats.knownCount.toLocaleString()} hint={`+${stats.newKnownThisWeek} learned this week`} />
         <Stat label="This week" value={formatMinutes(stats.weekSeconds)} hint={`${stats.weekWordsRead.toLocaleString()} words read`} />
         <Stat label="Streak" value={`${stats.streak} day${stats.streak === 1 ? "" : "s"}`} />
-        <Stat label="Words to review" value={stats.dueCount} hint={stats.dueCount ? <a href="/student/review" className="text-accent underline">Review now</a> : "All done for now"} />
+        <Stat
+          label="Words to review"
+          value={<span className={stats.dueCount ? "text-good" : undefined}>{stats.dueCount}</span>}
+          hint={stats.dueCount ? <a href="/student/review" className="underline">Review now</a> : "All done for now"}
+        />
       </div>
 
       {assigned.length > 0 && (
         <section>
-          <h2 className="mb-3 text-lg font-semibold">From your teacher</h2>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {assigned.map((t) => <TextCard key={t.id} entry={t} wpm={wpm} />)}
-          </div>
+          <h2 className="mb-2 text-[1.75rem] leading-tight font-semibold">From your teacher</h2>
+          <TextTable entries={assigned} wpm={wpm} showSeries={false} />
+        </section>
+      )}
+
+      {continueSeries.length > 0 && (
+        <section>
+          <h2 className="text-[1.75rem] leading-tight font-semibold">Continue your series</h2>
+          <p className="mb-2 text-muted">Reading texts on the same theme brings the same words back, which helps them stick.</p>
+          <TextTable entries={continueSeries.slice(0, 3)} wpm={wpm} />
         </section>
       )}
 
       <section>
-        <div className="mb-3 flex items-end justify-between">
-          <h2 className="text-lg font-semibold">Recommended for you</h2>
-          <ButtonLink href="/student/library" variant="ghost">Whole library →</ButtonLink>
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-[1.75rem] leading-tight font-semibold">Recommended for you</h2>
+          <ButtonLink href="/student/library" variant="secondary">Library</ButtonLink>
         </div>
         {picks.length ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {picks.map((t) => <TextCard key={t.id} entry={t} wpm={wpm} />)}
-          </div>
+          <TextTable entries={picks} wpm={wpm} showSeries={false} />
         ) : (
-          <Card className="text-sm text-muted">
-            You have read everything at your level. Review your words to unlock new texts.
-          </Card>
+          <p className="text-muted">You have read everything at your level. Review your words to unlock new texts.</p>
         )}
       </section>
 

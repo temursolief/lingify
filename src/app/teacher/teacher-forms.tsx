@@ -4,7 +4,7 @@ import { useActionState, useTransition } from "react";
 import { assignGoal, assignText, createClass, deleteAssignment, removeStudent, type FormState } from "@/app/actions/teacher";
 import { Button } from "@/components/ui";
 
-const inputClass = "rounded-lg border border-line bg-surface px-3 py-2 focus:border-accent focus:outline-none";
+const inputClass = "rounded-lg border border-line bg-surface px-3 py-2 focus:border-[#86b7fe] focus:outline-none focus:ring-4 focus:ring-accent/25";
 
 function Feedback({ state }: { state: FormState }) {
   if (!state) return null;

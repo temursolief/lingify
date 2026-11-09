@@ -1,0 +1,137 @@
+{
+  "series": {
+    "id": "brain",
+    "title": "How your brain works",
+    "part": 3
+  },
+  "leadIn": "How many hours a day do you spend on your phone? Could you live without it for a week?",
+  "prediction": {
+    "question": "What do you think happened to the students without phones?",
+    "options": [
+      "They were bored all week",
+      "Things got better after a few days",
+      "Most students gave up on the first day"
+    ],
+    "answer": 1
+  },
+  "preTeach": [
+    {
+      "word": "experiment",
+      "definition": "a test you do to find out if an idea is true",
+      "ccq": {
+        "question": "In an experiment, do you know the result before you start?",
+        "options": [
+          "Yes",
+          "No"
+        ],
+        "answer": 1
+      }
+    },
+    {
+      "word": "relaxed",
+      "definition": "calm and not worried",
+      "ccq": {
+        "question": "Do people usually feel relaxed before an important exam?",
+        "options": [
+          "Yes",
+          "No"
+        ],
+        "answer": 1
+      }
+    }
+  ],
+  "gist": {
+    "question": "What is the article mainly about?",
+    "options": [
+      "A new phone for students",
+      "What happened when students lived a week without smartphones",
+      "Why libraries are closing",
+      "How to organise homework"
+    ],
+    "answer": 1,
+    "explanation": "It reports on a school experiment and its results."
+  },
+  "skills": [
+    "detail",
+    "detail",
+    "detail",
+    "detail",
+    "attitude"
+  ],
+  "extraQuestion": {
+    "question": "Paragraph 6 begins “Not everything was positive.” What does this paragraph do?",
+    "options": [
+      "It gives the problems with the experiment",
+      "It gives more good results",
+      "It explains how the experiment started",
+      "It describes the library"
+    ],
+    "answer": 0,
+    "explanation": "After the positive results, the writer gives the other side: homework, music and secret phone use.",
+    "skill": "organisation"
+  },
+  "response": "Would you try a week without your smartphone? What would you miss most, and what might be better?",
+  "phrases": [
+    {
+      "phrase": "at first",
+      "inText": "At first",
+      "meaning": "at the beginning"
+    },
+    {
+      "phrase": "keep doing something",
+      "inText": "kept touching",
+      "meaning": "continue doing something again and again"
+    },
+    {
+      "phrase": "wake up",
+      "inText": "woke up",
+      "meaning": "stop sleeping"
+    }
+  ],
+  "grammar": [
+    {
+      "key": "present-perfect-since",
+      "examples": [
+        "I haven't done that since I was a little kid.",
+        "Daniel has wanted a new bike since his birthday."
+      ],
+      "highlights": [
+        "haven't done",
+        "since",
+        "has wanted",
+        "since"
+      ],
+      "discovery": {
+        "question": "Does the period of time in these sentences continue until now?",
+        "options": [
+          "Yes, from a point in the past until now",
+          "No, it finished long ago",
+          "It is in the future"
+        ],
+        "answer": 0,
+        "explanation": "have/has + past participle + since + a starting point describes a period continuing until now."
+      }
+    },
+    {
+      "key": "future-in-past",
+      "examples": [
+        "I thought I was going to be really bored.",
+        "We were going to visit the museum, but it was closed."
+      ],
+      "highlights": [
+        "was going to be",
+        "were going to visit"
+      ],
+      "discovery": {
+        "question": "When did Emma think about being bored?",
+        "options": [
+          "Before the experiment, in the past",
+          "Now",
+          "After the experiment ended"
+        ],
+        "answer": 0,
+        "explanation": "was/were going to shows what someone expected in the past."
+      }
+    }
+  ]
+}

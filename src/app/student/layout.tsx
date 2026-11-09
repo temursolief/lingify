@@ -15,6 +15,7 @@ async function StudentNav() {
         { href: "/student/library", label: "Library" },
         { href: "/student/review", label: "Review", badge: due },
         { href: "/student/words", label: "My words" },
+        { href: "/student/fluency", label: "Speed reading" },
         { href: "/student/progress", label: "Progress" },
       ]}
     />
@@ -23,12 +24,22 @@ async function StudentNav() {
 
 async function UserName() {
   const session = await getSession();
-  return <span className="hidden font-medium sm:inline">{session?.name}</span>;
+  return <span className="hidden p-2 text-nav sm:inline">{session?.name}</span>;
 }
 
 export default function StudentLayout({ children }: { children: ReactNode }) {
   return (
-    <AppShell home="/student" nav={<StudentNav />} user={<UserName />}>
+    <AppShell
+      home="/student"
+      nav={<StudentNav />}
+      user={<UserName />}
+      footer={[
+        { href: "/student/library", label: "Library" },
+        { href: "/student/fluency", label: "Speed reading" },
+        { href: "/student/progress", label: "Progress" },
+        { href: "/student/placement", label: "Placement test" },
+      ]}
+    >
       {children}
     </AppShell>
   );

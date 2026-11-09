@@ -1,0 +1,135 @@
+{
+  "series": {
+    "id": "history-of-things",
+    "title": "Everyday things in history",
+    "part": 3
+  },
+  "leadIn": "How do you usually pay for things: cash, card or phone? How did your grandparents pay?",
+  "prediction": {
+    "question": "Which of these do you think people once used as money?",
+    "options": [
+      "Shells",
+      "Salt",
+      "Both"
+    ],
+    "answer": 2
+  },
+  "preTeach": [
+    {
+      "word": "exchanged",
+      "definition": "gave something and got something else back",
+      "ccq": {
+        "question": "If you exchange books with a friend, do you both get a book?",
+        "options": [
+          "Yes",
+          "No"
+        ],
+        "answer": 0
+      }
+    },
+    {
+      "word": "coins",
+      "definition": "small, flat, round pieces of metal used as money",
+      "ccq": {
+        "question": "Are coins made of paper?",
+        "options": [
+          "Yes",
+          "No"
+        ],
+        "answer": 1
+      }
+    }
+  ],
+  "gist": {
+    "question": "What is the text mainly about?",
+    "options": [
+      "How banks work",
+      "How people paid for things before modern money",
+      "The island of Yap",
+      "Why salt is valuable"
+    ],
+    "answer": 1,
+    "explanation": "It describes barter, early kinds of money and the first coins."
+  },
+  "skills": [
+    "vocabulary",
+    "detail",
+    "detail",
+    "detail",
+    "detail"
+  ],
+  "extraQuestion": {
+    "question": "Why does the writer describe chickens, a knife and rice in paragraph 3?",
+    "options": [
+      "To give an example of the problem with barter",
+      "To describe a typical meal",
+      "To explain how farms work",
+      "To show that knives were expensive"
+    ],
+    "answer": 0,
+    "explanation": "The example shows how hard it is to find someone who wants exactly what you have.",
+    "skill": "organisation"
+  },
+  "response": "Do you think cash will disappear in your country? Would that be good or bad?",
+  "phrases": [
+    {
+      "phrase": "in return for",
+      "inText": "in return for",
+      "meaning": "as payment or exchange for"
+    },
+    {
+      "phrase": "in a way",
+      "inText": "In a way",
+      "meaning": "partly; if you think about it in one way"
+    },
+    {
+      "phrase": "a great success",
+      "inText": "a great success",
+      "meaning": "something that worked very well"
+    }
+  ],
+  "grammar": [
+    {
+      "key": "modals-possibility",
+      "examples": [
+        "A farmer with too much grain might exchange some of it for a pair of shoes.",
+        "We might pay for everything with our phones one day."
+      ],
+      "highlights": [
+        "might exchange",
+        "might pay"
+      ],
+      "discovery": {
+        "question": "Is the writer sure, or saying something is possible?",
+        "options": [
+          "Saying it is possible",
+          "Completely sure",
+          "Saying it is impossible"
+        ],
+        "answer": 0,
+        "explanation": "might + verb (without to) shows possibility or gives a possible example."
+      }
+    },
+    {
+      "key": "so-too",
+      "examples": [
+        "They were far too heavy to move, so when a stone was used to pay for something, it often stayed in the same place.",
+        "Salt was too valuable to waste."
+      ],
+      "highlights": [
+        "too heavy to move",
+        "too valuable to waste"
+      ],
+      "discovery": {
+        "question": "Could people move the stones?",
+        "options": [
+          "No, they were more heavy than possible",
+          "Yes, easily",
+          "Only on Sundays"
+        ],
+        "answer": 0,
+        "explanation": "too + adjective + to + verb means it is more than possible for that action."
+      }
+    }
+  ]
+}

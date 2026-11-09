@@ -57,3 +57,21 @@ export async function markLookedUp(
     });
   }
 }
+
+/** Adds a word to the learning queue without counting it as a lookup; words already known are left alone. */
+export async function addToLearning(userId: string, lemma: string, context: { sentence: string; word: string; textId: string }) {
+  const existing = await db.lemmaState.findUnique({ where: { userId_lemma: { userId, lemma } } });
+  if (existing) return;
+  await db.lemmaState.create({
+    data: {
+      userId,
+      lemma,
+      status: "LEARNING",
+      source: "LOOKUP",
+      contextSentence: context.sentence,
+      contextWord: context.word,
+      contextTextId: context.textId,
+      srsDue: firstDue(new Date()),
+    },
+  });
+}

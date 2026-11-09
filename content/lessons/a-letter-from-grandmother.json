@@ -1,0 +1,135 @@
+{
+  "series": {
+    "id": "kindness",
+    "title": "Stories of kindness",
+    "part": 4
+  },
+  "leadIn": "What is the best advice an older person in your family has given you?",
+  "prediction": {
+    "question": "What do you think the old letter will contain?",
+    "options": [
+      "A secret about money",
+      "Advice from the grandmother's life",
+      "A list of recipes"
+    ],
+    "answer": 1
+  },
+  "preTeach": [
+    {
+      "word": "drawer",
+      "definition": "a part of a desk or cupboard that you pull out to put things in",
+      "ccq": {
+        "question": "Can you keep papers in a drawer?",
+        "options": [
+          "Yes",
+          "No"
+        ],
+        "answer": 0
+      }
+    },
+    {
+      "word": "envelope",
+      "definition": "a flat paper cover that you put a letter in",
+      "ccq": {
+        "question": "Do you put a letter inside an envelope or under it?",
+        "options": [
+          "Inside",
+          "Under"
+        ],
+        "answer": 0
+      }
+    }
+  ],
+  "gist": {
+    "question": "What is the story mainly about?",
+    "options": [
+      "Selling a house in the village",
+      "A letter that helps Sara remember what matters in life",
+      "How to grow an apple tree",
+      "A family argument"
+    ],
+    "answer": 1,
+    "explanation": "The letter's advice moves Sara and her mother, and she keeps it close."
+  },
+  "skills": [
+    "detail",
+    "detail",
+    "detail",
+    "detail",
+    "inference"
+  ],
+  "extraQuestion": {
+    "question": "How did Sara's mother feel when she read the letter?",
+    "options": [
+      "Happy and sad at the same time",
+      "Angry",
+      "Bored",
+      "Afraid"
+    ],
+    "answer": 0,
+    "explanation": "She began to cry and smile at the same time.",
+    "skill": "attitude"
+  },
+  "response": "If you wrote a letter to a child in your family to open in twenty years, what one piece of advice would you include?",
+  "phrases": [
+    {
+      "phrase": "sort through",
+      "inText": "sort through",
+      "meaning": "look at things one by one to decide what to keep"
+    },
+    {
+      "phrase": "grown up",
+      "inText": "grown up",
+      "meaning": "an adult, no longer a child"
+    },
+    {
+      "phrase": "at the same time",
+      "inText": "at the same time",
+      "meaning": "together, in the same moment"
+    }
+  ],
+  "grammar": [
+    {
+      "key": "used-to",
+      "examples": [
+        "She found the blue cup that her grandmother always drank her tea from.",
+        "Every summer we used to visit her village."
+      ],
+      "highlights": [
+        "always drank",
+        "used to visit"
+      ],
+      "discovery": {
+        "question": "Do these sentences describe one event, or something that happened many times?",
+        "options": [
+          "Something that happened many times in the past",
+          "One event last week",
+          "Something in the future"
+        ],
+        "answer": 0,
+        "explanation": "used to + verb and always + past simple both describe past habits."
+      }
+    },
+    {
+      "key": "gerund-after-preposition",
+      "examples": [
+        "Do not be afraid of making mistakes; that is how we learn.",
+        "Sara thanked her mother for keeping the letter safe."
+      ],
+      "highlights": [
+        "of making",
+        "for keeping"
+      ],
+      "discovery": {
+        "question": "What form of the verb comes after “of” and “for”?",
+        "options": [
+          "The -ing form",
+          "The infinitive with to",
+          "The past simple"
+        ],
+        "answer": 0,
+        "explanation": "After a preposition, we use verb + -ing."
+      }
+    }
+  ]
+}

@@ -9,8 +9,9 @@ import { LibraryBrowser } from "./library-browser";
 
 export const metadata: Metadata = { title: "Library" };
 
-async function LibraryPageContent() {
+async function LibraryPageContent({ searchParams }: PageProps<"/student/library">) {
   const user = await requireStudent();
+  const { stopped } = await searchParams;
   const [library, recent] = await Promise.all([
     libraryFor(user.id),
     db.readingSession.findMany({ where: { userId: user.id, wpm: { not: null } }, orderBy: { completedAt: "desc" }, take: 5, select: { wpm: true } }),
@@ -20,17 +21,22 @@ async function LibraryPageContent() {
     <div>
       <PageHeader
         title="Library"
-        subtitle={`Texts open when you know at least ${MIN_COVERAGE * 100}% of their words. Texts at 98% or more are pleasure reads.`}
+        subtitle={`Texts open when you know at least ${MIN_COVERAGE * 100}% of their words. Texts at 98% or more are easy reads.`}
       />
+      {stopped && (
+        <div className="mb-5 rounded-xl bg-good-soft p-4 text-sm text-good">
+          No problem. Choosing what to read is part of being a good reader. Here are some other texts you might enjoy.
+        </div>
+      )}
       <LibraryBrowser entries={library} wpm={Math.round(wpm)} />
     </div>
   );
 }
 
-export default function LibraryPage() {
+export default function LibraryPage(props: PageProps<"/student/library">) {
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <LibraryPageContent />
+      <LibraryPageContent {...props} />
     </Suspense>
   );
 }

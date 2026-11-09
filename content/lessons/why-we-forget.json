@@ -1,0 +1,135 @@
+{
+  "series": {
+    "id": "brain",
+    "title": "How your brain works",
+    "part": 2
+  },
+  "leadIn": "How do you usually learn new English words? Do you remember them a week later?",
+  "prediction": {
+    "question": "What do you think is the best way to remember new words?",
+    "options": [
+      "Read the list ten times in one evening",
+      "Test yourself again after longer and longer breaks",
+      "Write each word once"
+    ],
+    "answer": 1
+  },
+  "preTeach": [
+    {
+      "word": "experiment",
+      "definition": "a test you do to find out if an idea is true",
+      "ccq": {
+        "question": "Do scientists do experiments to find out new things?",
+        "options": [
+          "Yes",
+          "No"
+        ],
+        "answer": 0
+      }
+    },
+    {
+      "word": "review",
+      "definition": "to look at or study something again",
+      "ccq": {
+        "question": "When you review a list, is it the first time you see it?",
+        "options": [
+          "Yes",
+          "No"
+        ],
+        "answer": 1
+      }
+    }
+  ],
+  "gist": {
+    "question": "What is the article mainly about?",
+    "options": [
+      "The life of a German scientist",
+      "Why we forget, and how to remember for longer",
+      "How to make nonsense words",
+      "Why tests are bad for students"
+    ],
+    "answer": 1,
+    "explanation": "It explains the forgetting curve and ways to fight it."
+  },
+  "skills": [
+    "detail",
+    "detail",
+    "detail",
+    "vocabulary",
+    "inference"
+  ],
+  "extraQuestion": {
+    "question": "What does the last paragraph do?",
+    "options": [
+      "Gives the reader practical advice",
+      "Tells the history of Ebbinghaus",
+      "Describes another experiment",
+      "Explains the forgetting curve again"
+    ],
+    "answer": 0,
+    "explanation": "It tells you what to do with the new words in this text.",
+    "skill": "organisation"
+  },
+  "response": "This platform uses the ideas in this article. Which idea surprised you most, and will it change how you study?",
+  "phrases": [
+    {
+      "phrase": "you are not alone",
+      "inText": "You are not alone",
+      "meaning": "other people have the same experience"
+    },
+    {
+      "phrase": "slow down",
+      "inText": "slowed down",
+      "meaning": "become slower"
+    },
+    {
+      "phrase": "as long as",
+      "inText": "as long as",
+      "meaning": "only if"
+    }
+  ],
+  "grammar": [
+    {
+      "key": "present-perfect-experience",
+      "examples": [
+        "Have you ever studied hard for a test, done well, and then a few weeks later realised that you had forgotten almost everything?",
+        "Have you ever forgotten someone's name a minute after you heard it?"
+      ],
+      "highlights": [
+        "Have you ever studied",
+        "Have you ever forgotten"
+      ],
+      "discovery": {
+        "question": "Does the question ask about a specific time, or about any time in your life?",
+        "options": [
+          "Any time in your life",
+          "Yesterday at 6 o'clock",
+          "Next week"
+        ],
+        "answer": 0,
+        "explanation": "Have you ever + past participle asks about experiences at any time up to now."
+      }
+    },
+    {
+      "key": "comparatives-modifiers",
+      "examples": [
+        "Instead of studying something ten times in one evening, it is much more effective to study it a few times with longer and longer breaks in between: after one day, then three days, then a week, then a month.",
+        "Learning a word in a story is far easier than learning it from a list."
+      ],
+      "highlights": [
+        "much more effective",
+        "far easier"
+      ],
+      "discovery": {
+        "question": "Why does the writer use “much” before “more effective”?",
+        "options": [
+          "To make the difference stronger",
+          "To show something is smaller",
+          "Because effective is a short word"
+        ],
+        "answer": 0,
+        "explanation": "much + comparative = a big difference."
+      }
+    }
+  ]
+}

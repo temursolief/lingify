@@ -1,62 +1,47 @@
 @import "tailwindcss";
 
+/* AnkiWeb look: Bootstrap 5 defaults, light only (AnkiWeb has no dark theme). */
 :root {
-  --paper: #f8f6f1;
+  color-scheme: light;
+  --page: #ffffff;
+  --bar: #eeeeee;
+  --paper: #f8f9fa;
   --surface: #ffffff;
-  --ink: #1d2126;
-  --muted: #5f6670;
-  --line: #e4e0d6;
-  --accent: #0f6e63;
+  --ink: #212529;
+  --muted: #6c757d;
+  --nav: rgba(0, 0, 0, 0.467);
+  --line: #dee2e6;
+  --accent: #0d6efd;
+  --accent-hover: #0b5ed7;
   --accent-ink: #ffffff;
-  --accent-soft: #e2f1ee;
-  --good: #23784a;
-  --good-soft: #e3f3e8;
-  --warn: #9a6200;
-  --warn-soft: #fbf0d9;
-  --bad: #b23a3a;
-  --bad-soft: #f8e4e2;
-  --learning: #f3e3b3;
+  --accent-soft: #e7f1ff;
+  --good: #198754;
+  --good-soft: #d1e7dd;
+  --warn: #997404;
+  --warn-soft: #fff3cd;
+  --bad: #dc3545;
+  --bad-soft: #f8d7da;
+  --learning: #fff3cd;
   --series-1: #2a78d6;
   --series-2: #eb6834;
   --series-3: #1baf7a;
   --series-4: #eda100;
   --series-5: #e87ba4;
-  --grid: #e9e6de;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --paper: #15181b;
-    --surface: #1d2125;
-    --ink: #e8e6e1;
-    --muted: #9aa1a9;
-    --line: #2e343a;
-    --accent: #4fb8a8;
-    --accent-ink: #0d1a18;
-    --accent-soft: #1c3531;
-    --good: #5cc28a;
-    --good-soft: #1b3326;
-    --warn: #e2b350;
-    --warn-soft: #3a2f17;
-    --bad: #ec8b84;
-    --bad-soft: #3d2221;
-    --learning: #4a3f1f;
-    --series-1: #3987e5;
-    --series-2: #d95926;
-    --series-3: #199e70;
-    --series-4: #c98500;
-    --series-5: #d55181;
-    --grid: #2a2f34;
-  }
+  --series-6: #008300;
+  --grid: #e9ecef;
 }
 
 @theme inline {
+  --color-page: var(--page);
+  --color-bar: var(--bar);
   --color-paper: var(--paper);
   --color-surface: var(--surface);
   --color-ink: var(--ink);
   --color-muted: var(--muted);
+  --color-nav: var(--nav);
   --color-line: var(--line);
   --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
   --color-accent-ink: var(--accent-ink);
   --color-accent-soft: var(--accent-soft);
   --color-good: var(--good);
@@ -67,16 +52,38 @@
   --color-bad-soft: var(--bad-soft);
   --color-learning: var(--learning);
   --color-grid: var(--grid);
-  --font-sans: var(--font-geist-sans);
-  --font-serif: var(--font-literata);
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-serif: var(--font-sans);
 }
 
-body {
-  background: var(--paper);
-  color: var(--ink);
+/* Bootstrap proportions: 6px corners, medium-weight headings. */
+@theme {
+  --radius-md: 0.375rem;
+  --radius-lg: 0.375rem;
+  --radius-xl: 0.375rem;
+  --radius-2xl: 0.5rem;
+  --font-weight-semibold: 500;
 }
 
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+@layer base {
+  html {
+    background: var(--bar);
+  }
+
+  body {
+    background: var(--page);
+    color: var(--ink);
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  a {
+    color: var(--accent);
+  }
+
+  :focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  }
 }

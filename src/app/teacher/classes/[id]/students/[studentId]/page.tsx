@@ -3,12 +3,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { GoalList } from "@/components/goal-list";
+import { LearningProfileView } from "@/components/learning-profile";
 import { StudentStatsView } from "@/components/student-stats";
 import { Badge, Card, PageHeader, PageSkeleton } from "@/components/ui";
 import { requireTeacher } from "@/lib/auth";
 import { teacherClass } from "@/lib/class-overview";
 import { db } from "@/lib/db";
 import { flagsFor } from "@/lib/flags";
+import { learningProfile } from "@/lib/profile";
 import { goalProgress, studentStats } from "@/lib/stats";
 import { RemoveStudentButton } from "../../../../teacher-forms";
 
@@ -63,6 +65,7 @@ async function StudentDetailPageContent(props: PageProps<"/teacher/classes/[id]/
           )}
         </Card>
       </div>
+      <LearningProfileView profile={await learningProfile(student.id, stats)} viewer="teacher" />
       <StudentStatsView stats={stats} readLinks={false} />
     </div>
   );

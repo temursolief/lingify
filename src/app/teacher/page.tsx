@@ -26,7 +26,7 @@ async function TeacherHomeContent() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {classes.map((c, i) => (
-            <Link key={c.id} href={`/teacher/classes/${c.id}`} className="rounded-xl border border-line bg-surface p-5 transition hover:border-muted">
+            <Link key={c.id} href={`/teacher/classes/${c.id}`} className="rounded-xl border border-line bg-surface p-5 transition hover:bg-paper">
               <div className="flex items-start justify-between gap-2">
                 <h2 className="font-semibold">{c.name}</h2>
                 <Badge tone="accent">Code {c.joinCode}</Badge>

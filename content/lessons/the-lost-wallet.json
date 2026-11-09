@@ -1,0 +1,114 @@
+{
+  "series": {
+    "id": "kindness",
+    "title": "Stories of kindness",
+    "part": 2
+  },
+  "leadIn": "Have you ever lost something important, or found something that belonged to someone else? What did you do?",
+  "prediction": {
+    "question": "Aziz finds a wallet full of money. What do you think he will do?",
+    "options": [
+      "Keep the money",
+      "Give the wallet to the police",
+      "Find the owner himself"
+    ],
+    "answer": 2
+  },
+  "preTeach": [
+    {
+      "word": "wallet",
+      "definition": "a small, flat case for keeping money and cards",
+      "ccq": {
+        "question": "Do you usually carry a wallet in your pocket or bag?",
+        "options": [
+          "Yes",
+          "No"
+        ],
+        "answer": 0
+      }
+    },
+    {
+      "word": "reward",
+      "definition": "something you get for doing something good",
+      "ccq": {
+        "question": "Do you get a reward for doing something bad?",
+        "options": [
+          "Yes",
+          "No"
+        ],
+        "answer": 1
+      }
+    }
+  ],
+  "gist": {
+    "question": "What is the main message of the story?",
+    "options": [
+      "Buses are dangerous places",
+      "Honesty can bring unexpected rewards",
+      "Students need more money",
+      "Bookshops are good places to work"
+    ],
+    "answer": 1,
+    "explanation": "Aziz chooses to be honest, and in the end he receives a laptop."
+  },
+  "skills": [
+    "detail",
+    "detail",
+    "inference",
+    "detail",
+    "inference"
+  ],
+  "extraQuestion": {
+    "question": "Paragraph 7: “Aziz refused”. What does “refused” mean here?",
+    "options": [
+      "He said no to it",
+      "He accepted it happily",
+      "He asked for more",
+      "He forgot about it"
+    ],
+    "answer": 0,
+    "explanation": "Mr Karimov tried to give him money, and Aziz did not take it.",
+    "skill": "vocabulary"
+  },
+  "response": "Would you return the wallet like Aziz? Why, or why not?",
+  "phrases": [
+    {
+      "phrase": "on your way to",
+      "inText": "on his way to",
+      "meaning": "while travelling to a place"
+    },
+    {
+      "phrase": "in a hurry",
+      "inText": "in a hurry",
+      "meaning": "needing to go or do something quickly"
+    },
+    {
+      "phrase": "leave it to me",
+      "inText": "Leave it to me",
+      "meaning": "I will deal with it for you"
+    }
+  ],
+  "grammar": [
+    {
+      "key": "past-perfect",
+      "examples": [
+        "He was tired because he had worked late at the restaurant the night before.",
+        "By the time Aziz got off the bus, the old man had disappeared."
+      ],
+      "highlights": [
+        "had worked",
+        "had disappeared"
+      ],
+      "discovery": {
+        "question": "Which happened first: working late, or feeling tired on the bus?",
+        "options": [
+          "Working late",
+          "Feeling tired on the bus",
+          "They happened at the same time"
+        ],
+        "answer": 0,
+        "explanation": "had worked shows the earlier action. The past simple (was tired) is the later one."
+      }
+    }
+  ]
+}

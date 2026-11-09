@@ -1,14 +1,27 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { Badge, ButtonLink, Card, PageSkeleton } from "@/components/ui";
 import { requireStudent } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { coverageOf, levelFor, MIN_COVERAGE, type LemmaCounts, type Token } from "@/lib/texts";
+import { seriesTitle } from "@/lib/series";
+import {
+  coverageOf,
+  levelFor,
+  MIN_COVERAGE,
+  type Choice,
+  type GrammarPoint,
+  type LemmaCounts,
+  type Phrase,
+  type PreTeachWord,
+  type Token,
+} from "@/lib/texts";
 import { wordSets } from "@/lib/vocab";
 import { Reader } from "./reader";
 
 export const metadata: Metadata = { title: "Reading" };
+
+const withoutAnswer = ({ question, options }: Choice) => ({ question, options });
 
 async function ReadPageContent(props: PageProps<"/student/read/[slug]">) {
   const user = await requireStudent();
@@ -16,7 +29,11 @@ async function ReadPageContent(props: PageProps<"/student/read/[slug]">) {
   const text = await db.text.findUnique({ where: { slug } });
   if (!text) notFound();
 
-  const { known, learning } = await wordSets(user.id);
+  const [{ known, learning }, readBefore, seriesCount] = await Promise.all([
+    wordSets(user.id),
+    db.readingSession.count({ where: { userId: user.id, textId: text.id, completedAt: { not: null } } }),
+    text.series ? db.text.count({ where: { series: text.series } }) : Promise.resolve(0),
+  ]);
   const counts = text.lemmaCounts as LemmaCounts;
   const { coverage, unknownLemmas } = coverageOf(counts, known);
   const level = levelFor(coverage);
@@ -39,7 +56,7 @@ async function ReadPageContent(props: PageProps<"/student/read/[slug]">) {
     );
   }
 
-  const learningInText = Object.keys(counts).filter((l) => learning.has(l));
+  const grammar = text.grammar as GrammarPoint[];
   return (
     <Reader
       text={{
@@ -52,7 +69,17 @@ async function ReadPageContent(props: PageProps<"/student/read/[slug]">) {
       }}
       coverage={coverage}
       pleasure={level === "pleasure"}
-      learningLemmas={learningInText}
+      learningLemmas={Object.keys(counts).filter((l) => learning.has(l))}
+      readBefore={readBefore > 0}
+      series={text.series ? { title: seriesTitle(text.series), part: text.seriesPart ?? 1, total: seriesCount } : null}
+      lesson={{
+        leadIn: text.leadIn,
+        prediction: text.prediction ? withoutAnswer(text.prediction as Choice) : null,
+        preTeach: (text.preTeach as PreTeachWord[]).map((w) => ({ word: w.word, lemma: w.lemma, definition: w.definition, ccq: withoutAnswer(w.ccq) })),
+        gist: text.gist ? (text.gist as Choice).question : null,
+        phrases: (text.phrases as Phrase[]).map(({ phrase, meaning, marks }) => ({ phrase, meaning, marks })),
+        grammar: readBefore > 0 ? grammar.map((g) => ({ structure: g.structure, marks: g.marks })) : [],
+      }}
     />
   );
 }

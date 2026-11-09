@@ -1,0 +1,115 @@
+{
+  "series": {
+    "id": "history-of-things",
+    "title": "Everyday things in history",
+    "part": 4
+  },
+  "leadIn": "What do you know about Samarkand and Bukhara? Why do you think they are famous?",
+  "prediction": {
+    "question": "Besides silk, what do you think travelled along the Silk Road?",
+    "options": [
+      "Only gold",
+      "Goods and ideas",
+      "Only soldiers"
+    ],
+    "answer": 1
+  },
+  "preTeach": [
+    {
+      "word": "merchants",
+      "definition": "people who buy and sell goods, especially in the past",
+      "ccq": {
+        "question": "Do merchants make money by trading?",
+        "options": [
+          "Yes",
+          "No"
+        ],
+        "answer": 0
+      }
+    },
+    {
+      "word": "camels",
+      "definition": "large animals with humps on their backs that live in the desert",
+      "ccq": {
+        "question": "Can camels walk a long way without water?",
+        "options": [
+          "Yes",
+          "No"
+        ],
+        "answer": 0
+      }
+    }
+  ],
+  "gist": {
+    "question": "What is the text mainly about?",
+    "options": [
+      "How silk is made",
+      "A network of trade routes that connected East and West",
+      "Modern railways in Asia",
+      "The life of a camel"
+    ],
+    "answer": 1,
+    "explanation": "It describes the Silk Road's goods, dangers, cities and ideas."
+  },
+  "skills": [
+    "detail",
+    "detail",
+    "detail",
+    "vocabulary",
+    "attitude"
+  ],
+  "extraQuestion": {
+    "question": "Paragraph 4: “they can walk for days without drinking”. What does “they” refer to?",
+    "options": [
+      "Merchants",
+      "Camels",
+      "Caravans",
+      "Mountains"
+    ],
+    "answer": 1,
+    "explanation": "The sentence is about why camels were perfect for the journey.",
+    "skill": "reference"
+  },
+  "response": "The Silk Road carried ideas between cultures. What idea, food or tradition from another culture do you enjoy?",
+  "phrases": [
+    {
+      "phrase": "in fact",
+      "inText": "In fact",
+      "meaning": "used to give the true or more exact information"
+    },
+    {
+      "phrase": "keep something a secret",
+      "inText": "kept the method a secret",
+      "meaning": "not tell anyone about something"
+    },
+    {
+      "phrase": "do business",
+      "inText": "did business",
+      "meaning": "buy and sell things; trade"
+    }
+  ],
+  "grammar": [
+    {
+      "key": "relative-where",
+      "examples": [
+        "Travellers crossed high mountains, where the air was cold and thin, and huge deserts, where there was almost no water.",
+        "This is the café where I first met my best friend."
+      ],
+      "highlights": [
+        "where the air",
+        "where there was",
+        "where I first met"
+      ],
+      "discovery": {
+        "question": "What kind of word comes just before “where”?",
+        "options": [
+          "A place",
+          "A person",
+          "A time"
+        ],
+        "answer": 0,
+        "explanation": "We use where to add information about a place."
+      }
+    }
+  ]
+}

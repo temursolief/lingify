@@ -1,0 +1,114 @@
+{
+  "series": {
+    "id": "remarkable-women",
+    "title": "Remarkable women",
+    "part": 2
+  },
+  "leadIn": "Are there many trees where you live? What happens to a place when its trees are cut down?",
+  "prediction": {
+    "question": "Wangari Maathai's movement planted millions of trees. How do you think it started?",
+    "options": [
+      "With a few trees in her garden",
+      "With money from the government",
+      "With a big company"
+    ],
+    "answer": 0
+  },
+  "preTeach": [
+    {
+      "word": "soil",
+      "definition": "the top part of the ground, where plants grow",
+      "ccq": {
+        "question": "Do plants grow in soil?",
+        "options": [
+          "Yes",
+          "No"
+        ],
+        "answer": 0
+      }
+    },
+    {
+      "word": "arrested",
+      "definition": "taken away by the police",
+      "ccq": {
+        "question": "If you are arrested, do the police take you away?",
+        "options": [
+          "Yes",
+          "No"
+        ],
+        "answer": 0
+      }
+    }
+  ],
+  "gist": {
+    "question": "What is the text mainly about?",
+    "options": [
+      "Life in a Kenyan village",
+      "A woman who changed her country by planting trees",
+      "How to grow fig trees",
+      "The Nobel Prize committee"
+    ],
+    "answer": 1,
+    "explanation": "It tells how Wangari Maathai started the Green Belt Movement and what it achieved."
+  },
+  "skills": [
+    "detail",
+    "detail",
+    "detail",
+    "detail",
+    "inference"
+  ],
+  "extraQuestion": {
+    "question": "Paragraph 5: “This gave them money and confidence”. What does “This” refer to?",
+    "options": [
+      "Being paid for every tree that survived",
+      "Winning the Nobel Prize",
+      "Being arrested",
+      "Walking further for wood"
+    ],
+    "answer": 0,
+    "explanation": "The sentence before says the women were paid for every tree that survived.",
+    "skill": "reference"
+  },
+  "response": "Like the small bird in the story, what is one small thing you could do to help the place where you live?",
+  "phrases": [
+    {
+      "phrase": "cut down",
+      "inText": "cut down",
+      "meaning": "make a tree fall by cutting it"
+    },
+    {
+      "phrase": "speak out against",
+      "inText": "spoke out against",
+      "meaning": "say publicly that you think something is wrong"
+    },
+    {
+      "phrase": "the best I can",
+      "inText": "the best I can",
+      "meaning": "as well as I am able"
+    }
+  ],
+  "grammar": [
+    {
+      "key": "past-perfect-passive",
+      "examples": [
+        "Many forests had been cut down to make space for farms that grew tea and coffee for sale abroad.",
+        "By 2004, millions of trees had been planted across Kenya."
+      ],
+      "highlights": [
+        "had been cut down",
+        "had been planted"
+      ],
+      "discovery": {
+        "question": "When were the forests cut down?",
+        "options": [
+          "Before Wangari visited the village",
+          "After she visited",
+          "While she was there"
+        ],
+        "answer": 0,
+        "explanation": "had been + past participle: something was done to something before a past moment."
+      }
+    }
+  ]
+}

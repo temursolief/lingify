@@ -3,13 +3,14 @@ import type { Activity, GoalType } from "@/generated/prisma/client";
 import { db } from "./db";
 import { addDays, dayKey, dayOf, streakFrom, weekStart } from "./time";
 
-export const ACTIVITIES: Activity[] = ["READING", "QUIZ", "VOCAB", "GRAMMAR", "REVIEW", "PLACEMENT"];
+export const ACTIVITIES: Activity[] = ["READING", "QUIZ", "VOCAB", "GRAMMAR", "REVIEW", "FLUENCY", "PLACEMENT"];
 export const ACTIVITY_LABEL: Record<Activity, string> = {
   READING: "Reading",
   QUIZ: "Comprehension",
   VOCAB: "Vocabulary practice",
   GRAMMAR: "Grammar in context",
   REVIEW: "Word review",
+  FLUENCY: "Speed reading",
   PLACEMENT: "Placement test",
 };
 

@@ -4,13 +4,41 @@ export type { Token };
 
 export type Question = { question: string; options: string[]; answer: number; explanation: string };
 
+export const READING_SKILLS = ["gist", "detail", "inference", "reference", "vocabulary", "attitude", "organisation"] as const;
+export type ReadingSkill = (typeof READING_SKILLS)[number];
+export const SKILL_LABEL: Record<ReadingSkill, string> = {
+  gist: "Main idea",
+  detail: "Specific information",
+  inference: "Reading between the lines",
+  reference: "Reference words (it, they, this)",
+  vocabulary: "Meaning from context",
+  attitude: "Writer's or character's attitude",
+  organisation: "How the text is organised",
+};
+
+export type SkillQuestion = Question & { skill: ReadingSkill };
+
+/** A run of tokens in one paragraph: tokens[from..to] inclusive. */
+export type Mark = { p: number; from: number; to: number };
+
 export type GrammarPoint = {
+  key: string;
   structure: string;
   explanation: string;
   /** a sentence copied from the text that shows the structure */
   example: string;
+  /** example sentences for guided discovery; the first comes from the text */
+  examples: string[];
+  highlights: string[];
+  /** where the structure appears in the text, for noticing */
+  marks: Mark[];
+  discovery: Question;
   exercise: Question;
 };
+
+export type Choice = { question: string; options: string[]; answer: number };
+export type PreTeachWord = { word: string; lemma: string; definition: string; ccq: Choice };
+export type Phrase = { phrase: string; meaning: string; inText: string; marks: Mark[] };
 
 export type LemmaCounts = Record<string, number>;
 

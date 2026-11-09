@@ -30,6 +30,7 @@ enum Activity {
   GRAMMAR
   REVIEW
   PLACEMENT
+  FLUENCY
 }
 
 enum AttemptKind {
@@ -37,6 +38,17 @@ enum AttemptKind {
   VOCAB
   GRAMMAR
   REVIEW
+  GIST
+  GUESS
+  CCQ
+  DISCOVERY
+  PHRASE
+}
+
+enum AbandonReason {
+  TOO_HARD
+  NOT_INTERESTED
+  NO_TIME
 }
 
 enum AssignmentKind {
@@ -62,7 +74,7 @@ model User {
   createdAt      DateTime  @default(now())
   lastActiveAt   DateTime?
 
-  classesTaught Class[]           @relation("TeacherClasses")
+  classesTaught Class[]               @relation("TeacherClasses")
   enrollments   Enrollment[]
   words         LemmaState[]
   sessions      ReadingSession[]
@@ -73,6 +85,8 @@ model User {
   goals         Goal[]
   recipients    AssignmentRecipient[]
   events        Event[]
+  ratings       TextRating[]
+  fluencyRuns   FluencyRun[]
 }
 
 model Class {
@@ -111,12 +125,26 @@ model Text {
   wordCount   Int
   /// { question, options, answer, explanation }[]
   questions   Json
-  /// { structure, explanation, example, exercise }[]
+  /// { key, structure, explanation, example, examples, marks, discovery, exercise }[]
   grammar     Json
+  leadIn      String   @default("")
+  /// { question, options, answer }
+  prediction  Json?
+  /// { word, lemma, definition, ccq: { question, options, answer } }[]
+  preTeach    Json     @default("[]")
+  /// { question, options, answer, explanation }
+  gist        Json?
+  response    String   @default("")
+  /// { phrase, meaning, marks }[]
+  phrases     Json     @default("[]")
+  series      String?
+  seriesPart  Int?
   createdAt   DateTime @default(now())
 
   sessions    ReadingSession[]
   assignments Assignment[]
+  ratings     TextRating[]
+  fluencyRuns FluencyRun[]
 }
 
 model LemmaState {
@@ -135,6 +163,9 @@ model LemmaState {
   srsStreak       Int        @default(0)
   srsReviews      Int        @default(0)
   srsLapses       Int        @default(0)
+  /// multi-word phrase saved from a text (not counted in coverage)
+  isPhrase        Boolean    @default(false)
+  meaning         String?
   knownAt         DateTime?
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
@@ -145,18 +176,22 @@ model LemmaState {
 }
 
 model ReadingSession {
-  id             String    @id @default(cuid())
-  userId         String
-  textId         String
-  startedAt      DateTime  @default(now())
-  completedAt    DateTime?
-  activeSeconds  Int       @default(0)
-  wpm            Float?
-  coverage       Float
-  lookupCount    Int       @default(0)
-  quizScore      Float?
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  text           Text      @relation(fields: [textId], references: [id], onDelete: Cascade)
+  id            String         @id @default(cuid())
+  userId        String
+  textId        String
+  startedAt     DateTime       @default(now())
+  completedAt   DateTime?
+  activeSeconds Int            @default(0)
+  wpm           Float?
+  coverage      Float
+  lookupCount   Int            @default(0)
+  quizScore     Float?
+  prediction    Int?
+  gistCorrect   Boolean?
+  abandonedAt   DateTime?
+  abandonReason AbandonReason?
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  text          Text           @relation(fields: [textId], references: [id], onDelete: Cascade)
 
   @@index([userId, completedAt])
 }
@@ -168,6 +203,8 @@ model ExerciseAttempt {
   kind       AttemptKind
   itemKey    String
   correct    Boolean
+  /// reading sub-skill for comprehension questions, grammar key for grammar items
+  skill      String?
   answeredAt DateTime    @default(now())
   user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -260,4 +297,33 @@ model Event {
   user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, type, at])
+}
+
+model TextRating {
+  userId     String
+  textId     String
+  /// 1 = not for me, 2 = it was OK, 3 = loved it
+  enjoyment  Int
+  /// -1 too easy, 0 just right, 1 too hard
+  difficulty Int
+  recommend  Boolean  @default(false)
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  text       Text     @relation(fields: [textId], references: [id], onDelete: Cascade)
+
+  @@id([userId, textId])
+}
+
+model FluencyRun {
+  id          String   @id @default(cuid())
+  userId      String
+  textId      String
+  seconds     Int
+  wpm         Float
+  gistCorrect Boolean?
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  text        Text     @relation(fields: [textId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }
