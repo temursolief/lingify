@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader, PageSkeleton } from "@/components/ui";
 import { requireStudent } from "@/lib/auth";
-import { deckSummary, studentDecks } from "@/lib/decks";
+import { deckSummaries, studentDecks } from "@/lib/decks";
 import { OPTIONS } from "@/lib/anki";
 
 export const metadata: Metadata = { title: "Flashcards" };
@@ -12,13 +12,15 @@ export const metadata: Metadata = { title: "Flashcards" };
 async function FlashcardsContent() {
   const user = await requireStudent();
   const decks = await studentDecks(user.id);
-  const rows = await Promise.all(decks.map(async (d) => ({ deck: d, counts: await deckSummary(user.id, d.id) })));
+  // One pair of counting queries for all decks, whatever their size.
+  const summaries = await deckSummaries(user.id, decks.map((d) => d.id));
+  const rows = decks.map((deck) => ({ deck, counts: summaries.get(deck.id) ?? { new: 0, learn: 0, due: 0, total: 0 } }));
   return (
     <>
       <PageHeader title="Flashcards" subtitle={`Anki scheduling · ${OPTIONS.newPerDay} new cards a day · every card returns within ${OPTIONS.maxInterval} days`} />
       <div className="mx-auto max-w-2xl">
         <div className="overflow-hidden rounded-xl bg-surface shadow-bubble">
-          <div className="grid grid-cols-[1fr_4rem_4rem_4rem] gap-2 border-b border-line px-4 py-2 text-sm text-muted">
+          <div className="grid grid-cols-[minmax(0,1fr)_3rem_3rem_3rem] sm:grid-cols-[minmax(0,1fr)_4rem_4rem_4rem] gap-2 border-b border-line px-4 py-2 text-sm text-muted">
             <span>Deck</span>
             <span className="text-right">New</span>
             <span className="text-right">Learn</span>
@@ -29,11 +31,11 @@ async function FlashcardsContent() {
               <li key={deck.id}>
                 <Link
                   href={`/student/flashcards/${deck.id}`}
-                  className="grid grid-cols-[1fr_4rem_4rem_4rem] items-center gap-2 px-4 py-3 text-ink no-underline hover:bg-hover hover:no-underline"
+                  className="grid grid-cols-[minmax(0,1fr)_3rem_3rem_3rem] sm:grid-cols-[minmax(0,1fr)_4rem_4rem_4rem] items-center gap-2 px-4 py-3 text-ink no-underline hover:bg-hover hover:no-underline"
                 >
                   <span className="min-w-0">
                     <span className="block truncate font-medium">{deck.name}</span>
-                    <span className="block text-sm text-muted">
+                    <span className="block truncate text-sm text-muted">
                       {deck.ownerId ? "Your cards from highlighted passages" : "From your school"} · {counts.total} card{counts.total === 1 ? "" : "s"}
                     </span>
                   </span>

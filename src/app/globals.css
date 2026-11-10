@@ -33,6 +33,30 @@
   --series-5: #e87ba4;
   --series-6: #008300;
   --grid: #eceef0;
+  /* Space around the open section: tighter on a phone. */
+  --pane: 1rem;
+}
+
+@media (min-width: 40rem) {
+  :root {
+    --pane: 1.5rem;
+  }
+}
+
+/* Lets a bar or a full-height screen reach the edges of the open section, whatever its padding. */
+@utility pane-x {
+  padding-inline: var(--pane);
+}
+
+@utility pane-bleed {
+  margin-inline: calc(var(--pane) * -1);
+  margin-top: calc(var(--pane) * -1);
+}
+
+/* A screen that fills the open section exactly and scrolls inside itself (passage and questions side by side). */
+@utility pane-fill {
+  margin: calc(var(--pane) * -1) calc(var(--pane) * -1) -3rem;
+  height: 100cqh;
 }
 
 @theme inline {
@@ -76,6 +100,31 @@
   html,
   body {
     background: var(--page);
+    /* The panes scroll, not the page: no rubber-band bounce around the app. */
+    overscroll-behavior: none;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* No delay and no double-tap zoom on controls. */
+  a,
+  button,
+  summary,
+  label,
+  [role="button"] {
+    touch-action: manipulation;
+  }
+
+  /* iOS zooms the page when a field with text under 16px gets focus. */
+  @media (pointer: coarse) {
+    input,
+    textarea,
+    select {
+      font-size: 16px;
+    }
   }
 
   body {

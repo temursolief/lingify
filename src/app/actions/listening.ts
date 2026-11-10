@@ -78,22 +78,21 @@ function slugify(title: string) {
   return `${base}-${randomInt(36 ** 4).toString(36)}`;
 }
 
-/** Admin teachers upload a lesson JSON; it becomes a page in every student's Listening library. */
-export async function uploadLesson(_: FormState, formData: FormData): Promise<FormState> {
+/** Admin teachers upload a lesson JSON; it becomes a page in every student's Listening library. One file per call. */
+export async function uploadLesson(raw: string): Promise<FormState> {
   const teacher = await requireAdmin();
-  const file = formData.get("file");
-  const raw = file instanceof File && file.size ? await file.text() : String(formData.get("json") ?? "");
-  if (!raw.trim()) return { error: "Choose a .json file or paste the JSON." };
+  if (typeof raw !== "string" || !raw.trim()) return { error: "Choose a .json file or paste the JSON." };
   if (raw.length > 200_000) return { error: "That file is too large for one lesson." };
   const parsed = parseListeningJson(raw);
-  if (!parsed.ok) return { error: "The lesson was not saved. Fix these points and upload again:", errors: parsed.errors };
+  if (!parsed.ok) return { error: "Not saved. Fix these points and upload again:", errors: parsed.errors };
   const { title, video, questionGroups, vocabulary } = parsed.data;
+  const same = await db.listeningLesson.findFirst({ where: { title: { equals: title, mode: "insensitive" } }, select: { id: true } });
+  if (same) return { error: `There is already a lesson called “${title}”. Delete it first if you want to replace it.` };
   const total = answerKey(questionGroups).length;
   await db.listeningLesson.create({
-    data: { slug: slugify(title), title, videoId: youtubeId(video)!, questions: questionGroups, vocabulary, total, ownerId: teacher.id },
+    data: { slug: slugify(title), title, videoId: youtubeId(video)!, questions: questionGroups, vocabulary, wordCount: vocabulary.length, total, ownerId: teacher.id },
   });
-  refresh();
-  return { ok: `“${title}” saved: ${total} questions, ${vocabulary.length} key words. It is now in every student's Listening library.` };
+  return { ok: `“${title}” saved: ${total} questions, ${vocabulary.length} key words.` };
 }
 
 export async function deleteLesson(lessonId: string) {

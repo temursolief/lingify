@@ -8,7 +8,7 @@ import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import bcrypt from "bcryptjs";
 import { readApkg } from "../src/lib/apkg";
 import { db } from "../src/lib/db";
-import { answerCard } from "../src/lib/decks";
+import { applyReviews, type Review } from "../src/lib/decks";
 import { saveImportedDeck } from "../src/lib/deck-import";
 import { answerKey, passageSchema, type QuestionGroup } from "../src/lib/passage-format";
 import { retryQuestion, submitFirst, tagQuestion, type Evidence } from "../src/lib/passages";
@@ -22,7 +22,15 @@ async function seedPassages() {
   for (const f of files) {
     const data = passageSchema.parse(JSON.parse(readFileSync(`content/ielts/${f}`, "utf8")));
     const slug = f.replace(/\.json$/, "");
-    const fields = { title: data.title, timeLimit: data.timeLimit, paragraphs: data.paragraphs, groups: data.questionGroups, ownerId: null };
+    const fields = {
+      title: data.title,
+      timeLimit: data.timeLimit,
+      paragraphs: data.paragraphs,
+      groups: data.questionGroups,
+      paragraphCount: data.paragraphs.length,
+      questionCount: data.questionGroups.reduce((n, g) => n + g.questions.length, 0),
+      ownerId: null,
+    };
     await db.passage.upsert({ where: { slug }, create: { slug, ...fields }, update: fields });
   }
   console.log(`passages: ${files.length}`);
@@ -158,11 +166,13 @@ async function seedDemo(deckId: string) {
 
   // Some flashcard history for Aisha, so the deck list has learning and due cards.
   const cards = await db.card.findMany({ where: { deckId }, orderBy: { position: "asc" }, take: 12 });
+  const reviews: Review[] = [];
   for (const [i, c] of cards.entries()) {
     const at = new Date(now.getTime() - (6 - (i % 5)) * 86_400_000);
-    await answerCard(aisha.id, c.id, 3, at);
-    if (i % 3 === 0) await answerCard(aisha.id, c.id, 3, new Date(at.getTime() + 600_000));
+    reviews.push({ cardId: c.id, rating: 3, at });
+    if (i % 3 === 0) reviews.push({ cardId: c.id, rating: 3, at: new Date(at.getTime() + 600_000) });
   }
+  await applyReviews(aisha.id, reviews);
   console.log("demo: teacher@lingify.test, student@lingify.test, jasur@lingify.test, malika@lingify.test");
 }
 

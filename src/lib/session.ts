@@ -1,7 +1,8 @@
 import { SignJWT, jwtVerify } from "jose";
 
 export const SESSION_COOKIE = "lingify_session";
-const SESSION_DAYS = 7;
+/** A study app is opened daily on the same device; a student is not asked to log in again every week. */
+const SESSION_DAYS = 30;
 
 export type SessionPayload = {
   userId: string;
@@ -12,6 +13,8 @@ export type SessionPayload = {
 function key() {
   const secret = process.env.SESSION_SECRET;
   if (!secret) throw new Error("SESSION_SECRET is not set");
+  // A short secret can be guessed, and anyone who guesses it can sign in as any teacher.
+  if (process.env.NODE_ENV === "production" && secret.length < 32) throw new Error("SESSION_SECRET must be at least 32 characters");
   return new TextEncoder().encode(secret);
 }
 

@@ -9,7 +9,8 @@ import { latestAttempt, passageVisibleTo, retryQuestion, submitFirst, tagQuestio
 const evidence = z.object({ paragraph: z.number().int().min(0).max(25), start: z.number().int().min(0), end: z.number().int().min(0), text: z.string().max(1500) });
 
 async function visiblePassage(userId: string, passageId: string) {
-  const passage = await db.passage.findFirst({ where: { id: passageId, ...passageVisibleTo(userId) } });
+  // Only the questions: the passage text is already in the browser.
+  const passage = await db.passage.findFirst({ where: { id: passageId, ...passageVisibleTo(userId) }, select: { id: true, groups: true } });
   if (!passage) throw new Error("Passage not found");
   return passage;
 }

@@ -1,6 +1,5 @@
-import { getSession, isAdmin } from "@/lib/auth";
+import { currentUser, getSession, isAdmin } from "@/lib/auth";
 import { readApkg } from "@/lib/apkg";
-import { db } from "@/lib/db";
 import { saveImportedDeck } from "@/lib/deck-import";
 
 const MAX_BYTES = 200 * 1024 * 1024;
@@ -8,7 +7,7 @@ const MAX_BYTES = 200 * 1024 * 1024;
 /** Admin teachers upload an Anki .apkg; its cards become a deck every student can study. */
 export async function POST(request: Request) {
   const session = await getSession();
-  const user = session ? await db.user.findUnique({ where: { id: session.userId } }) : null;
+  const user = session ? await currentUser(session.userId) : null;
   if (!user || user.role !== "TEACHER" || !isAdmin(user.email)) return Response.json({ error: "Only admin teachers can upload decks." }, { status: 403 });
 
   const form = await request.formData();
@@ -24,6 +23,11 @@ export async function POST(request: Request) {
     return Response.json({ error: (e as Error).message || "This file could not be read as an Anki deck." }, { status: 400 });
   }
 
-  await saveImportedDeck(deck);
+  try {
+    await saveImportedDeck(deck);
+  } catch (e) {
+    console.error("Deck import failed", e);
+    return Response.json({ error: "The deck could not be saved. Nothing was added; try again." }, { status: 500 });
+  }
   return Response.json({ ok: true, name: deck.name, cards: deck.cards.length, media: deck.media.length });
 }

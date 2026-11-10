@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
 import { addChunkCard, deleteOwnCard } from "@/app/actions/cards";
 import { restartAttempt, retryAnswer, submitPassage, tagMistake } from "@/app/actions/passage";
 import { ActivityTracker } from "@/components/activity-tracker";
@@ -12,6 +12,9 @@ import { NotesText } from "@/components/notes-text";
 
 type Passage = { id: string; title: string; timeLimit: number; paragraphs: string[] };
 type Tag = "VOCAB" | "DISTRACTOR" | "LOGIC" | "CARELESS";
+
+/** Room kept for the highlight toolbar ("Make flashcard" + "Proof for question 12"). */
+const TOOLBAR_WIDTH = 290;
 
 const TAGS: { tag: Tag; title: string; hint: string }[] = [
   { tag: "VOCAB", title: "Vocab / Synonym", hint: "Didn't know a word or missed the paraphrase" },
@@ -44,7 +47,8 @@ export function PassagePractice({ passage, groups, initial }: { passage: Passage
   );
   const [active, setActive] = useState<number | null>(null);
   const [errors, setErrors] = useState<Record<number, string>>({});
-  const [left, setLeft] = useState(passage.timeLimit * 60);
+  // On a phone the passage and the questions take turns; from a tablet up they sit side by side.
+  const [tab, setTab] = useState<"passage" | "questions">("passage");
   const [selection, setSelection] = useState<Selection | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
   const [pending, start] = useTransition();
@@ -74,27 +78,16 @@ export function PassagePractice({ passage, groups, initial }: { passage: Passage
     });
   }, [view.id, passage.id]);
 
-  // The exam timer runs only for the first try.
-  useEffect(() => {
-    if (!started || view.submitted) return;
-    const begin = Date.now();
-    const timer = setInterval(() => {
-      elapsed.current = Math.round((Date.now() - begin) / 1000);
-      const remaining = passage.timeLimit * 60 - elapsed.current;
-      setLeft(remaining);
-      if (remaining <= 0) {
-        clearInterval(timer);
-        submit();
-      }
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [started, view.submitted, passage.timeLimit, submit]);
+  const onTick = useCallback((seconds: number) => {
+    elapsed.current = seconds;
+  }, []);
 
   // Highlighting in the passage opens a small toolbar: make a flashcard, or use the sentence as proof.
   useEffect(() => {
-    const onUp = () => {
+    const read = () => {
       const sel = window.getSelection();
-      if (!sel || sel.isCollapsed || !passageRef.current) return setSelection(null);
+      const host = passageRef.current;
+      if (!sel || sel.isCollapsed || !sel.rangeCount || !host) return setSelection(null);
       const range = sel.getRangeAt(0);
       const para = (range.startContainer.parentElement?.closest("[data-para]") ?? null) as HTMLElement | null;
       const endPara = (range.endContainer.parentElement?.closest("[data-para]") ?? null) as HTMLElement | null;
@@ -105,11 +98,32 @@ export function PassagePractice({ passage, groups, initial }: { passage: Passage
       const text = passage.paragraphs[index].slice(start, end);
       if (!text.trim()) return setSelection(null);
       const box = range.getBoundingClientRect();
-      const host = passageRef.current.getBoundingClientRect();
-      setSelection({ top: box.bottom - host.top + passageRef.current.scrollTop + 6, left: Math.max(0, box.left - host.left), evidence: { paragraph: index, start, end, text } });
+      const frame = host.getBoundingClientRect();
+      // Kept inside the pane: on a phone a selection near the right edge would push the toolbar off the screen.
+      const left = Math.max(8, Math.min(box.left - frame.left, host.clientWidth - TOOLBAR_WIDTH - 8));
+      setSelection({ top: box.bottom - frame.top + host.scrollTop + 6, left, evidence: { paragraph: index, start, end, text } });
     };
-    document.addEventListener("mouseup", onUp);
-    return () => document.removeEventListener("mouseup", onUp);
+    // A mouse ends a selection with mouseup. A finger does not: the handles are dragged, so the selection is read
+    // once it has stopped changing.
+    let touch = false;
+    let wait: ReturnType<typeof setTimeout> | undefined;
+    const onPointer = (e: PointerEvent) => {
+      touch = e.pointerType !== "mouse";
+    };
+    const onChange = () => {
+      if (!touch) return;
+      clearTimeout(wait);
+      wait = setTimeout(read, 350);
+    };
+    document.addEventListener("pointerdown", onPointer, { passive: true });
+    document.addEventListener("mouseup", read);
+    document.addEventListener("selectionchange", onChange);
+    return () => {
+      clearTimeout(wait);
+      document.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("mouseup", read);
+      document.removeEventListener("selectionchange", onChange);
+    };
   }, [passage.paragraphs]);
 
   const makeCard = (ev: Evidence) =>
@@ -125,6 +139,7 @@ export function PassagePractice({ passage, groups, initial }: { passage: Passage
     setErrors((e) => ({ ...e, [n]: "" }));
     setSelection(null);
     window.getSelection()?.removeAllRanges();
+    setTab("questions");
   };
 
   const retry = (n: number) =>
@@ -146,19 +161,27 @@ export function PassagePractice({ passage, groups, initial }: { passage: Passage
       setAnswers({});
       setProofs({});
       setStarted(false);
-      setLeft(passage.timeLimit * 60);
+      setTab("passage");
       elapsed.current = 0;
     });
 
   const jump = (n: number) => {
     setActive(n);
-    document.getElementById(`q${n}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    setTab("questions");
+    // After the questions are on screen (on a phone they may have been behind the passage).
+    requestAnimationFrame(() => document.getElementById(`q${n}`)?.scrollIntoView({ behavior: "smooth", block: "center" }));
+  };
+
+  /** "Prove a new answer": the student goes to the passage to highlight the sentence. */
+  const prove = (n: number) => {
+    setActive(n);
+    setTab("passage");
   };
 
   if (!started) {
     return (
-      <div className="mx-auto max-w-xl pt-6">
-        <div className="rounded-xl bg-surface p-6 shadow-bubble">
+      <div className="mx-auto max-w-xl md:pt-6">
+        <div className="rounded-xl bg-surface p-5 shadow-bubble md:p-6">
           <p className="text-sm text-muted">IELTS Academic Reading</p>
           <h1 className="mt-1 text-xl font-semibold">{passage.title}</h1>
           <ul className="mt-4 list-disc space-y-1.5 pl-5 text-[15px]">
@@ -177,11 +200,10 @@ export function PassagePractice({ passage, groups, initial }: { passage: Passage
   const needTags = view.questions.filter((q) => q.correct && !q.firstCorrect && !q.errorTag).length;
 
   return (
-    <div className="-mx-6 -mt-6 -mb-12 flex h-dvh flex-col">
-      {!view.submitted && <ActivityTracker activity="IELTS" />}
-      {view.submitted && !view.completed && <ActivityTracker activity="IELTS" />}
+    <div className="pane-fill flex flex-col">
+      {!view.completed && <ActivityTracker activity="IELTS" />}
 
-      <div className="flex min-h-14 shrink-0 items-center gap-4 border-b border-line bg-bar px-6 py-2">
+      <div className="pane-x flex min-h-14 shrink-0 items-center gap-3 border-b border-line bg-bar py-2 md:gap-4">
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-base font-semibold">{passage.title}</h1>
           <p className="truncate text-sm text-muted">
@@ -194,31 +216,43 @@ export function PassagePractice({ passage, groups, initial }: { passage: Passage
         </div>
         {!view.submitted ? (
           <>
-            <span className={cx("font-mono text-lg tabular-nums", left < 120 && "text-bad")} aria-live="polite">{mmss(left)}</span>
-            <Button onClick={submit} disabled={pending}>{pending ? "Checking…" : "Submit answers"}</Button>
+            <Timer seconds={passage.timeLimit * 60} onTick={onTick} onEnd={submit} />
+            <Button className="max-md:px-3" onClick={submit} disabled={pending}>
+              {pending ? "Checking…" : <>Submit<span className="max-md:hidden"> answers</span></>}
+            </Button>
           </>
         ) : view.completed ? (
-          <Button variant="secondary" onClick={again} disabled={pending}>Practise again</Button>
+          <Button variant="secondary" className="max-md:px-3" onClick={again} disabled={pending}>Practise again</Button>
         ) : null}
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-2">
-        <div ref={passageRef} className="relative min-h-0 overflow-y-auto border-r border-line bg-surface px-8 py-6">
-          <p className="mb-4 text-xs text-muted">Highlight words to make a flashcard{view.submitted && red ? " or to prove a corrected answer" : ""}.</p>
-          <article className="space-y-5 font-serif text-[1.0625rem] leading-relaxed">
-            {passage.paragraphs.map((text, i) => (
-              <div key={i} className="flex gap-3">
-                <span className="w-4 shrink-0 pt-0.5 font-sans text-sm font-semibold text-muted select-none">{paragraphLetter(i)}</span>
-                <p data-para={i} className="flex-1">
-                  <Marked text={text} marks={Object.entries(proofs).filter(([, e]) => e.paragraph === i).map(([n, e]) => ({ n: Number(n), start: e.start, end: e.end, state: stateOf.get(Number(n)) }))} />
-                </p>
-              </div>
-            ))}
-          </article>
+      <div className="flex shrink-0 border-b border-line bg-bar md:hidden" role="tablist">
+        {(["passage", "questions"] as const).map((t) => (
+          <button
+            key={t}
+            type="button"
+            role="tab"
+            aria-selected={tab === t}
+            onClick={() => setTab(t)}
+            className={cx("h-10 flex-1 border-b-2 text-sm font-medium", tab === t ? "border-accent text-accent" : "border-transparent text-muted")}
+          >
+            {t === "passage" ? "Passage" : view.submitted && red ? `Questions · ${red} to correct` : "Questions"}
+          </button>
+        ))}
+      </div>
+
+      <div className="grid min-h-0 flex-1 md:grid-cols-2">
+        <div ref={passageRef} className={cx("relative min-h-0 overflow-y-auto overscroll-contain border-line bg-surface px-4 py-4 md:border-r md:px-8 md:py-6", tab !== "passage" && "max-md:hidden")}>
+          <p className="mb-4 text-xs text-muted">
+            {active !== null && view.submitted && stateOf.get(active) && !stateOf.get(active)!.correct
+              ? `Highlight the sentence that proves your answer to question ${active}.`
+              : `Highlight words to make a flashcard${view.submitted && red ? " or to prove a corrected answer" : ""}.`}
+          </p>
+          <PassageText paragraphs={passage.paragraphs} proofs={proofs} stateOf={stateOf} />
 
           {selection && (
             <div
-              className="absolute z-20 flex flex-wrap items-center gap-1 rounded-lg bg-ink p-1 font-sans text-sm text-white shadow-lg"
+              className="absolute z-20 flex max-w-[calc(100%-1rem)] flex-wrap items-center gap-1 rounded-lg bg-ink p-1 font-sans text-sm text-white shadow-lg"
               style={{ top: selection.top, left: selection.left }}
               onMouseUp={(e) => e.stopPropagation()}
             >
@@ -234,7 +268,7 @@ export function PassagePractice({ passage, groups, initial }: { passage: Passage
           )}
         </div>
 
-        <div className="min-h-0 overflow-y-auto px-6 py-6">
+        <div className={cx("pane-x min-h-0 overflow-y-auto overscroll-contain py-5 md:py-6", tab !== "questions" && "max-md:hidden")}>
           {view.completed && (
             <div className="mb-6 rounded-xl bg-good-soft p-4 text-good">
               <p className="font-semibold">Passage complete</p>
@@ -278,7 +312,7 @@ export function PassagePractice({ passage, groups, initial }: { passage: Passage
                       error={errors[n]}
                       pending={pending}
                       changed={(answers[n] ?? "").trim() !== (stateOf.get(n)?.answer ?? "") && !!(answers[n] ?? "").trim()}
-                      onActivate={() => setActive(n)}
+                      onActivate={() => prove(n)}
                       onRemoveProof={() => setProofs((p) => {
                         const next = { ...p };
                         delete next[n];
@@ -295,7 +329,7 @@ export function PassagePractice({ passage, groups, initial }: { passage: Passage
         </div>
       </div>
 
-      <nav className="flex shrink-0 flex-wrap items-center gap-1.5 border-t border-line bg-bar px-6 py-2" aria-label="Questions">
+      <nav className="pane-x flex shrink-0 items-center gap-1.5 overflow-x-auto border-t border-line bg-bar py-2 md:flex-wrap md:overflow-visible" aria-label="Questions">
         {numbers.map((n) => {
           const s = stateOf.get(n);
           const answered = !!answers[n]?.trim();
@@ -306,7 +340,7 @@ export function PassagePractice({ passage, groups, initial }: { passage: Passage
               onClick={() => jump(n)}
               aria-label={`Question ${n}${s ? (s.correct ? ", correct" : ", incorrect") : answered ? ", answered" : ""}`}
               className={cx(
-                "h-8 min-w-8 rounded-md px-1.5 text-sm font-medium tabular-nums transition-colors",
+                "h-8 min-w-8 shrink-0 rounded-md px-1.5 text-sm font-medium tabular-nums transition-colors",
                 s
                   ? s.correct
                     ? s.firstCorrect || s.errorTag
@@ -324,7 +358,7 @@ export function PassagePractice({ passage, groups, initial }: { passage: Passage
           );
         })}
         {view.submitted && (
-          <span className="ml-auto text-sm text-muted">
+          <span className="ml-auto text-sm text-muted max-md:hidden">
             <span className="text-good">●</span> correct <span className="ml-2 text-bad">●</span> incorrect
             {needTags > 0 && <><span className="ml-2 text-[#f0a020]">○</span> say why you missed it</>}
           </span>
@@ -335,6 +369,41 @@ export function PassagePractice({ passage, groups, initial }: { passage: Passage
     </div>
   );
 }
+
+/** The exam clock. It keeps its own state, so a tick redraws these few characters and not the passage and questions. */
+function Timer({ seconds, onTick, onEnd }: { seconds: number; onTick: (elapsed: number) => void; onEnd: () => void }) {
+  const [left, setLeft] = useState(seconds);
+  useEffect(() => {
+    const begin = Date.now();
+    const timer = setInterval(() => {
+      const elapsed = Math.round((Date.now() - begin) / 1000);
+      onTick(elapsed);
+      setLeft(seconds - elapsed);
+      if (elapsed >= seconds) {
+        clearInterval(timer);
+        onEnd();
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [seconds, onTick, onEnd]);
+  return <span className={cx("font-mono text-lg tabular-nums", left < 120 && "text-bad")} aria-live="off">{mmss(left)}</span>;
+}
+
+/** The passage itself. Typing an answer does not touch it, so it is not drawn again for every letter. */
+const PassageText = memo(function PassageText({ paragraphs, proofs, stateOf }: { paragraphs: string[]; proofs: Record<number, Evidence>; stateOf: Map<number, QuestionState> }) {
+  return (
+    <article className="space-y-5 font-serif text-[1.0625rem] leading-relaxed">
+      {paragraphs.map((text, i) => (
+        <div key={i} className="flex gap-2 md:gap-3">
+          <span className="w-4 shrink-0 pt-0.5 font-sans text-sm font-semibold text-muted select-none">{paragraphLetter(i)}</span>
+          <p data-para={i} className="min-w-0 flex-1">
+            <Marked text={text} marks={Object.entries(proofs).filter(([, e]) => e.paragraph === i).map(([n, e]) => ({ n: Number(n), start: e.start, end: e.end, state: stateOf.get(Number(n)) }))} />
+          </p>
+        </div>
+      ))}
+    </article>
+  );
+});
 
 /** Paragraph text with proof highlights; each mark carries its question number as a CSS badge. */
 function Marked({ text, marks }: { text: string; marks: { n: number; start: number; end: number; state?: QuestionState }[] }) {
@@ -442,7 +511,7 @@ function Group({
         autoComplete="off"
         spellCheck={false}
         aria-label={`Answer ${n}`}
-        className={cx("mx-1 w-40 rounded-md bg-surface px-2 py-0.5 ring-1 focus:outline-none ring-inset focus:ring-2 focus:ring-accent", submitted && fieldTone(s))}
+        className={cx("mx-1 w-40 max-w-full rounded-md bg-surface px-2 py-0.5 ring-1 focus:outline-none ring-inset focus:ring-2 focus:ring-accent", submitted && fieldTone(s))}
       />
     );
   };
@@ -606,7 +675,7 @@ function QuestionFooter({
         {needsTag && (
           <div className="mt-3 rounded-lg bg-paper p-3">
             <p className="font-medium">Why did you miss this the first time?</p>
-            <div className="mt-2 grid grid-cols-2 gap-1.5">
+            <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
               {TAGS.map((t) => (
                 <button key={t.tag} type="button" disabled={pending} onClick={() => onTag(t.tag)} className="rounded-md bg-surface px-3 py-2 text-left ring-1 ring-line hover:bg-hover ring-inset">
                   <span className="block font-medium">{t.title}</span>
@@ -627,7 +696,15 @@ function QuestionFooter({
       {proofLine}
       {!proof && (
         <p className={cx("mt-1", active ? "text-accent" : "text-muted")}>
-          {active ? "Now highlight the sentence that proves your new answer." : <button type="button" className="text-accent hover:underline" onClick={onActivate}>Prove a new answer</button>}
+          {active ? (
+            <>
+              Now highlight the sentence that proves your new answer.{" "}
+              {/* On a phone the passage is behind the other tab. */}
+              <button type="button" className="font-medium underline md:hidden" onClick={onActivate}>Open the passage</button>
+            </>
+          ) : (
+            <button type="button" className="text-accent hover:underline" onClick={onActivate}>Prove a new answer</button>
+          )}
         </p>
       )}
       {error && <p className="mt-1 text-bad">{error}</p>}
@@ -645,7 +722,7 @@ function CardToast({ toast, onClose }: { toast: Toast; onClose: () => void }) {
     return () => clearTimeout(t);
   }, [onClose]);
   return (
-    <div role="status" className="fixed right-6 bottom-16 z-30 w-80 rounded-xl bg-ink p-4 text-sm text-white shadow-lg">
+    <div role="status" className="fixed inset-x-4 bottom-16 z-30 rounded-xl bg-ink p-4 text-sm text-white shadow-lg md:left-auto md:right-6 md:w-80">
       {"error" in toast ? (
         <p>{toast.error}</p>
       ) : undone ? (

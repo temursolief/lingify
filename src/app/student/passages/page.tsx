@@ -5,6 +5,7 @@ import { Card, PageHeader, PageSkeleton, cx } from "@/components/ui";
 import { requireStudent } from "@/lib/auth";
 import { studentSummary } from "@/lib/class-overview";
 import { db } from "@/lib/db";
+import { formatDay } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Passages" };
 
@@ -18,9 +19,7 @@ function status(a: AttemptInfo | undefined) {
   return { text: `${a.red} to correct · ${score}`, tone: "text-bad" };
 }
 
-function dueLabel(d: Date) {
-  return d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
-}
+const dueLabel = (d: Date) => formatDay(d, true);
 
 async function PassagesContent() {
   const user = await requireStudent();

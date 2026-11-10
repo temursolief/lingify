@@ -2,25 +2,21 @@
 
 import { refresh } from "next/cache";
 import { z } from "zod";
-import type { Rating } from "@/lib/anki";
 import { requireStudent } from "@/lib/auth";
 import { chunkMeaning } from "@/lib/chunk-meaning";
 import { db } from "@/lib/db";
-import { answerCard, canUseDeck, deckSummary, nextCard, personalDeck, type StudyCard } from "@/lib/decks";
+import { personalDeck, studyQueue, usableDeck } from "@/lib/decks";
 import { passageVisibleTo } from "@/lib/passages";
+import type { StudyQueue } from "@/lib/study";
 
-const answerSchema = z.object({ deckId: z.string(), cardId: z.string(), rating: z.number().int().min(1).max(4) });
-
-/** Saves the answer and returns the next card to show (or null when the deck is done for now). */
-export type StudyStep = { card: StudyCard | null; counts: { new: number; learn: number; due: number } };
-
-export async function answerAndNext(input: z.infer<typeof answerSchema>): Promise<StudyStep> {
+/**
+ * More cards for a study session that has run out: the browser has sent its answers, so this is the queue as the
+ * server now sees it. No cards means the deck is done for now.
+ */
+export async function loadStudyQueue(deckId: string): Promise<StudyQueue | null> {
   const user = await requireStudent();
-  const { deckId, cardId, rating } = answerSchema.parse(input);
-  if (!(await canUseDeck(user.id, deckId))) throw new Error("Deck not found");
-  await answerCard(user.id, cardId, rating as Rating);
-  const [card, counts] = await Promise.all([nextCard(user.id, deckId), deckSummary(user.id, deckId)]);
-  return { card, counts };
+  if (typeof deckId !== "string" || !(await usableDeck(user.id, deckId))) return null;
+  return studyQueue(user.id, deckId);
 }
 
 const escapeHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");

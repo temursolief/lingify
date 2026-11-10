@@ -7,6 +7,7 @@ import { requireStudent } from "@/lib/auth";
 import { studentSummary } from "@/lib/class-overview";
 import { db } from "@/lib/db";
 import { errorBreakdown } from "@/lib/insights";
+import { formatDay } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Progress" };
 
@@ -39,7 +40,7 @@ async function ProgressContent() {
                   <Link href={`/student/passages/${a.passage.slug}`} className="flex items-center gap-4 px-4 py-2.5 text-ink no-underline hover:bg-hover hover:no-underline">
                     <span className="min-w-0 flex-1 truncate">{a.passage.title}</span>
                     <span className="text-sm text-muted tabular-nums">
-                      {a.firstCorrect}/{a.total} · band {a.band} · {a.firstSubmittedAt!.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                      {a.firstCorrect}/{a.total} · band {a.band} · {formatDay(a.firstSubmittedAt!)}
                     </span>
                   </Link>
                 </li>

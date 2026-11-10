@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
     "db:seed": "tsx --conditions=react-server scripts/seed.ts",
     "postinstall": "prisma generate",
     "telegram:bot": "tsx --conditions=react-server scripts/telegram-bot.ts",

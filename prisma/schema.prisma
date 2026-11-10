@@ -68,6 +68,8 @@ model Class {
   createdAt   DateTime     @default(now())
   enrollments Enrollment[]
   assignments Assignment[]
+
+  @@index([teacherId])
 }
 
 model Enrollment {
@@ -78,6 +80,7 @@ model Enrollment {
   class    Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
 
   @@id([userId, classId])
+  @@index([classId])
 }
 
 /// An IELTS Academic Reading passage. `ownerId` null = built into Lingify, visible to everyone.
@@ -90,11 +93,16 @@ model Passage {
   /// QuestionGroup[] in the documented upload format (src/lib/passage-format.ts)
   groups      Json
   timeLimit   Int              @default(20)
+  /// kept beside the content so lists show them without loading the passage itself
+  paragraphCount Int           @default(0)
+  questionCount  Int           @default(0)
   ownerId     String?
   owner       User?            @relation("TeacherPassages", fields: [ownerId], references: [id], onDelete: Cascade)
   createdAt   DateTime         @default(now())
   assignments Assignment[]
   attempts    PassageAttempt[]
+
+  @@index([ownerId])
 }
 
 model Assignment {
@@ -107,6 +115,9 @@ model Assignment {
   class      Class                 @relation(fields: [classId], references: [id], onDelete: Cascade)
   passage    Passage               @relation(fields: [passageId], references: [id], onDelete: Cascade)
   recipients AssignmentRecipient[]
+
+  @@index([classId])
+  @@index([passageId])
 }
 
 model AssignmentRecipient {
@@ -117,6 +128,7 @@ model AssignmentRecipient {
   student      User       @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@id([assignmentId, studentId])
+  @@index([studentId])
 }
 
 /// One student working through one passage: a timed first submission, then corrections until every answer is green.
@@ -174,10 +186,14 @@ model ListeningLesson {
   /// { word, meaning, uz?, example? }[]
   vocabulary Json               @default("[]")
   total      Int
+  /// number of key words, so lists do not load the vocabulary
+  wordCount  Int                @default(0)
   ownerId    String?
   owner      User?              @relation("LessonOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   createdAt  DateTime           @default(now())
   attempts   ListeningAttempt[]
+
+  @@index([ownerId])
 }
 
 /// One student working on one lesson. Every question's state lives in one JSON column, so checking an answer
@@ -197,13 +213,15 @@ model ListeningAttempt {
   lesson           ListeningLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@index([userId, lessonId])
+  @@index([lessonId])
 }
 
 /// An Anki deck: imported from .apkg by an admin teacher (ownerId null, shared with every student) or a student's own deck.
+/// A student has one deck of their own: `ownerId` is unique (shared decks have none).
 model Deck {
   id        String      @id @default(cuid())
   name      String
-  ownerId   String?
+  ownerId   String?     @unique
   owner     User?       @relation("DeckOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   /// card styling from the Anki note types: { [noteTypeId]: css }
   css       Json        @default("{}")
@@ -258,6 +276,7 @@ model CardState {
 
   @@id([userId, cardId])
   @@index([userId, due])
+  @@index([cardId])
 }
 
 model ReviewLog {
@@ -273,6 +292,7 @@ model ReviewLog {
   card     Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
 
   @@index([userId, at])
+  @@index([cardId])
 }
 
 model ActivityTime {

@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "./db";
@@ -19,14 +20,24 @@ export async function deleteSession() {
   (await cookies()).delete(SESSION_COOKIE);
 }
 
-export async function getSession() {
-  return decryptSession((await cookies()).get(SESSION_COOKIE)?.value);
-}
+/** The signed cookie, checked once per request however many components ask. */
+export const getSession = cache(async () => decryptSession((await cookies()).get(SESSION_COOKIE)?.value));
+
+/**
+ * The account behind the session: one query per request, shared by the sidebar, the page and its parts, and
+ * without the password hash, which nothing outside log in needs.
+ */
+export const currentUser = cache((userId: string) =>
+  db.user.findUnique({
+    where: { id: userId },
+    select: { id: true, email: true, name: true, role: true, uzbekGlosses: true, telegramCode: true, telegramChatId: true },
+  }),
+);
 
 export async function requireUser(role?: "STUDENT" | "TEACHER") {
   const session = await getSession();
   if (!session) redirect("/login");
-  const user = await db.user.findUnique({ where: { id: session.userId } });
+  const user = await currentUser(session.userId);
   if (!user) redirect("/auth/signout");
   if (role && user.role !== role) redirect(user.role === "TEACHER" ? "/teacher" : "/student");
   return user;

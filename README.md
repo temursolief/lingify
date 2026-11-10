@@ -44,6 +44,10 @@ the importer.
 
 | Variable | Purpose |
 |---|---|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `SESSION_SECRET` | Signs the login cookie. At least 32 characters in production (`openssl rand -hex 32`) |
+| `APP_TIMEZONE` | The school's time zone, e.g. `Asia/Tashkent`. Days, streaks and due dates are counted in it. Without it the server's own zone is used, which is usually UTC on a host |
+| `DATABASE_POOL_MAX` | Optional. Most database connections kept open (default 10) |
 | `ADMIN_EMAILS` | Comma-separated teacher emails that may upload Anki decks for every student |
 | `ANTHROPIC_API_KEY` | Optional. Claude (`claude-opus-5-5`) writes the meaning and Uzbek translation on highlight-made cards. Without it, the glossary or dictionary is used, which often finds nothing for multi-word chunks |
 | `TELEGRAM_*`, `APP_URL` | Optional Telegram reminders (below) |
@@ -192,10 +196,31 @@ Lingify is a progressive web app: Chrome and Edge offer **Install**, which opens
 
 The service worker is registered only in production builds (`npm run build && npm start`).
 
+## Deploying
+
+One Node server and one PostgreSQL database are enough for a school (tens of students at once).
+
+```bash
+npm ci
+npm run db:deploy           # applies new migrations; never resets data
+npm run build
+npm start                   # PORT=3000 by default; put it behind HTTPS (the app is installable only over HTTPS)
+```
+
+- Set `SESSION_SECRET`, `APP_TIMEZONE`, `ADMIN_EMAILS` and `APP_URL` on the server. Do not run `npm run db:seed` there
+  unless you want the demo accounts: use `npm run db:seed -- --content` for the built-in passages only.
+- Run `npm run db:deploy` before starting every new version.
+- Run a single server process. Login attempts are counted in memory, per process.
+- Uploads: passage and lesson JSON files go through the teacher pages, many files at a time (400 KB per passage,
+  200 KB per lesson). An Anki package may be up to 200 MB and is read in memory while it is imported, so give the
+  server at least 1 GB.
+- Anyone can sign up as a teacher. Only the emails in `ADMIN_EMAILS` can upload content for every student.
+
 ## Scripts
 
 | Command | What it does |
 |---|---|
+| `npm run db:deploy` | Applies database migrations on a server |
 | `npm test` | Unit tests: Anki scheduler, passage format and grading, .apkg import, card templates, dates |
 | `npm run lint` | ESLint |
 | `npm run telegram:remind` | Telegram reminders (`-- --weekly` for teacher summaries, `-- --dry-run` to preview) |

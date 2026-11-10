@@ -72,7 +72,7 @@ export function Stat({ label, value, hint }: { label: string; value: ReactNode; 
  */
 export function PageHeader({ title, subtitle, action }: { title: string; subtitle?: ReactNode; action?: ReactNode }) {
   return (
-    <div className="sticky top-0 z-10 -mx-6 -mt-6 mb-6 flex min-h-14 items-center justify-between gap-4 border-b border-line bg-bar px-6 py-2">
+    <div className="pane-bleed pane-x sticky top-0 z-10 mb-(--pane) flex min-h-14 items-center justify-between gap-3 border-b border-line bg-bar py-2">
       <div className="min-w-0">
         <h1 className="truncate text-base leading-tight font-semibold">{title}</h1>
         {subtitle && <p className="truncate text-sm text-muted">{subtitle}</p>}
@@ -85,7 +85,7 @@ export function PageHeader({ title, subtitle, action }: { title: string; subtitl
 /** Telegram folder tabs: plain words, the current one in blue with a rounded underline. */
 export function Tabs({ items, current }: { items: { key: string; label: ReactNode; href: string }[]; current: string }) {
   return (
-    <nav className="-mx-6 -mt-6 mb-6 flex gap-1 overflow-x-auto border-b border-line bg-bar px-4">
+    <nav className="pane-bleed mb-(--pane) flex gap-1 overflow-x-auto border-b border-line bg-bar px-1 sm:px-4">
       {items.map((t) => {
         const active = t.key === current;
         return (
@@ -135,7 +135,7 @@ export function Skeleton({ className }: { className?: string }) {
 export function PageSkeleton() {
   return (
     <div className="space-y-4" aria-busy="true" aria-label="Loading">
-      <div className="-mx-6 -mt-6 mb-6 flex h-14 items-center border-b border-line bg-bar px-6">
+      <div className="pane-bleed pane-x mb-(--pane) flex h-14 items-center border-b border-line bg-bar">
         <Skeleton className="h-4 w-40" />
       </div>
       <Skeleton className="h-24 rounded-xl" />

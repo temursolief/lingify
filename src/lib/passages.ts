@@ -72,9 +72,10 @@ function evidenceOk(evidence: Evidence | null, expected: string | undefined) {
 
 /** The exam-like first submission: every question is graded once; the score and band come from this alone. */
 export async function submitFirst(userId: string, attemptId: string, answers: Record<number, string>, evidence: Record<number, Evidence>, seconds: number) {
-  const attempt = await db.passageAttempt.findFirst({ where: { id: attemptId, userId }, include: { passage: true } });
+  const attempt = await db.passageAttempt.findFirst({ where: { id: attemptId, userId }, include: { passage: { select: { groups: true } } } });
   if (!attempt) throw new Error("Attempt not found");
-  if (attempt.firstSubmittedAt) throw new Error("Already submitted");
+  // A second submit (a double tap, or the request sent again after a lost reply) changes nothing.
+  if (attempt.firstSubmittedAt) return;
   const keys = answerKey(attempt.passage.groups as QuestionGroup[]);
   const now = new Date();
   const rows = keys.map((k) => {
@@ -96,20 +97,26 @@ export async function submitFirst(userId: string, attemptId: string, answers: Re
   });
   const firstCorrect = rows.filter((r) => r.correct).length;
   const allCorrect = firstCorrect === rows.length;
-  await db.$transaction([
-    db.questionAnswer.createMany({ data: rows }),
-    db.passageAttempt.update({
-      where: { id: attemptId },
-      data: {
-        firstSubmittedAt: now,
-        firstSeconds: seconds,
-        firstCorrect,
-        band: estimateBand(firstCorrect, rows.length),
-        ...(allCorrect ? { completedAt: now } : {}),
-      },
-    }),
-    db.user.update({ where: { id: userId }, data: { lastActiveAt: now } }),
-  ]);
+  try {
+    await db.$transaction([
+      db.questionAnswer.createMany({ data: rows }),
+      db.passageAttempt.update({
+        where: { id: attemptId },
+        data: {
+          firstSubmittedAt: now,
+          firstSeconds: seconds,
+          firstCorrect,
+          band: estimateBand(firstCorrect, rows.length),
+          ...(allCorrect ? { completedAt: now } : {}),
+        },
+      }),
+      db.user.update({ where: { id: userId }, data: { lastActiveAt: now } }),
+    ]);
+  } catch (e) {
+    // Two submits at the same moment: the other one saved the answers first (unique attempt + question number).
+    if ((e as { code?: string }).code === "P2002") return;
+    throw e;
+  }
   if (allCorrect) await completeAssignments(userId, attempt.passageId, now);
 }
 
@@ -120,7 +127,7 @@ export type RetryResult = { ok: true; correct: boolean; needsTag: boolean } | { 
  * passage as proof. A question that turns green this way asks why it was missed before it locks.
  */
 export async function retryQuestion(userId: string, attemptId: string, number: number, answer: string, evidence: Evidence | null): Promise<RetryResult> {
-  const attempt = await db.passageAttempt.findFirst({ where: { id: attemptId, userId }, include: { passage: true } });
+  const attempt = await db.passageAttempt.findFirst({ where: { id: attemptId, userId }, include: { passage: { select: { groups: true } } } });
   if (!attempt?.firstSubmittedAt) return { ok: false, error: "Submit your answers first." };
   const row = await db.questionAnswer.findUnique({ where: { attemptId_number: { attemptId, number } } });
   if (!row) return { ok: false, error: "Question not found." };
@@ -131,7 +138,8 @@ export async function retryQuestion(userId: string, attemptId: string, number: n
   const history = row.history as History;
   if (history.some((h) => h.answer.toLowerCase() === given.toLowerCase())) return { ok: false, error: "You already tried this answer. Look at the passage again." };
 
-  const key = answerKey(attempt.passage.groups as QuestionGroup[]).find((k) => k.number === number)!;
+  const key = answerKey(attempt.passage.groups as QuestionGroup[]).find((k) => k.number === number);
+  if (!key) return { ok: false, error: "Question not found." };
   const correct = key.check(given);
   const now = new Date();
   await db.questionAnswer.update({

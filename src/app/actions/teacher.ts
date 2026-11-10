@@ -7,6 +7,7 @@ import { requireAdmin, requireTeacher } from "@/lib/auth";
 import { teacherClass } from "@/lib/class-overview";
 import { db } from "@/lib/db";
 import { parsePassageJson } from "@/lib/passage-format";
+import { endOfDayOn } from "@/lib/time";
 
 export type FormState = { error?: string; errors?: string[]; ok?: string } | undefined;
 
@@ -51,20 +52,29 @@ function slugify(title: string) {
   return `${base}-${randomInt(36 ** 4).toString(36)}`;
 }
 
-/** Validates the uploaded JSON against the documented format and saves it as one of the teacher's passages. */
-export async function uploadPassage(_: FormState, formData: FormData): Promise<FormState> {
+/** One passage file may be this long. The whole request stays well under the 1 MB limit for form actions. */
+const MAX_PASSAGE_CHARS = 400_000;
+
+/**
+ * Validates one passage JSON against the documented format and saves it as one of the teacher's passages.
+ * The upload form sends its files one at a time and refreshes the list once at the end, so many files can be
+ * uploaded in one go without one large request.
+ */
+export async function uploadPassage(raw: string): Promise<FormState> {
   const teacher = await requireTeacher();
-  const file = formData.get("file");
-  const raw = file instanceof File && file.size ? await file.text() : String(formData.get("json") ?? "");
-  if (!raw.trim()) return { error: "Choose a .json file or paste the JSON." };
-  if (raw.length > 400_000) return { error: "That file is too large for one passage." };
+  if (typeof raw !== "string" || !raw.trim()) return { error: "Choose a .json file or paste the JSON." };
+  if (raw.length > MAX_PASSAGE_CHARS) return { error: "That file is too large for one passage." };
   const parsed = parsePassageJson(raw);
-  if (!parsed.ok) return { error: "The passage was not saved. Fix these points and upload again:", errors: parsed.errors };
+  if (!parsed.ok) return { error: "Not saved. Fix these points and upload again:", errors: parsed.errors };
   const { title, timeLimit, paragraphs, questionGroups } = parsed.data;
-  await db.passage.create({ data: { slug: slugify(title), title, timeLimit, paragraphs, groups: questionGroups, ownerId: teacher.id } });
-  refresh();
-  const count = questionGroups.reduce((n, g) => n + g.questions.length, 0);
-  return { ok: `“${title}” saved: ${paragraphs.length} paragraphs, ${count} questions. Assign it from a class.` };
+  // The same file chosen twice (easy to do with many files) must not make a second copy.
+  const same = await db.passage.findFirst({ where: { ownerId: teacher.id, title: { equals: title, mode: "insensitive" } }, select: { id: true } });
+  if (same) return { error: `You already have a passage called “${title}”. Delete it first if you want to replace it.` };
+  const questionCount = questionGroups.reduce((n, g) => n + g.questions.length, 0);
+  await db.passage.create({
+    data: { slug: slugify(title), title, timeLimit, paragraphs, groups: questionGroups, paragraphCount: paragraphs.length, questionCount, ownerId: teacher.id },
+  });
+  return { ok: `“${title}” saved: ${paragraphs.length} paragraphs, ${questionCount} questions.` };
 }
 
 export async function deletePassage(passageId: string) {
@@ -84,9 +94,11 @@ const assignSchema = z.object({
 export async function assignPassage(_: FormState, formData: FormData): Promise<FormState> {
   const parsed = assignSchema.safeParse(Object.fromEntries([...formData.entries()].filter(([k]) => k !== "students")));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const dueAt = parsed.data.dueAt ? endOfDayOn(parsed.data.dueAt) : null;
+  if (parsed.data.dueAt && !dueAt) return { error: "Choose a real due date." };
   const cls = await ownClass(parsed.data.classId);
   const teacherId = cls.teacherId;
-  const passage = await db.passage.findFirst({ where: { id: parsed.data.passageId, OR: [{ ownerId: null }, { ownerId: teacherId }] } });
+  const passage = await db.passage.findFirst({ where: { id: parsed.data.passageId, OR: [{ ownerId: null }, { ownerId: teacherId }] }, select: { id: true, title: true } });
   if (!passage) return { error: "Choose a passage." };
 
   const enrolled = (await db.enrollment.findMany({ where: { classId: cls.id }, select: { userId: true } })).map((e) => e.userId);
@@ -94,7 +106,6 @@ export async function assignPassage(_: FormState, formData: FormData): Promise<F
   const students = picked.length ? picked : enrolled;
   if (!students.length) return { error: "This class has no students yet." };
 
-  const dueAt = parsed.data.dueAt ? new Date(`${parsed.data.dueAt}T23:59:00`) : null;
   await db.assignment.create({
     data: {
       classId: cls.id,

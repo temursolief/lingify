@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 
 type Activity = "IELTS" | "REVIEW";
 
-const FLUSH_EVERY_MS = 15_000;
+const FLUSH_EVERY_MS = 30_000;
 /** Reading a long paragraph can take a while without touching anything, so passages tolerate longer pauses. */
 const IDLE_AFTER_MS: Record<Activity, number> = { IELTS: 120_000, REVIEW: 60_000 };
 
@@ -28,7 +28,6 @@ export function ActivityTracker({ activity }: { activity: Activity }) {
         });
       }
     };
-
 
     const touch = () => {
       lastInteraction.current = Date.now();

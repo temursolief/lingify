@@ -93,20 +93,91 @@ export function AssignPassageForm({
   );
 }
 
+type FileResult = { name: string; state: FormState };
+
+/** Larger than any real passage or lesson; a bigger file is refused before it is read or sent. */
+const MAX_JSON_BYTES = 400_000;
+
+/**
+ * Uploads passage (or listening lesson) JSON files. Any number of files can be chosen at once: they are checked
+ * and saved one at a time, so each request stays small and one bad file does not stop the others. The list on the
+ * page is refreshed once, at the end.
+ */
 export function UploadPassageForm({ lesson = false }: { lesson?: boolean }) {
-  const [state, action, pending] = useActionState(lesson ? uploadLesson : uploadPassage, undefined);
+  const router = useRouter();
+  const [results, setResults] = useState<FileResult[]>([]);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const [empty, setEmpty] = useState(false);
+  const save = lesson ? uploadLesson : uploadPassage;
+
+  async function submit(form: HTMLFormElement) {
+    const data = new FormData(form);
+    const files = data.getAll("file").filter((f): f is File => f instanceof File && f.size > 0);
+    const pasted = String(data.get("json") ?? "").trim();
+    const items: { name: string; read: () => Promise<string | null> }[] = files.map((f) => ({ name: f.name, read: async () => (f.size > MAX_JSON_BYTES ? null : f.text()) }));
+    if (pasted) items.push({ name: "Pasted JSON", read: async () => pasted });
+    setEmpty(!items.length);
+    if (!items.length) return;
+
+    setResults([]);
+    setProgress({ done: 0, total: items.length });
+    const done: FileResult[] = [];
+    for (const item of items) {
+      let state: FormState;
+      try {
+        const raw = await item.read();
+        state = raw === null ? { error: "That file is too large." } : await save(raw);
+      } catch {
+        state = { error: "Could not be sent. Check the connection and upload this file again." };
+      }
+      done.push({ name: item.name, state });
+      setResults([...done]);
+      setProgress({ done: done.length, total: items.length });
+    }
+    setProgress(null);
+    if (done.some((r) => r.state?.ok)) {
+      // Keep what failed visible; the saved files are cleared from the form.
+      if (done.every((r) => r.state?.ok)) form.reset();
+      router.refresh();
+    }
+  }
+
+  const saved = results.filter((r) => r.state?.ok).length;
+  const failed = results.filter((r) => !r.state?.ok);
   return (
-    <form action={action} className="space-y-3">
+    <form
+      className="space-y-3"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!progress) void submit(e.currentTarget);
+      }}
+    >
       <label className="block text-sm">
-        <span className="mb-1 block text-muted">JSON file</span>
-        <input name="file" type="file" accept=".json,application/json" className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-accent-soft file:px-3 file:py-2 file:text-accent" />
+        <span className="mb-1 block text-muted">JSON files (choose one or many)</span>
+        <input name="file" type="file" multiple accept=".json,application/json" className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-accent-soft file:px-3 file:py-2 file:text-accent" />
       </label>
       <details className="text-sm">
         <summary className="cursor-pointer text-accent">or paste the JSON</summary>
         <textarea name="json" rows={8} className={`${inputClass} mt-2 w-full font-mono text-xs`} placeholder={lesson ? '{ "title": "…", "video": "https://www.youtube.com/watch?v=…", "questionGroups": [ … ], "vocabulary": [ … ] }' : '{ "title": "…", "paragraphs": [ … ], "questionGroups": [ … ] }'} />
       </details>
-      <Button type="submit" disabled={pending}>{pending ? "Checking…" : lesson ? "Upload lesson" : "Upload passage"}</Button>
-      <Feedback state={state} />
+      <Button type="submit" disabled={!!progress}>
+        {progress ? `Checking ${Math.min(progress.done + 1, progress.total)} of ${progress.total}…` : lesson ? "Upload lessons" : "Upload passages"}
+      </Button>
+      <div className="space-y-2 text-sm" aria-live="polite">
+        {empty && <p className="text-bad">Choose a .json file or paste the JSON.</p>}
+        {!progress && results.length > 1 && (
+          <p className={failed.length ? "text-ink" : "text-good"}>
+            {saved} of {results.length} saved{failed.length ? `, ${failed.length} not saved:` : "."}
+          </p>
+        )}
+        {(results.length === 1 ? results : failed).map((r, i) => (
+          <div key={i}>
+            {results.length > 1 && <p className="font-medium">{r.name}</p>}
+            <Feedback state={r.state} />
+          </div>
+        ))}
+        {!failed.length && saved > 0 && !progress && <p className="text-muted">{lesson ? "They are now in every student's Listening library." : "Assign them from a class."}</p>}
+      </div>
     </form>
   );
 }

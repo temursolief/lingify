@@ -12,7 +12,7 @@ async function LessonsContent() {
   await requireAdmin();
   const lessons = await db.listeningLesson.findMany({
     orderBy: { createdAt: "desc" },
-    select: { id: true, title: true, videoId: true, total: true, vocabulary: true, _count: { select: { attempts: true } } },
+    select: { id: true, title: true, videoId: true, total: true, wordCount: true, _count: { select: { attempts: true } } },
   });
   return (
     <>
@@ -39,7 +39,7 @@ async function LessonsContent() {
                   <img src={`https://i.ytimg.com/vi/${l.videoId}/mqdefault.jpg`} alt="" loading="lazy" width={96} height={54} className="h-[54px] w-24 shrink-0 rounded-md bg-grid object-cover" />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-medium">{l.title}</span>
-                    <span className="block text-sm text-muted">{l.total} questions · {(l.vocabulary as unknown[]).length} key words · {l._count.attempts} students started</span>
+                    <span className="block text-sm text-muted">{l.total} questions · {l.wordCount} key words · {l._count.attempts} students started</span>
                   </span>
                   <DeleteLessonButton id={l.id} />
                 </li>

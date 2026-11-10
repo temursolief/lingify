@@ -132,12 +132,12 @@ export const isLearning = (q: Queue) => q === "LEARNING" || q === "RELEARNING";
  * Which card to show next, from cards already loaded for a deck: learning cards that are due first,
  * then reviews, then new cards, then learning cards due within the learn-ahead window. Mirrors Anki's order.
  */
-export function pickNext<T extends { schedule: Schedule }>(cards: T[], now: Date, newLeft: number, reviewsLeft: number): T | null {
+export function pickNext<T extends { schedule: Schedule }>(cards: T[], now: Date, newLeft: number, reviewsLeft: number, dayEnd = endOfDay(now)): T | null {
   const t = now.getTime();
   const due = (c: T) => c.schedule.due.getTime();
   const learningNow = cards.filter((c) => isLearning(c.schedule.queue) && due(c) <= t).sort((a, b) => due(a) - due(b));
   if (learningNow.length) return learningNow[0];
-  const reviews = cards.filter((c) => c.schedule.queue === "REVIEW" && due(c) <= endOfDay(now)).sort((a, b) => due(a) - due(b));
+  const reviews = cards.filter((c) => c.schedule.queue === "REVIEW" && due(c) <= dayEnd).sort((a, b) => due(a) - due(b));
   if (reviews.length && reviewsLeft > 0) return reviews[0];
   const fresh = cards.filter((c) => c.schedule.queue === "NEW").sort((a, b) => due(a) - due(b));
   if (fresh.length && newLeft > 0) return fresh[0];
@@ -147,7 +147,10 @@ export function pickNext<T extends { schedule: Schedule }>(cards: T[], now: Date
   return ahead[0] ?? null;
 }
 
-/** Reviews count as due for the whole day they fall on, like Anki. */
+/**
+ * Reviews count as due for the whole day they fall on, like Anki. This is the day of the device running the code;
+ * a caller that knows the school's day (the server does) passes its own `dayEnd` to `pickNext` and `deckCounts`.
+ */
 export function endOfDay(now: Date) {
   const d = new Date(now);
   d.setHours(23, 59, 59, 999);
@@ -155,11 +158,11 @@ export function endOfDay(now: Date) {
 }
 
 /** The three numbers on Anki's deck list: New (blue), Learn (red), Due (green). */
-export function deckCounts(schedules: Schedule[], now: Date, newLeft: number, reviewsLeft: number) {
+export function deckCounts(schedules: Schedule[], now: Date, newLeft: number, reviewsLeft: number, dayEnd = endOfDay(now)) {
   const t = now.getTime();
   return {
     new: Math.min(newLeft, schedules.filter((s) => s.queue === "NEW").length),
     learn: schedules.filter((s) => isLearning(s.queue) && s.due.getTime() <= t + OPTIONS.learnAheadMinutes * MIN).length,
-    due: Math.min(reviewsLeft, schedules.filter((s) => s.queue === "REVIEW" && s.due.getTime() <= endOfDay(now)).length),
+    due: Math.min(reviewsLeft, schedules.filter((s) => s.queue === "REVIEW" && s.due.getTime() <= dayEnd).length),
   };
 }

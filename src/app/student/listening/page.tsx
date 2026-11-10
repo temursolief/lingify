@@ -14,7 +14,7 @@ async function LibraryContent() {
   const [lessons, attempts] = await Promise.all([
     db.listeningLesson.findMany({
       orderBy: { createdAt: "desc" },
-      select: { id: true, slug: true, title: true, videoId: true, total: true, vocabulary: true },
+      select: { id: true, slug: true, title: true, videoId: true, total: true, wordCount: true },
     }),
     db.listeningAttempt.findMany({
       where: { userId: user.id },
@@ -41,7 +41,7 @@ async function LibraryContent() {
                 : a.completedAt
                   ? { text: `Done · ${a.firstCorrect}/${l.total} · band ${a.band}`, tone: "text-good" }
                   : { text: `${red} to correct · ${a.firstCorrect}/${l.total}`, tone: "text-bad" };
-              const words = (l.vocabulary as unknown[]).length;
+              const words = l.wordCount;
               return (
                 <li key={l.id}>
                   <Link href={`/student/listening/${l.slug}`} className="flex items-center gap-4 px-4 py-3 text-ink no-underline hover:bg-hover hover:no-underline">

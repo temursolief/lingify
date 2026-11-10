@@ -82,7 +82,8 @@ export async function retryListening(userId: string, attemptId: string, number: 
   if (!answer) return { error: "Write an answer." };
   if (current.wrong.some((w) => w.toLowerCase() === answer.toLowerCase())) return { error: "You already tried this answer. Listen to that part again." };
 
-  const key = answerKey(attempt.lesson.questions as QuestionGroup[]).find((k) => k.number === number)!;
+  const key = answerKey(attempt.lesson.questions as QuestionGroup[]).find((k) => k.number === number);
+  if (!key) return { error: "Question not found." };
   const correct = key.check(answer);
   const next: ListeningAnswers = {
     ...answers,

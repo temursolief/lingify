@@ -1,14 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import { answerAndNext } from "@/app/actions/cards";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { ActivityTracker } from "@/components/activity-tracker";
 import { Button, PageHeader, cx } from "@/components/ui";
-import { intervalLabel, RATING_LABEL, type Rating, type Schedule } from "@/lib/anki";
+import { intervalLabel, RATING_LABEL, type Rating } from "@/lib/anki";
+import { applyAnswer, nextCard, queueCounts, type LiveCard, type StudyQueue } from "@/lib/study";
 
-type Card = { id: string; front: string; back: string; noteType: string; schedule: Schedule };
-type Counts = { new: number; learn: number; due: number };
+/** One answer, as the session hands it to whoever saves it. */
+export type Answered = { cardId: string; rating: Rating; at: Date };
+/** What `refill` resolves with: a new queue, or "unsent" when the server could not be reached. */
+export type Refill = StudyQueue | "unsent" | null;
 
 /** Styling for cards made from passages; imported decks bring their own CSS from Anki. */
 const CHUNK_CSS = `
@@ -51,46 +53,80 @@ function CardFrame({ html, css }: { html: string; css: string }) {
   );
 }
 
+type Step = { queue: StudyQueue; card: LiveCard | null; at: number; studied: number };
+
+const RATINGS: Rating[] = [1, 2, 3, 4];
+
+/**
+ * A study session, run entirely in the browser: the queue holds every card that can come up today, each answer is
+ * scheduled here with the Anki code the server uses, and the next card shows at once. Saving an answer is the
+ * caller's job (`onAnswer`): online it is sent in the background, offline it waits on the device.
+ */
 export function StudySession({
   deck,
-  first,
-  counts: initialCounts,
-  answer,
+  queue,
+  startedAt,
+  onAnswer,
+  refill,
+  note,
   backHref = "/student/flashcards",
   track = true,
 }: {
   deck: { id: string; name: string; css: Record<string, string> };
-  first: Card | null;
-  counts: Counts;
-  /** offline mode grades on the laptop; online it is the server action */
-  answer?: (card: Card, rating: Rating) => Promise<{ card: Card | null; counts: Counts }>;
+  queue: StudyQueue;
+  /** when the queue was built (ISO); the first card is picked for this moment, the same on server and browser */
+  startedAt: string;
+  /** called after every answer with the answer and the queue as it is now */
+  onAnswer: (answered: Answered, queue: StudyQueue) => void;
+  /** asks for the reviews that did not fit in the first queue (`moreDue`) */
+  refill?: () => Promise<Refill>;
+  /** a line under the card, such as "no connection, answers are saved on this device" */
+  note?: ReactNode;
   backHref?: string;
   track?: boolean;
 }) {
-  const [card, setCard] = useState(first);
-  const [counts, setCounts] = useState(initialCounts);
+  const [step, setStep] = useState<Step>(() => {
+    const at = new Date(startedAt);
+    return { queue, card: nextCard(queue, at), at: at.getTime(), studied: 0 };
+  });
   const [shown, setShown] = useState(false);
-  const [done, setDone] = useState(0);
-  const [pending, start] = useTransition();
+  const [more, setMore] = useState<"none" | "loading" | "failed">("none");
+
+  const loadMore = useCallback(() => {
+    if (!refill) return;
+    setMore("loading");
+    refill().then(
+      (next) => {
+        if (!next || next === "unsent") return setMore("failed");
+        const at = new Date();
+        setStep((s) => ({ queue: next, card: nextCard(next, at), at: at.getTime(), studied: s.studied }));
+        setMore("none");
+      },
+      () => setMore("failed"),
+    );
+  }, [refill]);
 
   const rate = useCallback(
     (rating: Rating) => {
-      if (!card || pending) return;
-      start(async () => {
-        const next = answer ? await answer(card, rating) : await answerAndNext({ deckId: deck.id, cardId: card.id, rating });
-        setCard(next.card as Card | null);
-        setCounts(next.counts);
-        setShown(false);
-        setDone((n) => n + 1);
-      });
+      const { card } = step;
+      if (!card) return;
+      const now = new Date();
+      const next = applyAnswer(step.queue, card.id, rating, now);
+      const upcoming = nextCard(next, now);
+      setStep({ queue: next, card: upcoming, at: now.getTime(), studied: step.studied + 1 });
+      setShown(false);
+      onAnswer({ cardId: card.id, rating, at: now }, next);
+      if (!upcoming && next.moreDue) loadMore();
     },
-    [card, pending, answer, deck.id],
+    [step, onAnswer, loadMore],
   );
 
   // Anki's keys: space or Enter shows the answer, then 1-4 rate it (space/Enter = Good).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement)?.closest("input, textarea")) return;
+      // A held key must not answer the next card too.
+      if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
+      if ((e.target as HTMLElement)?.closest("input, textarea, select, a, [contenteditable]")) return;
       if (!shown && (e.key === " " || e.key === "Enter")) {
         e.preventDefault();
         setShown(true);
@@ -104,8 +140,11 @@ export function StudySession({
     return () => window.removeEventListener("keydown", onKey);
   }, [shown, rate]);
 
+  const { card, studied } = step;
+  const at = new Date(step.at);
+  const counts = queueCounts(step.queue, at);
   const css = card ? (card.noteType === "chunk" ? CHUNK_CSS : (deck.css[card.noteType] ?? "")) : "";
-  const now = new Date();
+  const waitingForMore = !card && !!step.queue.moreDue && !!refill;
 
   return (
     <>
@@ -115,44 +154,57 @@ export function StudySession({
         subtitle={
           <span className="tabular-nums">
             <span className="text-accent">{counts.new}</span> new · <span className="text-bad">{counts.learn}</span> learning ·{" "}
-            <span className="text-good">{counts.due}</span> due{done > 0 && ` · ${done} studied`}
+            <span className="text-good">{counts.due}</span> due{studied > 0 && ` · ${studied} studied`}
           </span>
         }
         action={<Link href={backHref} className="text-sm">Decks</Link>}
       />
-      {!card ? (
-        <div className="mx-auto max-w-xl rounded-xl bg-surface p-8 text-center shadow-bubble">
-          <p className="font-semibold">Congratulations! You have finished this deck for now.</p>
-          <p className="mt-1 text-muted">{done ? `${done} card${done === 1 ? "" : "s"} studied. ` : ""}Come back later for cards that are due again.</p>
-          <Link href={backHref} className="mt-4 inline-block">Back to decks</Link>
-        </div>
-      ) : (
+      {card ? (
         <div className="mx-auto max-w-2xl">
-          <div className="rounded-xl bg-surface px-6 py-6 shadow-bubble">
+          <div className="rounded-xl bg-surface px-4 py-5 shadow-bubble sm:px-6 sm:py-6">
             <CardFrame key={`${card.id}-${shown}`} html={shown ? card.back : card.front} css={css} />
           </div>
-          <div className="mt-4 flex justify-center gap-2">
+          <div className="mt-4 grid grid-cols-4 gap-2 sm:flex sm:justify-center">
             {!shown ? (
-              <Button className="min-w-48" onClick={() => setShown(true)}>Show answer</Button>
+              <Button className="col-span-4 sm:min-w-48" onClick={() => setShown(true)}>Show answer</Button>
             ) : (
-              ([1, 2, 3, 4] as Rating[]).map((r) => (
+              RATINGS.map((r) => (
                 <button
                   key={r}
                   type="button"
-                  disabled={pending}
                   onClick={() => rate(r)}
                   className={cx(
-                    "min-w-24 rounded-md px-3 py-2 text-center font-medium text-white transition-opacity disabled:opacity-50",
+                    "rounded-md px-1 py-2 text-center font-medium text-white transition-opacity active:opacity-80 sm:min-w-24 sm:px-3",
                     r === 1 ? "bg-bad" : r === 2 ? "bg-[#8e99a4]" : r === 3 ? "bg-good" : "bg-accent",
                   )}
                 >
-                  <span className="block text-xs font-normal opacity-90">{intervalLabel(card.schedule, r, now)}</span>
+                  <span className="block text-xs font-normal opacity-90">{intervalLabel(card.schedule, r, at)}</span>
                   {RATING_LABEL[r]}
                 </button>
               ))
             )}
           </div>
-          <p className="mt-3 text-center text-xs text-muted">{shown ? "Keys: 1 Again · 2 Hard · 3 Good · 4 Easy" : "Space shows the answer"}</p>
+          <p className="mt-3 hidden text-center text-xs text-muted sm:block">{shown ? "Keys: 1 Again · 2 Hard · 3 Good · 4 Easy" : "Space shows the answer"}</p>
+          {note && <p className="mt-3 text-center text-xs text-muted">{note}</p>}
+        </div>
+      ) : waitingForMore ? (
+        <div className="mx-auto max-w-xl rounded-xl bg-surface p-8 text-center shadow-bubble">
+          {more === "failed" ? (
+            <>
+              <p className="font-semibold">More cards are due today</p>
+              <p className="mt-1 text-muted">They could not be loaded: there is no connection. Your answers are saved on this device.</p>
+              <Button className="mt-4" onClick={loadMore}>Try again</Button>
+            </>
+          ) : (
+            <p className="text-muted">Loading more cards…</p>
+          )}
+        </div>
+      ) : (
+        <div className="mx-auto max-w-xl rounded-xl bg-surface p-8 text-center shadow-bubble">
+          <p className="font-semibold">Congratulations! You have finished this deck for now.</p>
+          <p className="mt-1 text-muted">{studied ? `${studied} card${studied === 1 ? "" : "s"} studied. ` : ""}Come back later for cards that are due again.</p>
+          {note && <p className="mt-3 text-xs text-muted">{note}</p>}
+          <Link href={backHref} className="mt-4 inline-block">Back to decks</Link>
         </div>
       )}
     </>

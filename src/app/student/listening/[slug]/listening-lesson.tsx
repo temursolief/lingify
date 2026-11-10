@@ -15,7 +15,7 @@ type QState = ListeningView["questions"][number];
 
 /**
  * A Listening Comprehension lesson: the video and its key words on the left, the questions on the right, question
- * numbers along the bottom. The first submission gives the score. Red answers are never corrected for the student:
+ * numbers along the bottom. On a phone it is one column: the video stays at the top while the questions scroll. The first submission gives the score. Red answers are never corrected for the student:
  * they replay the video and try a new answer until it turns green.
  */
 export function ListeningLesson({ lesson, groups, vocabulary, initial }: { lesson: { id: string; title: string; videoId: string }; groups: PublicGroup[]; vocabulary: Vocab[]; initial: ListeningView }) {
@@ -61,7 +61,7 @@ export function ListeningLesson({ lesson, groups, vocabulary, initial }: { lesso
       spellCheck={false}
       aria-label={`Answer ${n}`}
       className={cx(
-        "mx-1 w-40 rounded-md bg-surface px-2 py-0.5 ring-1 ring-inset focus:outline-none focus:ring-2 focus:ring-accent",
+        "mx-1 w-40 max-w-full rounded-md bg-surface px-2 py-0.5 ring-1 ring-inset focus:outline-none focus:ring-2 focus:ring-accent",
         !view.submitted || !states[n] ? "ring-line" : states[n].correct ? "bg-good-soft text-good ring-good" : "bg-bad-soft text-bad ring-bad",
       )}
     />
@@ -190,9 +190,9 @@ export function ListeningLesson({ lesson, groups, vocabulary, initial }: { lesso
   };
 
   return (
-    <div className="-mx-6 -mt-6 -mb-12 flex h-dvh flex-col">
+    <div className="pane-fill flex flex-col">
       {!view.completed && <ActivityTracker activity="IELTS" />}
-      <div className="flex min-h-14 shrink-0 items-center gap-4 border-b border-line bg-bar px-6 py-2">
+      <div className="pane-x flex min-h-14 shrink-0 items-center gap-3 border-b border-line bg-bar py-2 md:gap-4">
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-base font-semibold">{lesson.title}</h1>
           <p className="truncate text-sm text-muted">
@@ -204,21 +204,29 @@ export function ListeningLesson({ lesson, groups, vocabulary, initial }: { lesso
           </p>
         </div>
         {!view.submitted ? (
-          <Button onClick={submit} disabled={pending}>{pending ? "Checking…" : "Submit answers"}</Button>
+          <Button className="max-md:px-3" onClick={submit} disabled={pending}>
+            {pending ? "Checking…" : <>Submit<span className="max-md:hidden"> answers</span></>}
+          </Button>
         ) : view.completed ? (
-          <Button variant="secondary" onClick={again} disabled={pending}>Practise again</Button>
+          <Button variant="secondary" className="max-md:px-3" onClick={again} disabled={pending}>Practise again</Button>
         ) : null}
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-2">
-        <div className="min-h-0 space-y-4 overflow-y-auto border-r border-line bg-surface px-6 py-6">
-          <LiteVideo id={lesson.videoId} title={lesson.title} />
-          <p className="text-sm text-muted">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain md:grid md:grid-cols-2 md:overflow-hidden">
+        {/* Below md this box disappears (display: contents) and its parts are ordered around the questions. */}
+        <div className="contents md:block md:min-h-0 md:space-y-4 md:overflow-y-auto md:border-r md:border-line md:bg-surface md:px-6 md:py-6">
+          <div className="sticky top-0 z-10 order-1 bg-surface px-2 py-2 shadow-bubble md:static md:p-0 md:shadow-none">
+            {/* No taller than about a third of the screen, so the questions stay in view on a phone held sideways. */}
+            <div className="mx-auto max-w-[min(100%,56dvh)] md:max-w-none">
+              <LiteVideo id={lesson.videoId} title={lesson.title} />
+            </div>
+          </div>
+          <p className="order-2 px-4 pt-3 text-sm text-muted md:p-0">
             Pause, rewind and replay as often as you need.{view.submitted && red ? " For each red answer, find that part of the video and listen again." : ""}
           </p>
           {vocabulary.length > 0 && (
-            <section className="rounded-xl bg-paper p-4">
-              <div className="flex items-baseline justify-between gap-2">
+            <section className="order-4 mx-4 mb-6 rounded-xl bg-paper p-4 md:m-0">
+              <div className="flex flex-wrap items-baseline justify-between gap-x-2">
                 <p className="font-semibold">Key words</p>
                 {vocabAdded === null ? (
                   <button type="button" disabled={pending} onClick={addVocab} className="text-sm text-accent hover:underline">Add to my flashcards</button>
@@ -239,7 +247,7 @@ export function ListeningLesson({ lesson, groups, vocabulary, initial }: { lesso
           )}
         </div>
 
-        <div className="min-h-0 overflow-y-auto px-6 py-6">
+        <div className="pane-x order-3 py-5 md:min-h-0 md:overflow-y-auto md:py-6">
           {view.completed && (
             <div className="mb-6 rounded-xl bg-good-soft p-4 text-good">
               <p className="font-semibold">Lesson complete</p>
@@ -271,7 +279,7 @@ export function ListeningLesson({ lesson, groups, vocabulary, initial }: { lesso
         </div>
       </div>
 
-      <nav className="flex shrink-0 flex-wrap items-center gap-1.5 border-t border-line bg-bar px-6 py-2" aria-label="Questions">
+      <nav className="pane-x flex shrink-0 items-center gap-1.5 overflow-x-auto border-t border-line bg-bar py-2 md:flex-wrap md:overflow-visible" aria-label="Questions">
         {numbers.map((n) => {
           const s = view.submitted ? states[n] : undefined;
           const answered = !!answers[n]?.trim();
@@ -282,7 +290,7 @@ export function ListeningLesson({ lesson, groups, vocabulary, initial }: { lesso
               onClick={() => jump(n)}
               aria-label={`Question ${n}${s ? (s.correct ? ", correct" : ", incorrect") : answered ? ", answered" : ""}`}
               className={cx(
-                "h-8 min-w-8 rounded-md px-1.5 text-sm font-medium tabular-nums",
+                "h-8 min-w-8 shrink-0 rounded-md px-1.5 text-sm font-medium tabular-nums",
                 s ? (s.correct ? "bg-good text-white" : "bg-bad text-white") : answered ? "bg-accent-soft text-accent" : "bg-paper text-muted",
                 active === n && "outline-2 outline-offset-2 outline-ink",
               )}
@@ -292,7 +300,7 @@ export function ListeningLesson({ lesson, groups, vocabulary, initial }: { lesso
           );
         })}
         {view.submitted && (
-          <span className="ml-auto text-sm text-muted"><span className="text-good">●</span> correct <span className="ml-2 text-bad">●</span> incorrect</span>
+          <span className="ml-auto text-sm text-muted max-md:hidden"><span className="text-good">●</span> correct <span className="ml-2 text-bad">●</span> incorrect</span>
         )}
       </nav>
     </div>

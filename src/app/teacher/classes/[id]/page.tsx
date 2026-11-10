@@ -8,6 +8,7 @@ import { requireTeacher } from "@/lib/auth";
 import { classOverview, teacherClass } from "@/lib/class-overview";
 import { db } from "@/lib/db";
 import { errorBreakdown, passageHeatmap, stuckStudents } from "@/lib/insights";
+import { formatDay } from "@/lib/time";
 import { AssignPassageForm, DeleteAssignmentButton } from "../../teacher-forms";
 
 export const metadata: Metadata = { title: "Class" };
@@ -200,7 +201,7 @@ async function PassagesTab({ classId, teacherId, base, selected, students }: { c
                   <Link href={`${base}?tab=passages&p=${a.passageId}`} className="min-w-0 flex-1 truncate">{a.passage.title}</Link>
                   <span className="text-sm text-muted">
                     {done}/{a.recipients.length} done
-                    {a.dueAt && ` · due ${a.dueAt.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`}
+                    {a.dueAt && ` · due ${formatDay(a.dueAt)}`}
                     {late > 0 && <span className="text-bad"> · {late} late</span>}
                   </span>
                   <DeleteAssignmentButton id={a.id} />
