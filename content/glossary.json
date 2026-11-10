@@ -1,240 +1,1192 @@
 {
-  "abroad": ["adverb", "in or to another country"],
-  "afterwards": ["adverb", "later, after something else has happened"],
-  "alarm": ["noun", "a machine that makes a loud noise to wake you up or to warn you of danger"],
-  "apologize": ["verb", "to say that you are sorry for something"],
-  "apps": ["noun", "small programs that you use on a phone or computer"],
-  "asleep": ["adjective", "sleeping"],
-  "awake": ["adjective", "not sleeping"],
-  "baked": ["adjective", "cooked in an oven"],
-  "baking": ["noun", "making bread or cakes in an oven"],
-  "balcony": ["noun", "a small area outside an upstairs window or door, where you can stand or sit"],
-  "bark": ["verb", "when a dog makes a short, loud sound"],
-  "barter": ["noun", "exchanging things for other things, without using money"],
-  "battlefield": ["noun", "the place where soldiers fight in a war"],
-  "beak": ["noun", "the hard, pointed mouth of a bird"],
-  "bean": ["noun", "a seed of some plants, which you can cook and eat or use to make drinks like coffee"],
-  "bedroom": ["noun", "a room where you sleep"],
-  "bee": ["noun", "a small flying insect that makes honey"],
-  "belong": ["verb", "to be owned by someone, or to be in the right place"],
-  "bend": ["verb", "to move the top part of your body down towards the ground"],
-  "bicycle": ["noun", "a vehicle with two wheels that you ride by moving your legs"],
-  "bone": ["noun", "one of the hard white parts inside your body"],
-  "bookshop": ["noun", "a shop that sells books"],
-  "bow": ["verb", "to move your head or body forward and down to show respect or thanks"],
-  "bread": ["noun", "a common food made from flour and water and baked in an oven"],
-  "breath": ["noun", "the air that goes into and out of your body"],
-  "bucket": ["noun", "an open container with a handle, used for carrying water"],
-  "builder": ["noun", "a person whose job is to build or repair houses"],
-  "bullet": ["noun", "a small piece of metal that comes out of a gun"],
-  "bush": ["noun", "a plant like a small tree with many branches"],
-  "camel": ["noun", "a large animal with one or two humps on its back that lives in the desert"],
-  "cancel": ["verb", "to stop something that was planned from happening"],
-  "caravan": ["noun", "a group of people and animals travelling together, especially across a desert"],
-  "caravanserai": ["noun", "an old building where travellers and their animals could rest for the night"],
-  "cheer": ["verb", "to shout loudly to show you are happy or to support someone"],
-  "childhood": ["noun", "the time in your life when you are a child"],
-  "clap": ["verb", "to hit your hands together many times to show you liked something"],
-  "clever": ["adjective", "able to learn and understand things quickly"],
-  "coat": ["noun", "a warm piece of clothing that you wear over other clothes outside"],
-  "coconut": ["noun", "a large brown nut with hard skin, white food and juice inside"],
-  "coin": ["noun", "a small, flat, round piece of metal used as money"],
-  "colony": ["noun", "a country or area that is controlled by another, more powerful country"],
-  "complain": ["verb", "to say that you are not happy about something"],
-  "concentrate": ["verb", "to think carefully about only one thing"],
-  "container": ["noun", "something such as a box or a jar that you keep things in"],
-  "cooking": ["noun", "preparing food to eat"],
-  "cousin": ["noun", "the child of your aunt or uncle"],
-  "cowrie": ["noun", "a small, shiny sea shell that people once used as money"],
-  "crop": ["noun", "a plant that farmers grow in large amounts, such as wheat or rice"],
-  "cupboard": ["noun", "a piece of furniture with doors where you keep things"],
-  "curious": ["adjective", "wanting to know or learn about something"],
-  "curve": ["verb", "to bend in a smooth, round shape"],
-  "cycling": ["noun", "riding a bicycle"],
-  "dancing": ["noun", "moving your body to music"],
-  "daytime": ["noun", "the part of the day when it is light"],
-  "defender": ["noun", "a football player whose job is to stop the other team from scoring"],
-  "democracy": ["noun", "a system where people choose their government by voting"],
-  "desert": ["noun", "a large, dry area of land with very little water and few plants"],
-  "desk": ["noun", "a table that you sit at to work or study"],
-  "disappear": ["verb", "to go away so that you cannot see or find it any more"],
-  "disappointed": ["adjective", "sad because something was not as good as you hoped"],
-  "discovery": ["noun", "finding something new that nobody knew about before"],
-  "doctorate": ["noun", "the highest university degree"],
-  "drawer": ["noun", "a part of a desk or cupboard that you pull out to put things in"],
-  "encourage": ["verb", "to give someone hope and confidence so they continue"],
-  "enslaved": ["adjective", "forced to work for someone else without pay or freedom"],
-  "envelope": ["noun", "a flat paper cover that you put a letter in"],
-  "equip": ["verb", "to give a person or a place the things they need for a job"],
-  "experiment": ["noun", "a test you do to find out if an idea is true"],
-  "farmer": ["noun", "a person who grows food or keeps animals on a farm"],
-  "farming": ["noun", "the job of growing food or keeping animals"],
-  "fashionable": ["adjective", "popular at a particular time"],
-  "fee": ["noun", "money that you pay for a service, such as school or a doctor"],
-  "fig": ["noun", "a soft, sweet fruit with many small seeds, or the tree it grows on"],
-  "fisherman": ["noun", "a person who catches fish as a job"],
-  "float": ["verb", "to stay on top of water without going down"],
-  "flour": ["noun", "a white or brown powder made from grain, used to make bread and cakes"],
-  "friendship": ["noun", "the relationship between friends"],
-  "frog": ["noun", "a small green animal that lives near water and jumps"],
-  "gate": ["noun", "a kind of door in a wall or fence"],
-  "goalkeeper": ["noun", "the football player who tries to stop the ball going into the goal"],
-  "goat": ["noun", "an animal with horns that is kept on farms for its milk"],
-  "grain": ["noun", "the seeds of plants like wheat and rice, used for food; also a very small piece of something like sand"],
-  "grandfather": ["noun", "the father of your mother or father"],
-  "grandmother": ["noun", "the mother of your mother or father"],
-  "graph": ["noun", "a picture with lines that shows how numbers change"],
-  "grass": ["noun", "a common green plant that covers fields and gardens"],
-  "gray": ["adjective", "the colour between black and white"],
-  "habit": ["noun", "something you do often and regularly"],
-  "hallway": ["noun", "a long, narrow space inside a building with doors to rooms"],
-  "handwriting": ["noun", "the way a person writes with a pen"],
-  "harm": ["verb", "to hurt or damage someone or something"],
-  "heal": ["verb", "to become healthy again after an injury"],
-  "heartbroken": ["adjective", "very, very sad"],
-  "helpful": ["adjective", "useful, or happy to help"],
-  "hiding": ["noun", "being in a place where nobody can see you"],
-  "homework": ["noun", "school work that you do at home"],
-  "honey": ["noun", "a sweet, thick food that bees make"],
-  "hurry": ["noun", "needing to move or do something quickly"],
-  "illness": ["noun", "a disease; being sick"],
-  "infection": ["noun", "an illness caused by very small living things entering your body"],
-  "insect": ["noun", "a very small animal with six legs, like a bee or a fly"],
-  "interrupt": ["verb", "to stop someone while they are speaking"],
-  "invite": ["verb", "to ask someone to come to an event or to your home"],
-  "jacket": ["noun", "a short coat"],
-  "jam": ["noun", "a situation where too many cars, bikes or people cannot move"],
-  "journalist": ["noun", "a person who writes news for a newspaper, website or TV"],
-  "kilometer": ["noun", "a distance of 1,000 metres"],
-  "knife": ["noun", "a tool with a sharp edge for cutting"],
-  "knock": ["verb", "to hit a door with your hand so people inside know you are there"],
-  "laptop": ["noun", "a small computer that you can carry"],
-  "leather": ["noun", "material made from animal skin, used for shoes, bags and wallets"],
-  "lesson": ["noun", "a period of time when someone teaches you something"],
-  "lift": ["verb", "to move something up"],
-  "liquid": ["noun", "something like water or oil that flows and is not solid"],
-  "loaf": ["noun", "bread that has been baked in one piece"],
-  "loud": ["adjective", "making a lot of noise"],
-  "lunchtime": ["noun", "the time in the middle of the day when people eat lunch"],
-  "maker": ["noun", "a person who makes something"],
-  "mathematics": ["noun", "the study of numbers and shapes"],
-  "meal": ["noun", "food that you eat at one time, such as breakfast or dinner"],
-  "merchant": ["noun", "a person who buys and sells goods, especially in the past"],
-  "mixture": ["noun", "different things put together"],
-  "nervous": ["adjective", "a little afraid or worried about something"],
-  "nil": ["noun", "zero, used for football scores"],
-  "noisy": ["adjective", "making a lot of noise"],
-  "nonsense": ["noun", "words or ideas that have no meaning or are silly"],
-  "notebook": ["noun", "a small book of empty pages for writing in"],
-  "octopus": ["noun", "a soft sea animal with eight long arms"],
-  "ordinary": ["adjective", "normal, not special"],
-  "organize": ["verb", "to plan and arrange something"],
-  "ours": ["pronoun", "the one that belongs to us"],
-  "package": ["noun", "a box or parcel that is sent by post"],
-  "packing": ["noun", "putting things into boxes or bags"],
-  "parking": ["noun", "leaving a car in a place for some time"],
-  "passion": ["noun", "a very strong feeling of loving something"],
-  "petrol": ["noun", "the liquid fuel that cars use"],
-  "photograph": ["noun", "a picture taken with a camera"],
-  "physics": ["noun", "the science of energy, light, heat and how things move"],
-  "pipe": ["noun", "a long tube that water or gas flows through"],
-  "planting": ["noun", "putting seeds or young plants in the ground so they grow"],
-  "plastic": ["noun", "a light, strong material made in factories"],
-  "pocket": ["noun", "a small bag sewn into clothes for keeping things"],
-  "pollen": ["noun", "a fine yellow powder made by flowers"],
-  "polonium": ["noun", "a rare chemical element that is radioactive"],
-  "possession": ["noun", "something that you own"],
-  "pot": ["noun", "a round container for cooking or for keeping plants in"],
-  "pound": ["noun", "the money used in the UK"],
-  "poverty": ["noun", "being very poor"],
-  "powder": ["noun", "something made of very small, dry pieces, like flour"],
-  "prayer": ["noun", "words that you say when you speak to God"],
-  "producer": ["noun", "a company or country that makes or grows something"],
-  "pyramid": ["noun", "a very large stone building with a square base and four sides that meet in a point, built in ancient Egypt"],
-  "radioactive": ["adjective", "giving out a dangerous kind of energy"],
-  "radioactivity": ["noun", "a dangerous kind of energy that comes from some materials"],
-  "railway": ["noun", "the metal tracks that trains travel on"],
-  "receptionist": ["noun", "a person who welcomes visitors at the front desk of a hotel or office"],
-  "recipe": ["noun", "instructions that tell you how to cook something"],
-  "referee": ["noun", "the person who controls a sports game and makes sure players follow the rules"],
-  "relative": ["noun", "a member of your family"],
-  "relax": ["verb", "to rest and become calm"],
-  "repair": ["verb", "to fix something that is broken"],
-  "repeat": ["verb", "to do or say something again"],
-  "repetition": ["noun", "doing something again and again"],
-  "rested": ["adjective", "not tired any more because you have slept or rested"],
-  "retrieval": ["noun", "getting something back, for example bringing information out of your memory"],
-  "reward": ["noun", "something you get for doing something good"],
-  "rider": ["noun", "a person who rides a bicycle or a horse"],
-  "ruler": ["noun", "a person, such as a king, who controls a country"],
-  "salary": ["noun", "the money you get every month for your job"],
-  "sand": ["noun", "the very small yellow grains on a beach"],
-  "scare": ["verb", "to make someone afraid"],
-  "scientist": ["noun", "a person who studies science"],
-  "secondary": ["adjective", "for students aged about 11 to 18 (secondary school)"],
-  "seed": ["noun", "the small, hard part of a plant that a new plant grows from"],
-  "shake": ["verb", "to move quickly from side to side or up and down, for example when you are afraid"],
-  "shallow": ["adjective", "not deep"],
-  "shell": ["noun", "the hard outside part of a nut, egg or some animals"],
-  "shock": ["verb", "to surprise and upset someone very much"],
-  "shout": ["verb", "to say something very loudly"],
-  "shy": ["adjective", "nervous about meeting or talking to people"],
-  "silence": ["noun", "when there is no sound"],
-  "silk": ["noun", "a soft, smooth, expensive material made by small insects"],
-  "smartphones": ["noun", "mobile phones that can use the internet and apps"],
-  "smell": ["noun", "what you notice with your nose"],
-  "snail": ["noun", "a small, slow animal with a soft body and a round shell on its back"],
-  "snake": ["noun", "a long, thin animal with no legs"],
-  "sofa": ["noun", "a long, soft seat for two or more people"],
-  "soil": ["noun", "the top part of the ground, where plants grow"],
-  "solve": ["verb", "to find the answer to a problem"],
-  "sore": ["adjective", "hurting a little"],
-  "soup": ["noun", "a hot liquid food made by cooking vegetables or meat in water"],
-  "spice": ["noun", "a powder or seed from a plant, used to give food more flavour"],
-  "stair": ["noun", "one of a set of steps that go from one floor to another"],
-  "stamp": ["verb", "to press a picture or words onto something"],
-  "substance": ["noun", "a kind of material, solid or liquid"],
-  "survive": ["verb", "to continue to live or exist"],
-  "suspicious": ["adjective", "not trusting someone or something"],
-  "swallow": ["verb", "to make food or drink go down your throat"],
-  "swim": ["verb", "to move through water using your arms and legs"],
-  "swimming": ["noun", "the activity of moving through water using your arms and legs"],
-  "symbol": ["noun", "something that represents an idea"],
-  "tall": ["adjective", "higher than most people or things"],
-  "taxi": ["noun", "a car with a driver that you pay to take you somewhere"],
-  "teammate": ["noun", "a person in the same team as you"],
-  "tear": ["noun", "a drop of water that comes from your eye when you cry"],
-  "thin": ["adjective", "with little air or oxygen, high up in mountains; also not thick"],
-  "ton": ["noun", "a very heavy weight: 1,000 kilograms"],
-  "tourism": ["noun", "the business of helping people travel for holidays"],
-  "tourist": ["noun", "a person who travels to a place on holiday"],
-  "towel": ["noun", "a piece of cloth used for drying your body or things"],
-  "trader": ["noun", "a person who buys and sells things"],
-  "tragedy": ["noun", "a very sad event, often when someone dies"],
-  "trainer": ["noun", "a person who teaches someone to do a job or a skill"],
-  "translation": ["noun", "changing words from one language into another"],
-  "traveler": ["noun", "a person who is on a journey"],
-  "umbrella": ["noun", "a thing you hold over your head to keep dry when it rains"],
-  "uncle": ["noun", "the brother of your mother or father"],
-  "underneath": ["preposition", "under something"],
-  "unlock": ["verb", "to open a door or lock with a key"],
-  "unusual": ["adjective", "not normal or common"],
-  "upstairs": ["adverb", "on a higher floor of a building"],
-  "useless": ["adjective", "not useful; it does not help"],
-  "valuable": ["adjective", "worth a lot of money, or very useful"],
-  "vegetable": ["noun", "a plant you eat, such as a carrot or potato"],
-  "violin": ["noun", "a musical instrument with four strings that you hold under your chin"],
-  "violinist": ["noun", "a person who plays the violin"],
-  "wallet": ["noun", "a small, flat case for keeping money and cards"],
-  "wash": ["verb", "to clean something with water, or to carry something away with water"],
-  "weigh": ["verb", "to have a certain weight"],
-  "wheat": ["noun", "a plant whose grain is used to make flour and bread"],
-  "whistle": ["noun", "a small thing you blow into to make a high sound"],
-  "whoever": ["pronoun", "the person who; any person who"],
-  "wid": ["noun", "a made-up word with no meaning"],
-  "wise": ["adjective", "knowing a lot and making good decisions"],
-  "wooden": ["adjective", "made of wood"],
-  "wrap": ["verb", "to cover something completely in paper or cloth"],
-  "yeast": ["noun", "a very small living thing used to make bread soft and light"],
-  "zof": ["noun", "a made-up word with no meaning"]
+  "abroad": [
+    "adverb",
+    "in or to another country",
+    "chet elda, xorijda"
+  ],
+  "afterwards": [
+    "adverb",
+    "later, after something else has happened",
+    "keyin, so'ng"
+  ],
+  "alarm": [
+    "noun",
+    "a machine that makes a loud noise to wake you up or to warn you of danger",
+    "budilnik; signal"
+  ],
+  "apologize": [
+    "verb",
+    "to say that you are sorry for something",
+    "kechirim so'ramoq"
+  ],
+  "apps": [
+    "noun",
+    "small programs that you use on a phone or computer",
+    "ilovalar"
+  ],
+  "asleep": [
+    "adjective",
+    "sleeping",
+    "uxlab yotgan"
+  ],
+  "awake": [
+    "adjective",
+    "not sleeping",
+    "uyg'oq"
+  ],
+  "baked": [
+    "adjective",
+    "cooked in an oven",
+    "pishirilgan (pechda)"
+  ],
+  "baking": [
+    "noun",
+    "making bread or cakes in an oven",
+    "non/pishiriq yopish"
+  ],
+  "balcony": [
+    "noun",
+    "a small area outside an upstairs window or door, where you can stand or sit",
+    "balkon"
+  ],
+  "bark": [
+    "verb",
+    "when a dog makes a short, loud sound",
+    "vovullamoq"
+  ],
+  "barter": [
+    "noun",
+    "exchanging things for other things, without using money",
+    "ayirboshlash, barter"
+  ],
+  "battlefield": [
+    "noun",
+    "the place where soldiers fight in a war",
+    "jang maydoni"
+  ],
+  "beak": [
+    "noun",
+    "the hard, pointed mouth of a bird",
+    "tumshuq (qushning)"
+  ],
+  "bean": [
+    "noun",
+    "a seed of some plants, which you can cook and eat or use to make drinks like coffee",
+    "loviya; don (qahva doni)"
+  ],
+  "bedroom": [
+    "noun",
+    "a room where you sleep",
+    "yotoqxona"
+  ],
+  "bee": [
+    "noun",
+    "a small flying insect that makes honey",
+    "asalari"
+  ],
+  "belong": [
+    "verb",
+    "to be owned by someone, or to be in the right place",
+    "tegishli bo'lmoq"
+  ],
+  "bend": [
+    "verb",
+    "to move the top part of your body down towards the ground",
+    "egilmoq, engashmoq"
+  ],
+  "bicycle": [
+    "noun",
+    "a vehicle with two wheels that you ride by moving your legs",
+    "velosiped"
+  ],
+  "bone": [
+    "noun",
+    "one of the hard white parts inside your body",
+    "suyak"
+  ],
+  "bookshop": [
+    "noun",
+    "a shop that sells books",
+    "kitob do'koni"
+  ],
+  "bow": [
+    "verb",
+    "to move your head or body forward and down to show respect or thanks",
+    "ta'zim qilmoq"
+  ],
+  "bread": [
+    "noun",
+    "a common food made from flour and water and baked in an oven",
+    "non"
+  ],
+  "breath": [
+    "noun",
+    "the air that goes into and out of your body",
+    "nafas"
+  ],
+  "bucket": [
+    "noun",
+    "an open container with a handle, used for carrying water",
+    "chelak"
+  ],
+  "builder": [
+    "noun",
+    "a person whose job is to build or repair houses",
+    "quruvchi"
+  ],
+  "bullet": [
+    "noun",
+    "a small piece of metal that comes out of a gun",
+    "o'q (qurol o'qi)"
+  ],
+  "bush": [
+    "noun",
+    "a plant like a small tree with many branches",
+    "buta"
+  ],
+  "camel": [
+    "noun",
+    "a large animal with one or two humps on its back that lives in the desert",
+    "tuya"
+  ],
+  "cancel": [
+    "verb",
+    "to stop something that was planned from happening",
+    "bekor qilmoq"
+  ],
+  "caravan": [
+    "noun",
+    "a group of people and animals travelling together, especially across a desert",
+    "karvon"
+  ],
+  "caravanserai": [
+    "noun",
+    "an old building where travellers and their animals could rest for the night",
+    "karvonsaroy"
+  ],
+  "cheer": [
+    "verb",
+    "to shout loudly to show you are happy or to support someone",
+    "olqishlamoq, qichqirib qo'llamoq"
+  ],
+  "childhood": [
+    "noun",
+    "the time in your life when you are a child",
+    "bolalik"
+  ],
+  "clap": [
+    "verb",
+    "to hit your hands together many times to show you liked something",
+    "qarsak chalmoq"
+  ],
+  "clever": [
+    "adjective",
+    "able to learn and understand things quickly",
+    "aqlli"
+  ],
+  "coat": [
+    "noun",
+    "a warm piece of clothing that you wear over other clothes outside",
+    "palto"
+  ],
+  "coconut": [
+    "noun",
+    "a large brown nut with hard skin, white food and juice inside",
+    "kokos yong'og'i"
+  ],
+  "coin": [
+    "noun",
+    "a small, flat, round piece of metal used as money",
+    "tanga"
+  ],
+  "colony": [
+    "noun",
+    "a country or area that is controlled by another, more powerful country",
+    "mustamlaka"
+  ],
+  "complain": [
+    "verb",
+    "to say that you are not happy about something",
+    "shikoyat qilmoq"
+  ],
+  "concentrate": [
+    "verb",
+    "to think carefully about only one thing",
+    "diqqatni jamlamoq"
+  ],
+  "container": [
+    "noun",
+    "something such as a box or a jar that you keep things in",
+    "idish, quti"
+  ],
+  "cooking": [
+    "noun",
+    "preparing food to eat",
+    "ovqat pishirish"
+  ],
+  "cousin": [
+    "noun",
+    "the child of your aunt or uncle",
+    "amakivachcha, xolavachcha"
+  ],
+  "cowrie": [
+    "noun",
+    "a small, shiny sea shell that people once used as money",
+    "kauri chig'anog'i"
+  ],
+  "crop": [
+    "noun",
+    "a plant that farmers grow in large amounts, such as wheat or rice",
+    "ekin, hosil"
+  ],
+  "cupboard": [
+    "noun",
+    "a piece of furniture with doors where you keep things",
+    "shkaf"
+  ],
+  "curious": [
+    "adjective",
+    "wanting to know or learn about something",
+    "qiziquvchan"
+  ],
+  "curve": [
+    "verb",
+    "to bend in a smooth, round shape",
+    "egilmoq, qayrilmoq"
+  ],
+  "cycling": [
+    "noun",
+    "riding a bicycle",
+    "velosipedda yurish"
+  ],
+  "dancing": [
+    "noun",
+    "moving your body to music",
+    "raqs"
+  ],
+  "daytime": [
+    "noun",
+    "the part of the day when it is light",
+    "kunduz"
+  ],
+  "defender": [
+    "noun",
+    "a football player whose job is to stop the other team from scoring",
+    "himoyachi"
+  ],
+  "democracy": [
+    "noun",
+    "a system where people choose their government by voting",
+    "demokratiya"
+  ],
+  "desert": [
+    "noun",
+    "a large, dry area of land with very little water and few plants",
+    "cho'l"
+  ],
+  "desk": [
+    "noun",
+    "a table that you sit at to work or study",
+    "yozuv stoli, parta"
+  ],
+  "disappear": [
+    "verb",
+    "to go away so that you cannot see or find it any more",
+    "g'oyib bo'lmoq, yo'qolmoq"
+  ],
+  "disappointed": [
+    "adjective",
+    "sad because something was not as good as you hoped",
+    "hafsalasi pir bo'lgan"
+  ],
+  "discovery": [
+    "noun",
+    "finding something new that nobody knew about before",
+    "kashfiyot"
+  ],
+  "doctorate": [
+    "noun",
+    "the highest university degree",
+    "doktorlik darajasi"
+  ],
+  "drawer": [
+    "noun",
+    "a part of a desk or cupboard that you pull out to put things in",
+    "tortma (stol tortmasi)"
+  ],
+  "encourage": [
+    "verb",
+    "to give someone hope and confidence so they continue",
+    "ruhlantirmoq"
+  ],
+  "enslaved": [
+    "adjective",
+    "forced to work for someone else without pay or freedom",
+    "qul qilingan"
+  ],
+  "envelope": [
+    "noun",
+    "a flat paper cover that you put a letter in",
+    "konvert"
+  ],
+  "equip": [
+    "verb",
+    "to give a person or a place the things they need for a job",
+    "jihozlamoq"
+  ],
+  "experiment": [
+    "noun",
+    "a test you do to find out if an idea is true",
+    "tajriba"
+  ],
+  "farmer": [
+    "noun",
+    "a person who grows food or keeps animals on a farm",
+    "fermer, dehqon"
+  ],
+  "farming": [
+    "noun",
+    "the job of growing food or keeping animals",
+    "dehqonchilik"
+  ],
+  "fashionable": [
+    "adjective",
+    "popular at a particular time",
+    "zamonaviy, urfdagi"
+  ],
+  "fee": [
+    "noun",
+    "money that you pay for a service, such as school or a doctor",
+    "to'lov"
+  ],
+  "fig": [
+    "noun",
+    "a soft, sweet fruit with many small seeds, or the tree it grows on",
+    "anjir"
+  ],
+  "fisherman": [
+    "noun",
+    "a person who catches fish as a job",
+    "baliqchi"
+  ],
+  "float": [
+    "verb",
+    "to stay on top of water without going down",
+    "suv yuzida qalqib turmoq"
+  ],
+  "flour": [
+    "noun",
+    "a white or brown powder made from grain, used to make bread and cakes",
+    "un"
+  ],
+  "friendship": [
+    "noun",
+    "the relationship between friends",
+    "do'stlik"
+  ],
+  "frog": [
+    "noun",
+    "a small green animal that lives near water and jumps",
+    "qurbaqa"
+  ],
+  "gate": [
+    "noun",
+    "a kind of door in a wall or fence",
+    "darvoza"
+  ],
+  "goalkeeper": [
+    "noun",
+    "the football player who tries to stop the ball going into the goal",
+    "darvozabon"
+  ],
+  "goat": [
+    "noun",
+    "an animal with horns that is kept on farms for its milk",
+    "echki"
+  ],
+  "grain": [
+    "noun",
+    "the seeds of plants like wheat and rice, used for food; also a very small piece of something like sand",
+    "don; zarra"
+  ],
+  "grandfather": [
+    "noun",
+    "the father of your mother or father",
+    "bobo"
+  ],
+  "grandmother": [
+    "noun",
+    "the mother of your mother or father",
+    "buvi"
+  ],
+  "graph": [
+    "noun",
+    "a picture with lines that shows how numbers change",
+    "grafik"
+  ],
+  "grass": [
+    "noun",
+    "a common green plant that covers fields and gardens",
+    "o't, maysa"
+  ],
+  "gray": [
+    "adjective",
+    "the colour between black and white",
+    "kulrang"
+  ],
+  "habit": [
+    "noun",
+    "something you do often and regularly",
+    "odat"
+  ],
+  "hallway": [
+    "noun",
+    "a long, narrow space inside a building with doors to rooms",
+    "yo'lak"
+  ],
+  "handwriting": [
+    "noun",
+    "the way a person writes with a pen",
+    "qo'lyozma, xat"
+  ],
+  "harm": [
+    "verb",
+    "to hurt or damage someone or something",
+    "zarar yetkazmoq"
+  ],
+  "heal": [
+    "verb",
+    "to become healthy again after an injury",
+    "tuzalmoq"
+  ],
+  "heartbroken": [
+    "adjective",
+    "very, very sad",
+    "qattiq qayg'urgan"
+  ],
+  "helpful": [
+    "adjective",
+    "useful, or happy to help",
+    "foydali; yordam beruvchi"
+  ],
+  "hiding": [
+    "noun",
+    "being in a place where nobody can see you",
+    "yashirinish"
+  ],
+  "homework": [
+    "noun",
+    "school work that you do at home",
+    "uy vazifasi"
+  ],
+  "honey": [
+    "noun",
+    "a sweet, thick food that bees make",
+    "asal"
+  ],
+  "hurry": [
+    "noun",
+    "needing to move or do something quickly",
+    "shoshilish"
+  ],
+  "illness": [
+    "noun",
+    "a disease; being sick",
+    "kasallik"
+  ],
+  "infection": [
+    "noun",
+    "an illness caused by very small living things entering your body",
+    "infeksiya, yuqumli kasallik"
+  ],
+  "insect": [
+    "noun",
+    "a very small animal with six legs, like a bee or a fly",
+    "hasharot"
+  ],
+  "interrupt": [
+    "verb",
+    "to stop someone while they are speaking",
+    "gapini bo'lmoq"
+  ],
+  "invite": [
+    "verb",
+    "to ask someone to come to an event or to your home",
+    "taklif qilmoq"
+  ],
+  "jacket": [
+    "noun",
+    "a short coat",
+    "kurtka"
+  ],
+  "jam": [
+    "noun",
+    "a situation where too many cars, bikes or people cannot move",
+    "tirbandlik"
+  ],
+  "journalist": [
+    "noun",
+    "a person who writes news for a newspaper, website or TV",
+    "jurnalist"
+  ],
+  "kilometer": [
+    "noun",
+    "a distance of 1,000 metres",
+    "kilometr"
+  ],
+  "knife": [
+    "noun",
+    "a tool with a sharp edge for cutting",
+    "pichoq"
+  ],
+  "knock": [
+    "verb",
+    "to hit a door with your hand so people inside know you are there",
+    "taqillatmoq"
+  ],
+  "laptop": [
+    "noun",
+    "a small computer that you can carry",
+    "noutbuk"
+  ],
+  "leather": [
+    "noun",
+    "material made from animal skin, used for shoes, bags and wallets",
+    "charm, teri"
+  ],
+  "lesson": [
+    "noun",
+    "a period of time when someone teaches you something",
+    "dars"
+  ],
+  "lift": [
+    "verb",
+    "to move something up",
+    "ko'tarmoq"
+  ],
+  "liquid": [
+    "noun",
+    "something like water or oil that flows and is not solid",
+    "suyuqlik"
+  ],
+  "loaf": [
+    "noun",
+    "bread that has been baked in one piece",
+    "butun non"
+  ],
+  "loud": [
+    "adjective",
+    "making a lot of noise",
+    "baland ovozli"
+  ],
+  "lunchtime": [
+    "noun",
+    "the time in the middle of the day when people eat lunch",
+    "tushlik vaqti"
+  ],
+  "maker": [
+    "noun",
+    "a person who makes something",
+    "yasovchi, ishlab chiqaruvchi"
+  ],
+  "mathematics": [
+    "noun",
+    "the study of numbers and shapes",
+    "matematika"
+  ],
+  "meal": [
+    "noun",
+    "food that you eat at one time, such as breakfast or dinner",
+    "ovqat (bir mahal)"
+  ],
+  "merchant": [
+    "noun",
+    "a person who buys and sells goods, especially in the past",
+    "savdogar"
+  ],
+  "mixture": [
+    "noun",
+    "different things put together",
+    "aralashma"
+  ],
+  "nervous": [
+    "adjective",
+    "a little afraid or worried about something",
+    "hayajonlangan, asabiy"
+  ],
+  "nil": [
+    "noun",
+    "zero, used for football scores",
+    "nol (hisobda)"
+  ],
+  "noisy": [
+    "adjective",
+    "making a lot of noise",
+    "shovqinli"
+  ],
+  "nonsense": [
+    "noun",
+    "words or ideas that have no meaning or are silly",
+    "bema'ni gap"
+  ],
+  "notebook": [
+    "noun",
+    "a small book of empty pages for writing in",
+    "daftar"
+  ],
+  "octopus": [
+    "noun",
+    "a soft sea animal with eight long arms",
+    "sakkizoyoq"
+  ],
+  "ordinary": [
+    "adjective",
+    "normal, not special",
+    "oddiy"
+  ],
+  "organize": [
+    "verb",
+    "to plan and arrange something",
+    "tashkil qilmoq, tartibga solmoq"
+  ],
+  "ours": [
+    "pronoun",
+    "the one that belongs to us",
+    "bizniki"
+  ],
+  "package": [
+    "noun",
+    "a box or parcel that is sent by post",
+    "posilka, quti"
+  ],
+  "packing": [
+    "noun",
+    "putting things into boxes or bags",
+    "joylash, qadoqlash"
+  ],
+  "parking": [
+    "noun",
+    "leaving a car in a place for some time",
+    "avtoturargoh"
+  ],
+  "passion": [
+    "noun",
+    "a very strong feeling of loving something",
+    "ishtiyoq"
+  ],
+  "petrol": [
+    "noun",
+    "the liquid fuel that cars use",
+    "benzin"
+  ],
+  "photograph": [
+    "noun",
+    "a picture taken with a camera",
+    "fotosurat"
+  ],
+  "physics": [
+    "noun",
+    "the science of energy, light, heat and how things move",
+    "fizika"
+  ],
+  "pipe": [
+    "noun",
+    "a long tube that water or gas flows through",
+    "quvur"
+  ],
+  "planting": [
+    "noun",
+    "putting seeds or young plants in the ground so they grow",
+    "ekish"
+  ],
+  "plastic": [
+    "noun",
+    "a light, strong material made in factories",
+    "plastik"
+  ],
+  "pocket": [
+    "noun",
+    "a small bag sewn into clothes for keeping things",
+    "cho'ntak"
+  ],
+  "pollen": [
+    "noun",
+    "a fine yellow powder made by flowers",
+    "gulchang"
+  ],
+  "polonium": [
+    "noun",
+    "a rare chemical element that is radioactive",
+    "poloniy"
+  ],
+  "possession": [
+    "noun",
+    "something that you own",
+    "mulk, buyum"
+  ],
+  "pot": [
+    "noun",
+    "a round container for cooking or for keeping plants in",
+    "qozon; tuvak"
+  ],
+  "pound": [
+    "noun",
+    "the money used in the UK",
+    "funt (pul birligi)"
+  ],
+  "poverty": [
+    "noun",
+    "being very poor",
+    "qashshoqlik"
+  ],
+  "powder": [
+    "noun",
+    "something made of very small, dry pieces, like flour",
+    "kukun"
+  ],
+  "prayer": [
+    "noun",
+    "words that you say when you speak to God",
+    "ibodat, duo"
+  ],
+  "producer": [
+    "noun",
+    "a company or country that makes or grows something",
+    "ishlab chiqaruvchi"
+  ],
+  "pyramid": [
+    "noun",
+    "a very large stone building with a square base and four sides that meet in a point, built in ancient Egypt",
+    "piramida"
+  ],
+  "radioactive": [
+    "adjective",
+    "giving out a dangerous kind of energy",
+    "radioaktiv"
+  ],
+  "radioactivity": [
+    "noun",
+    "a dangerous kind of energy that comes from some materials",
+    "radioaktivlik"
+  ],
+  "railway": [
+    "noun",
+    "the metal tracks that trains travel on",
+    "temir yo'l"
+  ],
+  "receptionist": [
+    "noun",
+    "a person who welcomes visitors at the front desk of a hotel or office",
+    "qabulxona xodimi, administrator"
+  ],
+  "recipe": [
+    "noun",
+    "instructions that tell you how to cook something",
+    "retsept (taom tayyorlash usuli)"
+  ],
+  "referee": [
+    "noun",
+    "the person who controls a sports game and makes sure players follow the rules",
+    "hakam"
+  ],
+  "relative": [
+    "noun",
+    "a member of your family",
+    "qarindosh"
+  ],
+  "relax": [
+    "verb",
+    "to rest and become calm",
+    "dam olmoq, bo'shashmoq"
+  ],
+  "repair": [
+    "verb",
+    "to fix something that is broken",
+    "ta'mirlamoq"
+  ],
+  "repeat": [
+    "verb",
+    "to do or say something again",
+    "takrorlamoq"
+  ],
+  "repetition": [
+    "noun",
+    "doing something again and again",
+    "takrorlash"
+  ],
+  "rested": [
+    "adjective",
+    "not tired any more because you have slept or rested",
+    "dam olgan"
+  ],
+  "retrieval": [
+    "noun",
+    "getting something back, for example bringing information out of your memory",
+    "esga olish, qayta topish"
+  ],
+  "reward": [
+    "noun",
+    "something you get for doing something good",
+    "mukofot"
+  ],
+  "rider": [
+    "noun",
+    "a person who rides a bicycle or a horse",
+    "chavandoz; velosipedchi"
+  ],
+  "ruler": [
+    "noun",
+    "a person, such as a king, who controls a country",
+    "hukmdor"
+  ],
+  "salary": [
+    "noun",
+    "the money you get every month for your job",
+    "maosh"
+  ],
+  "sand": [
+    "noun",
+    "the very small yellow grains on a beach",
+    "qum"
+  ],
+  "scare": [
+    "verb",
+    "to make someone afraid",
+    "qo'rqitmoq"
+  ],
+  "scientist": [
+    "noun",
+    "a person who studies science",
+    "olim"
+  ],
+  "secondary": [
+    "adjective",
+    "for students aged about 11 to 18 (secondary school)",
+    "o'rta (maktab)"
+  ],
+  "seed": [
+    "noun",
+    "the small, hard part of a plant that a new plant grows from",
+    "urug'"
+  ],
+  "shake": [
+    "verb",
+    "to move quickly from side to side or up and down, for example when you are afraid",
+    "titramoq"
+  ],
+  "shallow": [
+    "adjective",
+    "not deep",
+    "sayoz"
+  ],
+  "shell": [
+    "noun",
+    "the hard outside part of a nut, egg or some animals",
+    "chig'anoq; po'choq"
+  ],
+  "shock": [
+    "verb",
+    "to surprise and upset someone very much",
+    "hayratga solmoq"
+  ],
+  "shout": [
+    "verb",
+    "to say something very loudly",
+    "baqirmoq"
+  ],
+  "shy": [
+    "adjective",
+    "nervous about meeting or talking to people",
+    "uyatchan"
+  ],
+  "silence": [
+    "noun",
+    "when there is no sound",
+    "sukunat"
+  ],
+  "silk": [
+    "noun",
+    "a soft, smooth, expensive material made by small insects",
+    "ipak"
+  ],
+  "smartphones": [
+    "noun",
+    "mobile phones that can use the internet and apps",
+    "smartfonlar"
+  ],
+  "smell": [
+    "noun",
+    "what you notice with your nose",
+    "hid"
+  ],
+  "snail": [
+    "noun",
+    "a small, slow animal with a soft body and a round shell on its back",
+    "shilliqqurt"
+  ],
+  "snake": [
+    "noun",
+    "a long, thin animal with no legs",
+    "ilon"
+  ],
+  "sofa": [
+    "noun",
+    "a long, soft seat for two or more people",
+    "divan"
+  ],
+  "soil": [
+    "noun",
+    "the top part of the ground, where plants grow",
+    "tuproq"
+  ],
+  "solve": [
+    "verb",
+    "to find the answer to a problem",
+    "hal qilmoq"
+  ],
+  "sore": [
+    "adjective",
+    "hurting a little",
+    "og'riyotgan"
+  ],
+  "soup": [
+    "noun",
+    "a hot liquid food made by cooking vegetables or meat in water",
+    "sho'rva"
+  ],
+  "spice": [
+    "noun",
+    "a powder or seed from a plant, used to give food more flavour",
+    "ziravor"
+  ],
+  "stair": [
+    "noun",
+    "one of a set of steps that go from one floor to another",
+    "zinapoya"
+  ],
+  "stamp": [
+    "verb",
+    "to press a picture or words onto something",
+    "muhr bosmoq"
+  ],
+  "substance": [
+    "noun",
+    "a kind of material, solid or liquid",
+    "modda"
+  ],
+  "survive": [
+    "verb",
+    "to continue to live or exist",
+    "omon qolmoq"
+  ],
+  "suspicious": [
+    "adjective",
+    "not trusting someone or something",
+    "shubhali, ishonchsiz"
+  ],
+  "swallow": [
+    "verb",
+    "to make food or drink go down your throat",
+    "yutmoq"
+  ],
+  "swim": [
+    "verb",
+    "to move through water using your arms and legs",
+    "suzmoq"
+  ],
+  "swimming": [
+    "noun",
+    "the activity of moving through water using your arms and legs",
+    "suzish"
+  ],
+  "symbol": [
+    "noun",
+    "something that represents an idea",
+    "ramz"
+  ],
+  "tall": [
+    "adjective",
+    "higher than most people or things",
+    "baland bo'yli"
+  ],
+  "taxi": [
+    "noun",
+    "a car with a driver that you pay to take you somewhere",
+    "taksi"
+  ],
+  "teammate": [
+    "noun",
+    "a person in the same team as you",
+    "jamoadosh"
+  ],
+  "tear": [
+    "noun",
+    "a drop of water that comes from your eye when you cry",
+    "ko'z yoshi"
+  ],
+  "thin": [
+    "adjective",
+    "with little air or oxygen, high up in mountains; also not thick",
+    "siyrak (havo); yupqa"
+  ],
+  "ton": [
+    "noun",
+    "a very heavy weight: 1,000 kilograms",
+    "tonna"
+  ],
+  "tourism": [
+    "noun",
+    "the business of helping people travel for holidays",
+    "turizm"
+  ],
+  "tourist": [
+    "noun",
+    "a person who travels to a place on holiday",
+    "sayyoh"
+  ],
+  "towel": [
+    "noun",
+    "a piece of cloth used for drying your body or things",
+    "sochiq"
+  ],
+  "trader": [
+    "noun",
+    "a person who buys and sells things",
+    "savdogar"
+  ],
+  "tragedy": [
+    "noun",
+    "a very sad event, often when someone dies",
+    "fojia"
+  ],
+  "trainer": [
+    "noun",
+    "a person who teaches someone to do a job or a skill",
+    "murabbiy, o'rgatuvchi"
+  ],
+  "translation": [
+    "noun",
+    "changing words from one language into another",
+    "tarjima"
+  ],
+  "traveler": [
+    "noun",
+    "a person who is on a journey",
+    "sayohatchi"
+  ],
+  "umbrella": [
+    "noun",
+    "a thing you hold over your head to keep dry when it rains",
+    "soyabon"
+  ],
+  "uncle": [
+    "noun",
+    "the brother of your mother or father",
+    "amaki, tog'a"
+  ],
+  "underneath": [
+    "preposition",
+    "under something",
+    "ostida"
+  ],
+  "unlock": [
+    "verb",
+    "to open a door or lock with a key",
+    "qulfini ochmoq"
+  ],
+  "unusual": [
+    "adjective",
+    "not normal or common",
+    "g'ayrioddiy"
+  ],
+  "upstairs": [
+    "adverb",
+    "on a higher floor of a building",
+    "yuqori qavatda"
+  ],
+  "useless": [
+    "adjective",
+    "not useful; it does not help",
+    "foydasiz"
+  ],
+  "valuable": [
+    "adjective",
+    "worth a lot of money, or very useful",
+    "qimmatli"
+  ],
+  "vegetable": [
+    "noun",
+    "a plant you eat, such as a carrot or potato",
+    "sabzavot"
+  ],
+  "violin": [
+    "noun",
+    "a musical instrument with four strings that you hold under your chin",
+    "skripka"
+  ],
+  "violinist": [
+    "noun",
+    "a person who plays the violin",
+    "skripkachi"
+  ],
+  "wallet": [
+    "noun",
+    "a small, flat case for keeping money and cards",
+    "hamyon"
+  ],
+  "wash": [
+    "verb",
+    "to clean something with water, or to carry something away with water",
+    "yuvmoq; yuvib ketmoq"
+  ],
+  "weigh": [
+    "verb",
+    "to have a certain weight",
+    "og'irligi ... bo'lmoq"
+  ],
+  "wheat": [
+    "noun",
+    "a plant whose grain is used to make flour and bread",
+    "bug'doy"
+  ],
+  "whistle": [
+    "noun",
+    "a small thing you blow into to make a high sound",
+    "hushtak"
+  ],
+  "whoever": [
+    "pronoun",
+    "the person who; any person who",
+    "kim bo'lsa ham"
+  ],
+  "wid": [
+    "noun",
+    "a made-up word with no meaning",
+    "ma'nosiz so'z"
+  ],
+  "wise": [
+    "adjective",
+    "knowing a lot and making good decisions",
+    "dono"
+  ],
+  "wooden": [
+    "adjective",
+    "made of wood",
+    "yog'och"
+  ],
+  "wrap": [
+    "verb",
+    "to cover something completely in paper or cloth",
+    "o'ramoq"
+  ],
+  "yeast": [
+    "noun",
+    "a very small living thing used to make bread soft and light",
+    "xamirturush"
+  ],
+  "zof": [
+    "noun",
+    "a made-up word with no meaning",
+    "ma'nosiz so'z"
+  ]
 }

@@ -61,6 +61,7 @@ export function ReviewSession({ cards, mode }: { cards: ReviewCard[]; mode: "typ
         <span className="ml-3 text-muted">left</span>
       </p>
 
+      {card.checkup && <p className="mb-3 text-muted">Check-up: you learned this {card.isPhrase ? "phrase" : "word"} earlier. Do you still know it?</p>}
       {card.gapped ? (
         <p className="text-2xl leading-relaxed">
           {before}
@@ -125,14 +126,16 @@ export function ReviewSession({ cards, mode }: { cards: ReviewCard[]; mode: "typ
         <div className="mt-6" aria-live="polite">
           <p className={cx("font-medium", result.correct ? "text-good" : "text-warn")}>
             {result.graduated
-              ? "Correct! You know this word now. 🎉"
-              : result.correct
+              ? "Correct! You know this word now. 🎉 It will come back for a check-up in a month."
+              : result.forgotten
+                ? `Good try. The answer is “${result.expected}”. It's back in your learning words for now.`
+                : result.correct
                 ? `Correct! See you again in ${result.nextInDays} day${result.nextInDays === 1 ? "" : "s"}.`
                 : `Good try. The answer is “${result.expected}”. It will come back in a few minutes.`}
           </p>
-          {!result.graduated && (
+          {!result.graduated && !card.checkup && (
             <p className="mt-1 text-xs text-muted">
-              {result.correct ? Math.min(card.streak + 1, GRADUATE_STREAK) : 0} of {GRADUATE_STREAK} correct reviews in a row to learn it · seen in {card.exposures} text{card.exposures === 1 ? "" : "s"}
+              {result.correct ? Math.min(card.streak + 1, GRADUATE_STREAK) : 0} of {GRADUATE_STREAK} correct reviews in a row to learn it · met in {card.contexts} sentence{card.contexts === 1 ? "" : "s"}
             </p>
           )}
           <Button className="mt-4" onClick={next} autoFocus>Next</Button>

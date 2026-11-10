@@ -1,14 +1,12 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import { TextTable } from "@/components/text-table";
 import { EmptyState, cx } from "@/components/ui";
 import type { LibraryEntry } from "@/lib/recommend";
-import { SERIES } from "@/lib/series";
-import { topicLabel } from "@/lib/topics";
 
 const LEVELS = [
-  { key: "open", label: "At my level" },
+  { key: "open", label: "For me" },
   { key: "pleasure", label: "Easy reads" },
   { key: "locked", label: "Coming soon" },
   { key: "all", label: "All" },
@@ -16,83 +14,54 @@ const LEVELS = [
 
 type LevelKey = (typeof LEVELS)[number]["key"];
 
-/** A row of comma-separated choices, like the category links on AnkiWeb's shared decks page. */
-function LinkRow<T extends string>({ label, options, value, onChange }: {
-  label: string;
-  options: { value: T | null; label: string }[];
-  value: T | null;
-  onChange: (v: T | null) => void;
-}) {
-  return (
-    <p>
-      <span className="text-muted">{label}: </span>
-      {options.map((o, i) => (
-        <Fragment key={o.label}>
-          {i > 0 && ", "}
-          <button
-            type="button"
-            aria-pressed={value === o.value}
-            onClick={() => onChange(o.value)}
-            className={cx(value === o.value ? "font-bold text-ink" : "text-accent underline")}
-          >
-            {o.label}
-          </button>
-        </Fragment>
-      ))}
-    </p>
-  );
-}
+const matches = (e: LibraryEntry, key: LevelKey) =>
+  key === "all" || (key === "open" ? e.level !== "locked" : e.level === key);
 
 export function LibraryBrowser({ entries, wpm }: { entries: LibraryEntry[]; wpm: number }) {
-  const [level, setLevel] = useState<LevelKey | null>("open");
-  const [genre, setGenre] = useState<string | null>(null);
-  const [topic, setTopic] = useState<string | null>(null);
-  const [series, setSeries] = useState<string | null>(null);
+  const [level, setLevel] = useState<LevelKey>("open");
+  const [genre, setGenre] = useState("");
   const [hideRead, setHideRead] = useState(false);
 
   const genres = [...new Set(entries.map((e) => e.genre))].sort();
-  const topics = [...new Set(entries.flatMap((e) => e.topics))].sort();
-  const count = (key: LevelKey) => entries.filter((e) => key === "all" || (key === "open" ? e.level !== "locked" : e.level === key)).length;
-  const shown = entries.filter(
-    (e) =>
-      (!level || level === "all" ||
-        (level === "open" && e.level !== "locked") ||
-        (level === "pleasure" && e.level === "pleasure") ||
-        (level === "locked" && e.level === "locked")) &&
-      (!genre || e.genre === genre) &&
-      (!topic || e.topics.includes(topic)) &&
-      (!series || e.series === series) &&
-      (!hideRead || !e.completed),
-  );
-  const ordered = series
-    ? [...shown].sort((a, b) => (a.seriesPart ?? 0) - (b.seriesPart ?? 0))
-    : level === "locked"
-      ? [...shown].sort((a, b) => b.coverage - a.coverage)
-      : shown;
+  const shown = entries.filter((e) => matches(e, level) && (!genre || e.genre === genre) && (!hideRead || !e.completed));
+  const ordered = level === "locked" ? [...shown].sort((a, b) => b.coverage - a.coverage) : shown;
 
   return (
     <div>
-      <div className="mb-4 space-y-1">
-        <LinkRow
-          label="Show"
-          options={LEVELS.map((l) => ({ value: l.key, label: `${l.label} (${count(l.key)})` }))}
-          value={level}
-          onChange={(v) => setLevel(v ?? "all")}
-        />
-        <LinkRow label="Type" options={[{ value: null, label: "Any" }, ...genres.map((g) => ({ value: g, label: g }))]} value={genre} onChange={setGenre} />
-        <LinkRow
-          label="Series"
-          options={[{ value: null, label: "Any" }, ...Object.entries(SERIES).map(([id, title]) => ({ value: id, label: title }))]}
-          value={series}
-          onChange={setSeries}
-        />
-        <LinkRow label="Topic" options={[{ value: null, label: "Any" }, ...topics.map((t) => ({ value: t, label: topicLabel(t) }))]} value={topic} onChange={setTopic} />
-        <label className="flex items-center gap-2">
+      <div className="mb-4 flex flex-wrap items-center gap-x-5 gap-y-3">
+        <div className="inline-flex" role="group" aria-label="Show">
+          {LEVELS.map((l, i) => (
+            <button
+              key={l.key}
+              type="button"
+              aria-pressed={level === l.key}
+              onClick={() => setLevel(l.key)}
+              className={cx(
+                "border border-accent px-3 py-1.5 text-sm",
+                i === 0 ? "rounded-l-md" : "-ml-px",
+                i === LEVELS.length - 1 && "rounded-r-md",
+                level === l.key ? "bg-accent text-accent-ink" : "text-accent hover:bg-accent-soft",
+              )}
+            >
+              {l.label} <span className="opacity-70">{entries.filter((e) => matches(e, l.key)).length}</span>
+            </button>
+          ))}
+        </div>
+        <select
+          value={genre}
+          onChange={(e) => setGenre(e.target.value)}
+          aria-label="Type of text"
+          className="rounded-md border border-line bg-surface px-2 py-1.5 text-sm"
+        >
+          <option value="">All types</option>
+          {genres.map((g) => <option key={g} value={g}>{g}</option>)}
+        </select>
+        <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={hideRead} onChange={(e) => setHideRead(e.target.checked)} className="accent-[var(--accent)]" />
           Hide texts I&apos;ve read
         </label>
       </div>
-      {ordered.length ? <TextTable entries={ordered} wpm={wpm} /> : <EmptyState title="No texts match these filters." />}
+      {ordered.length ? <TextTable entries={ordered} wpm={wpm} /> : <EmptyState title="No texts match." />}
     </div>
   );
 }

@@ -91,6 +91,22 @@
         "answer": 1,
         "explanation": "He discovered it before Aziz arrived, so we use the past perfect: had already discovered."
       }
+    },
+    {
+      "structure": "Articles: a or an",
+      "explanation": "We say an before a vowel sound (an older man, an hour) and a before a consonant sound (a grey coat, a university). The sound matters, not the letter.",
+      "example": "When the bus stopped near the city park, an older man in a grey coat got off in a hurry.",
+      "exercise": {
+        "question": "Choose the correct words: She is ___ honest student and ___ good friend.",
+        "options": [
+          "an / a",
+          "a / an",
+          "an / an",
+          "a / a"
+        ],
+        "answer": 0,
+        "explanation": "“Honest” starts with a vowel sound (the h is silent), so an honest; “good” starts with a consonant sound, so a good."
+      }
     }
   ]
 }

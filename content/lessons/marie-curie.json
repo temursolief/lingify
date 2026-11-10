@@ -75,17 +75,74 @@
     {
       "phrase": "give up",
       "inText": "give up",
-      "meaning": "stop trying"
+      "meaning": "stop trying",
+      "uz": "voz kechmoq, taslim bo'lmoq"
     },
     {
       "phrase": "at the top of",
       "inText": "at the top of her class",
-      "meaning": "the best in a group"
+      "meaning": "the best in a group",
+      "uz": "eng yaxshilaridan biri"
     },
     {
       "phrase": "get married",
       "inText": "got married",
-      "meaning": "become husband and wife"
+      "meaning": "become husband and wife",
+      "uz": "turmush qurmoq"
+    },
+    {
+      "phrase": "be allowed to",
+      "inText": "allowed to",
+      "meaning": "have permission to",
+      "uz": "...ga ruxsat berilmoq"
+    },
+    {
+      "phrase": "save money",
+      "inText": "saved her money",
+      "meaning": "keep money instead of spending it",
+      "uz": "pul yig'moq"
+    },
+    {
+      "phrase": "pay for",
+      "inText": "pay for",
+      "meaning": "give money to buy something",
+      "uz": "...uchun to'lamoq"
+    },
+    {
+      "phrase": "be busy doing",
+      "inText": "busy studying",
+      "meaning": "have a lot to do",
+      "uz": "...bilan band bo'lmoq"
+    },
+    {
+      "phrase": "share a passion for",
+      "inText": "shared the same passion for",
+      "meaning": "both love the same thing",
+      "uz": "bir xil ishtiyoqqa ega bo'lmoq"
+    },
+    {
+      "phrase": "win a prize",
+      "inText": "won the Nobel Prize",
+      "meaning": "get a prize",
+      "uz": "mukofot yutmoq"
+    },
+    {
+      "phrase": "save lives",
+      "inText": "saved many lives",
+      "meaning": "stop people from dying",
+      "uz": "hayotlarni saqlab qolmoq"
+    },
+    {
+      "phrase": "become seriously ill",
+      "inText": "became seriously ill",
+      "meaning": "get a very bad illness",
+      "uz": "og'ir kasal bo'lmoq"
+    },
+    {
+      "phrase": "change something forever",
+      "inText": "changed science forever",
+      "meaning": "change something completely",
+      "uz": "...ni butunlay o'zgartirmoq"
     }
   ],
   "grammar": [

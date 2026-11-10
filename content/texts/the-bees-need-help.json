@@ -90,6 +90,22 @@
         "answer": 1,
         "explanation": "Second conditional: if + past simple, would + verb."
       }
+    },
+    {
+      "structure": "Word + preposition: depend on, afraid of",
+      "explanation": "Some verbs and adjectives always take the same preposition: depend on, afraid of, interested in. Learn them together as one chunk.",
+      "example": "Scientists say that about one third of the food we eat depends on bees and other insects.",
+      "exercise": {
+        "question": "Choose the correct word: She is afraid ___ dogs.",
+        "options": [
+          "of",
+          "from",
+          "to",
+          "at"
+        ],
+        "answer": 0,
+        "explanation": "afraid of. In Uzbek we say “...dan qo'rqmoq”, but English uses of, not from."
+      }
     }
   ]
 }

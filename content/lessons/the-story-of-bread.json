@@ -75,17 +75,74 @@
     {
       "phrase": "be given credit for",
       "inText": "given credit for",
-      "meaning": "be praised as the person who did something"
+      "meaning": "be praised as the person who did something",
+      "uz": "...ning muallifi deb tan olinmoq"
     },
     {
       "phrase": "a lack of",
       "inText": "a lack of",
-      "meaning": "not having enough of something"
+      "meaning": "not having enough of something",
+      "uz": "...ning yetishmasligi"
     },
     {
       "phrase": "more and more",
       "inText": "more and more",
-      "meaning": "a growing number"
+      "meaning": "a growing number",
+      "uz": "tobora ko'proq"
+    },
+    {
+      "phrase": "come in many shapes and sizes",
+      "inText": "comes in many shapes and sizes",
+      "meaning": "exist in many different forms",
+      "uz": "turli shakl va o'lchamlarda bo'lmoq"
+    },
+    {
+      "phrase": "break something into pieces",
+      "inText": "broke them into small pieces",
+      "meaning": "make something into small parts",
+      "uz": "bo'laklarga bo'lmoq"
+    },
+    {
+      "phrase": "large amounts of",
+      "inText": "large amounts of",
+      "meaning": "a lot of",
+      "uz": "katta miqdorda"
+    },
+    {
+      "phrase": "because of",
+      "inText": "because of",
+      "meaning": "for the reason of",
+      "uz": "...tufayli"
+    },
+    {
+      "phrase": "a sign of",
+      "inText": "a sign of",
+      "meaning": "something that shows",
+      "uz": "...ning belgisi"
+    },
+    {
+      "phrase": "at the start of",
+      "inText": "at the start of",
+      "meaning": "at the beginning of",
+      "uz": "...ning boshida"
+    },
+    {
+      "phrase": "easy to buy",
+      "inText": "easy to buy",
+      "meaning": "not difficult to buy",
+      "uz": "sotib olish oson"
+    },
+    {
+      "phrase": "in recent years",
+      "inText": "in recent years",
+      "meaning": "during the last few years",
+      "uz": "so'nggi yillarda"
+    },
+    {
+      "phrase": "be part of our lives",
+      "inText": "part of our lives",
+      "meaning": "be a normal thing that we have every day",
+      "uz": "hayotimizning bir qismi bo'lmoq"
     }
   ],
   "grammar": [

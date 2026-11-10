@@ -75,17 +75,74 @@
     {
       "phrase": "make friends with",
       "inText": "make friends with",
-      "meaning": "start a friendly relationship with someone or something"
+      "meaning": "start a friendly relationship with",
+      "uz": "...bilan do'stlashmoq"
     },
     {
       "phrase": "give up",
       "inText": "give up",
-      "meaning": "stop trying"
+      "meaning": "stop trying",
+      "uz": "voz kechmoq, taslim bo'lmoq"
     },
     {
       "phrase": "take a deep breath",
       "inText": "took a deep breath",
-      "meaning": "breathe in slowly, often to feel calmer"
+      "meaning": "breathe in slowly, often to feel calmer",
+      "uz": "chuqur nafas olmoq"
+    },
+    {
+      "phrase": "be afraid of",
+      "inText": "afraid of",
+      "meaning": "feel fear about something",
+      "uz": "...dan qo'rqmoq"
+    },
+    {
+      "phrase": "have an excuse",
+      "inText": "had an excuse",
+      "meaning": "have a reason for not doing something",
+      "uz": "bahonasi bo'lmoq"
+    },
+    {
+      "phrase": "have fun",
+      "inText": "having fun",
+      "meaning": "enjoy yourself",
+      "uz": "maza qilmoq"
+    },
+    {
+      "phrase": "it's your turn",
+      "inText": "it's your turn",
+      "meaning": "now you must do it",
+      "uz": "endi sening navbating"
+    },
+    {
+      "phrase": "say no",
+      "inText": "say no",
+      "meaning": "refuse",
+      "uz": "yo'q demoq"
+    },
+    {
+      "phrase": "at the edge of",
+      "inText": "at the edge of",
+      "meaning": "at the side of",
+      "uz": "...ning chetida"
+    },
+    {
+      "phrase": "go well",
+      "inText": "went well",
+      "meaning": "be successful",
+      "uz": "yaxshi o'tmoq"
+    },
+    {
+      "phrase": "without help",
+      "inText": "without help",
+      "meaning": "alone, with nobody helping",
+      "uz": "yordamsiz"
+    },
+    {
+      "phrase": "the best ... of your life",
+      "inText": "the best holiday of her life",
+      "meaning": "better than any other in your life",
+      "uz": "hayotidagi eng yaxshi ..."
     }
   ],
   "grammar": [

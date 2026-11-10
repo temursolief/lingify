@@ -13,7 +13,7 @@ export function LearningProfileView({ profile, viewer = "student" }: { profile: 
   return (
     <div className="space-y-6">
       <Card>
-        <h2 className="font-semibold">{you ? "What I can do" : "Can-do statements"} (CEFR B1 reading)</h2>
+        <h2 className="font-semibold">{you ? "What I can do" : "Can-do statements"}</h2>
         <p className="mb-4 text-sm text-muted">Based on {you ? "your" : "their"} answers and reading so far.</p>
         <ul className="divide-y divide-line">
           {profile.canDo.map((c) => {
@@ -92,13 +92,13 @@ export function LearningProfileView({ profile, viewer = "student" }: { profile: 
         </Card>
       </div>
 
-      <Card>
+      {!you && <Card>
         <h2 className="font-semibold">Speed reading</h2>
         <p className="mb-4 text-sm text-muted">
           Words per minute on easy texts. {profile.fluency.best ? `Best: ${profile.fluency.best} wpm.` : ""} Fluent readers of easy texts reach 150–200.
         </p>
         <LineChart data={profile.fluency.runs} unit=" wpm" label="Speed reading words per minute" />
-      </Card>
+      </Card>}
     </div>
   );
 }

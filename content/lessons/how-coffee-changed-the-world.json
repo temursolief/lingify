@@ -75,17 +75,74 @@
     {
       "phrase": "look after",
       "inText": "looking after",
-      "meaning": "take care of"
+      "meaning": "take care of",
+      "uz": "...ga qaramoq, parvarish qilmoq"
     },
     {
       "phrase": "stay awake",
       "inText": "stay awake",
-      "meaning": "not go to sleep"
+      "meaning": "not go to sleep",
+      "uz": "uxlamay turmoq"
     },
     {
       "phrase": "bring people together",
       "inText": "brings people together",
-      "meaning": "make people meet and feel connected"
+      "meaning": "make people meet and feel connected",
+      "uz": "odamlarni birlashtirmoq"
+    },
+    {
+      "phrase": "a cup of",
+      "inText": "cups of coffee",
+      "meaning": "the amount a cup holds",
+      "uz": "bir piyola"
+    },
+    {
+      "phrase": "be part of",
+      "inText": "part of our lives",
+      "meaning": "be included in",
+      "uz": "...ning bir qismi bo'lmoq"
+    },
+    {
+      "phrase": "full of energy",
+      "inText": "full of energy",
+      "meaning": "very lively",
+      "uz": "g'ayratga to'la"
+    },
+    {
+      "phrase": "share ideas",
+      "inText": "sharing ideas",
+      "meaning": "tell each other your thoughts",
+      "uz": "fikr almashmoq"
+    },
+    {
+      "phrase": "be afraid that",
+      "inText": "afraid that",
+      "meaning": "be worried that",
+      "uz": "...dan xavotirlanmoq"
+    },
+    {
+      "phrase": "a meeting place",
+      "inText": "a meeting place",
+      "meaning": "where people come together",
+      "uz": "uchrashuv joyi"
+    },
+    {
+      "phrase": "grow into",
+      "inText": "grew into",
+      "meaning": "slowly become",
+      "uz": "...ga aylanmoq"
+    },
+    {
+      "phrase": "wake up",
+      "inText": "wake up",
+      "meaning": "stop sleeping",
+      "uz": "uyg'onmoq"
+    },
+    {
+      "phrase": "meet friends",
+      "inText": "meet friends",
+      "meaning": "see friends",
+      "uz": "do'stlar bilan uchrashmoq"
     }
   ],
   "grammar": [

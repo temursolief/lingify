@@ -36,7 +36,8 @@ async function ReadPageContent(props: PageProps<"/student/read/[slug]">) {
   ]);
   const counts = text.lemmaCounts as LemmaCounts;
   const { coverage, unknownLemmas } = coverageOf(counts, known);
-  const level = levelFor(coverage);
+  const isIelts = text.track === "ielts";
+  const level = isIelts && coverage >= 0.9 ? (coverage >= 0.98 ? "pleasure" : "study") : levelFor(coverage);
 
   if (level === "locked") {
     const tokensTotal = Object.values(counts).reduce((a, b) => a + b, 0);
@@ -71,13 +72,14 @@ async function ReadPageContent(props: PageProps<"/student/read/[slug]">) {
       pleasure={level === "pleasure"}
       learningLemmas={Object.keys(counts).filter((l) => learning.has(l))}
       readBefore={readBefore > 0}
+      uzbek={user.uzbekGlosses}
       series={text.series ? { title: seriesTitle(text.series), part: text.seriesPart ?? 1, total: seriesCount } : null}
       lesson={{
         leadIn: text.leadIn,
         prediction: text.prediction ? withoutAnswer(text.prediction as Choice) : null,
         preTeach: (text.preTeach as PreTeachWord[]).map((w) => ({ word: w.word, lemma: w.lemma, definition: w.definition, ccq: withoutAnswer(w.ccq) })),
         gist: text.gist ? (text.gist as Choice).question : null,
-        phrases: (text.phrases as Phrase[]).map(({ phrase, meaning, marks }) => ({ phrase, meaning, marks })),
+        phrases: (text.phrases as Phrase[]).map(({ phrase, meaning, uz, marks }) => ({ phrase, meaning, uz, marks })),
         grammar: readBefore > 0 ? grammar.map((g) => ({ structure: g.structure, marks: g.marks })) : [],
       }}
     />

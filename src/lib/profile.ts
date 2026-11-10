@@ -1,5 +1,7 @@
 import "server-only";
+import { awlProgress } from "./awl";
 import { db } from "./db";
+import { wordSets } from "./vocab";
 import { GRAMMAR_SEQUENCE, MASTERY_CORRECT, readyStage } from "./grammar-sequence";
 import type { StudentStats } from "./stats";
 import { READING_SKILLS, SKILL_LABEL, type ReadingSkill } from "./texts";
@@ -13,7 +15,7 @@ export type CanDo = { id: string; statement: string; status: CanDoStatus; eviden
 const MIN_EVIDENCE = 3;
 
 export async function learningProfile(userId: string, stats: StudentStats) {
-  const [attempts, guesses, grammarAttempts, runs, completed] = await Promise.all([
+  const [attempts, guesses, grammarAttempts, runs, completed, ielts, words] = await Promise.all([
     db.exerciseAttempt.findMany({
       where: { userId, kind: { in: ["COMPREHENSION", "GIST"] }, skill: { not: null } },
       orderBy: { answeredAt: "asc" },
@@ -23,7 +25,13 @@ export async function learningProfile(userId: string, stats: StudentStats) {
     db.exerciseAttempt.groupBy({ by: ["skill", "correct"], where: { userId, kind: "GRAMMAR", skill: { not: null } }, _count: true }),
     db.fluencyRun.findMany({ where: { userId }, orderBy: { createdAt: "asc" }, select: { wpm: true, createdAt: true, gistCorrect: true, text: { select: { title: true } } } }),
     db.readingSession.findMany({ where: { userId, completedAt: { not: null } }, select: { text: { select: { topics: true, genre: true } } } }),
+    db.ieltsAttempt.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 3, select: { band: true } }),
+    wordSets(userId),
   ]);
+  const ieltsBand = ielts.length ? Math.round((ielts.reduce((n, a) => n + a.band, 0) / ielts.length) * 2) / 2 : null;
+  const awl = awlProgress(words.known);
+  const core = awl.sublists.slice(0, 3);
+  const coreShare = core.reduce((n, s) => n + s.known, 0) / core.reduce((n, s) => n + s.total, 0);
 
   // First try only: retrying a question after seeing the answer says nothing about the skill.
   const firstTry = new Map<string, { skill: string; correct: boolean }>();
@@ -99,6 +107,18 @@ export async function learningProfile(userId: string, stats: StudentStats) {
       evidence: bestWpm ? `Best speed ${Math.round(bestWpm)} words per minute` : "No speed measured yet",
     },
     {
+      id: "ielts",
+      statement: "I can answer IELTS Academic reading questions at band 5.5 or above.",
+      status: ieltsBand === null ? "not-yet" : ieltsBand >= 5.5 && ielts.length >= 2 ? "achieved" : "developing",
+      evidence: ieltsBand === null ? "No IELTS practice yet" : `Estimated band ${ieltsBand} from ${ielts.length} passage${ielts.length === 1 ? "" : "s"}`,
+    },
+    {
+      id: "academic",
+      statement: "I know the most common academic words (Academic Word List, sublists 1–3).",
+      status: coreShare >= 0.8 ? "achieved" : coreShare >= 0.4 ? "developing" : "not-yet",
+      evidence: `${Math.round(coreShare * 100)}% of sublists 1–3 · ${awl.known} of ${awl.total} academic words in total`,
+    },
+    {
       id: "habit",
       statement: "I read regularly, on my own.",
       status: stats.textsCompleted >= 10 || stats.streak >= 5 ? "achieved" : stats.textsCompleted >= 3 ? "developing" : "not-yet",
@@ -117,6 +137,8 @@ export async function learningProfile(userId: string, stats: StudentStats) {
       best: bestFluency && Math.round(bestFluency),
     },
     topics: topics.size,
+    ieltsBand,
+    awl,
     canDo,
   };
 }

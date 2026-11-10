@@ -1,0 +1,69 @@
+{
+  "slug": "plastic-in-the-ocean",
+  "title": "Plastic in the Ocean: Beyond Recycling",
+  "summary": "Why recycling alone cannot solve the problem of plastic pollution, and what else is being tried.",
+  "topics": ["environment", "technology", "science"],
+  "level": "B2",
+  "timeLimit": 20,
+  "paragraphs": [
+    "Since the 1950s, the world has produced more than eight billion tonnes of plastic. The material is cheap, light and strong, which makes it ideal for everything from food packaging to medical equipment. But the same qualities that make plastic useful also make it a serious environmental problem. Most plastics do not break down naturally; instead, they slowly fragment into smaller and smaller pieces that can remain in the environment for hundreds of years.",
+    "Scientists estimate that between eight and twelve million tonnes of plastic enter the oceans every year. Much of it comes from rivers, which carry waste from cities and farms to the sea. Research published in 2021 suggested that around a thousand rivers, many of them in Asia, are responsible for the majority of this pollution. Once in the ocean, plastic is carried by currents and collects in large areas such as the Great Pacific Garbage Patch, which lies between California and Hawaii.",
+    "The effects on marine life are well documented. Sea turtles mistake plastic bags for jellyfish, seabirds feed plastic to their chicks, and whales have been found with kilograms of plastic in their stomachs. Smaller pieces, known as microplastics, are eaten by fish and shellfish and can therefore enter the human food chain. Scientists have detected microplastics in drinking water, salt and even human blood, although the long-term effects on health are not yet fully understood.",
+    "For many years, recycling was presented as the main solution. In reality, however, only about nine per cent of all plastic ever produced has been recycled. There are several reasons for this. Many products are made from mixtures of different plastics, which are difficult to separate. Recycled plastic is often of lower quality than new plastic, and it is frequently more expensive to produce. In addition, for decades, wealthy countries exported large amounts of plastic waste to other parts of the world, where much of it was burned or dumped rather than recycled.",
+    "As a result, governments and companies are increasingly focusing on reducing the amount of plastic used in the first place. Since 2015, more than eighty countries have introduced bans or taxes on plastic bags, and the European Union has banned several single-use items, such as plastic straws and cutlery. Some companies are redesigning packaging so that it can be refilled or reused. Scientists are also developing new materials made from plants, seaweed and even mushrooms, although these are not yet cheap enough to replace plastic on a large scale.",
+    "Cleaning up the plastic already in the ocean is a far greater challenge. Projects such as The Ocean Cleanup, founded by a Dutch teenager in 2013, use long floating barriers to collect waste from the surface. Critics point out, however, that most ocean plastic is not on the surface but has sunk to the seabed or broken into microplastics, which cannot be collected in this way. Most experts agree that the most effective strategy is to stop plastic reaching the sea, by improving waste collection, especially in fast-growing cities, and by producing much less of it."
+  ],
+  "tasks": [
+    {
+      "type": "tfng",
+      "instructions": "Do the following statements agree with the information in the passage? Choose TRUE, FALSE or NOT GIVEN.",
+      "items": [
+        { "id": "q1", "statement": "Most plastics break down naturally within a few years.", "answer": "FALSE", "explanation": "Paragraph A: most plastics do not break down naturally and can remain for hundreds of years." },
+        { "id": "q2", "statement": "Rivers carry a large share of the plastic that reaches the oceans.", "answer": "TRUE", "explanation": "Paragraph B: much of it comes from rivers." },
+        { "id": "q3", "statement": "Scientists have proved that microplastics cause serious illness in humans.", "answer": "FALSE", "explanation": "Paragraph C: the long-term effects on health are not yet fully understood." },
+        { "id": "q4", "statement": "Recycled plastic is usually cheaper to make than new plastic.", "answer": "FALSE", "explanation": "Paragraph D: it is frequently more expensive to produce." },
+        { "id": "q5", "statement": "The Ocean Cleanup is funded mainly by the Dutch government.", "answer": "NOT GIVEN", "explanation": "The passage does not mention how the project is funded." }
+      ]
+    },
+    {
+      "type": "headings",
+      "instructions": "Choose the correct heading for paragraphs B–E from the list of headings below.",
+      "headings": [
+        "Where ocean plastic comes from",
+        "Harm to animals and people",
+        "The history of plastic production",
+        "Why recycling has not worked",
+        "Using less plastic",
+        "The cost of cleaning beaches",
+        "Plastic in space"
+      ],
+      "items": [
+        { "id": "q6", "paragraph": 1, "answer": 0, "explanation": "Paragraph B explains that rivers carry plastic to the oceans." },
+        { "id": "q7", "paragraph": 2, "answer": 1, "explanation": "Paragraph C describes effects on marine life and on humans." },
+        { "id": "q8", "paragraph": 3, "answer": 3, "explanation": "Paragraph D gives reasons why only nine per cent has been recycled." },
+        { "id": "q9", "paragraph": 4, "answer": 4, "explanation": "Paragraph E is about bans, taxes and reducing plastic use." }
+      ]
+    },
+    {
+      "type": "completion",
+      "instructions": "Complete the sentences below. Choose NO MORE THAN TWO WORDS from the passage for each answer.",
+      "maxWords": 2,
+      "items": [
+        { "id": "q10", "before": "Sea turtles sometimes eat plastic bags because they look like", "after": ".", "answers": ["jellyfish"], "explanation": "Paragraph C: sea turtles mistake plastic bags for jellyfish." },
+        { "id": "q11", "before": "Tiny pieces of plastic eaten by fish are called", "after": ".", "answers": ["microplastics"], "explanation": "Paragraph C: smaller pieces, known as microplastics." },
+        { "id": "q12", "before": "The European Union has banned some", "after": "items such as plastic straws.", "answers": ["single-use"], "explanation": "Paragraph E: several single-use items." },
+        { "id": "q13", "before": "The Ocean Cleanup uses long floating", "after": "to collect waste.", "answers": ["barriers"], "explanation": "Paragraph F: long floating barriers." }
+      ]
+    }
+  ],
+  "phrases": [
+    { "phrase": "break down", "inText": "break down", "meaning": "decay into smaller natural parts", "uz": "parchalanmoq" },
+    { "phrase": "the majority of", "inText": "the majority of", "meaning": "most of", "uz": "...ning ko'pchiligi" },
+    { "phrase": "well documented", "inText": "well documented", "meaning": "described in many reliable sources", "uz": "yaxshi hujjatlashtirilgan" },
+    { "phrase": "in reality", "inText": "In reality", "meaning": "what is actually true", "uz": "aslida, haqiqatda" },
+    { "phrase": "as a result", "inText": "As a result", "meaning": "because of this", "uz": "natijada" },
+    { "phrase": "in the first place", "inText": "in the first place", "meaning": "from the beginning", "uz": "dastavval, boshidanoq" },
+    { "phrase": "on a large scale", "inText": "on a large scale", "meaning": "in large amounts or over a big area", "uz": "keng miqyosda" },
+    { "phrase": "point out", "inText": "point out", "meaning": "tell people something important", "uz": "ta'kidlamoq" }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "slug": "bilingual-brains",
+  "title": "The Bilingual Brain",
+  "summary": "What researchers have learned about how speaking two languages affects the mind, from childhood to old age.",
+  "topics": ["science", "school", "culture"],
+  "level": "B2",
+  "timeLimit": 20,
+  "paragraphs": [
+    "More than half of the world's population uses two or more languages in everyday life. In countries such as Uzbekistan, India and Switzerland, it is common for children to grow up speaking one language at home and another at school. For a long time, however, bilingualism was seen as a problem rather than an advantage. Early studies in the first half of the twentieth century suggested that children who learned two languages were confused and performed worse at school than children who spoke only one.",
+    "Later researchers pointed out that these early studies had serious weaknesses. Many of them compared bilingual children from poor immigrant families with monolingual children from wealthier backgrounds, and they often tested the bilingual children in their weaker language. When scientists in the 1960s began to design more careful experiments, the results changed. A famous study carried out in Canada in 1962 found that bilingual children actually performed better than monolingual children on a range of tests, especially those that required flexible thinking.",
+    "Since then, a large body of research has tried to explain why this might be. One popular theory focuses on what psychologists call executive control: the set of mental skills that allows us to plan, pay attention and switch between tasks. According to this theory, when bilingual people speak, both of their languages are active in the brain at the same time. To use the correct language, they must constantly select one and ignore the other. This regular practice, researchers argue, strengthens the brain's ability to control attention in general.",
+    "Some of the most interesting findings concern older adults. In 2007, a team in Toronto studied patients who had been diagnosed with dementia, a disease that causes memory loss. They found that, on average, bilingual patients had started to show symptoms about four years later than monolingual patients. The researchers suggested that a lifetime of managing two languages may build a kind of 'cognitive reserve', which helps the brain to cope with damage for longer. Similar results have since been reported in India and Belgium.",
+    "Not all scientists are convinced, however. In recent years, several large studies have failed to find any clear advantage for bilingual people in tests of executive control. Critics argue that positive results are more likely to be published than negative ones, which may have made the benefits seem bigger than they really are. They also point out that bilingual and monolingual groups often differ in other ways, such as education, income or culture, and that these differences, rather than language, may explain some of the results.",
+    "What most researchers do agree on is that bilingualism is not harmful, and that its social and practical benefits are clear. People who speak more than one language can communicate with more people, access more information and work in a wider range of jobs. For parents who are worried that a second language might slow their child's development, the evidence is reassuring: children are fully capable of learning two languages at once, even if they sometimes mix them while they are young."
+  ],
+  "tasks": [
+    {
+      "type": "tfng",
+      "instructions": "Do the following statements agree with the information in the passage? Choose TRUE, FALSE or NOT GIVEN.",
+      "items": [
+        { "id": "q1", "statement": "Most people in the world speak only one language.", "answer": "FALSE", "explanation": "Paragraph A: more than half of the world's population uses two or more languages." },
+        { "id": "q2", "statement": "Some early studies tested bilingual children in the language they knew less well.", "answer": "TRUE", "explanation": "Paragraph B: they often tested the bilingual children in their weaker language." },
+        { "id": "q3", "statement": "The 1962 Canadian study was repeated in other countries.", "answer": "NOT GIVEN", "explanation": "The passage does not say whether the Canadian study was repeated." },
+        { "id": "q4", "statement": "Bilingual dementia patients in the Toronto study lived longer than monolingual patients.", "answer": "NOT GIVEN", "explanation": "The study found that symptoms started later; it says nothing about how long patients lived." },
+        { "id": "q5", "statement": "All recent large studies have confirmed an advantage for bilingual people.", "answer": "FALSE", "explanation": "Paragraph E: several large studies have failed to find any clear advantage." }
+      ]
+    },
+    {
+      "type": "headings",
+      "instructions": "Choose the correct heading for paragraphs B–E from the list of headings below.",
+      "headings": [
+        "Problems with the first studies",
+        "How children choose their first language",
+        "A possible explanation",
+        "Protecting the ageing brain",
+        "Reasons for doubt",
+        "The cost of language teaching",
+        "Language and income"
+      ],
+      "items": [
+        { "id": "q6", "paragraph": 1, "answer": 0, "explanation": "Paragraph B describes the weaknesses of the early studies." },
+        { "id": "q7", "paragraph": 2, "answer": 2, "explanation": "Paragraph C presents the executive control theory to explain the results." },
+        { "id": "q8", "paragraph": 3, "answer": 3, "explanation": "Paragraph D is about dementia and cognitive reserve in older adults." },
+        { "id": "q9", "paragraph": 4, "answer": 4, "explanation": "Paragraph E explains why some scientists are not convinced." }
+      ]
+    },
+    {
+      "type": "summary",
+      "instructions": "Complete the summary below. Choose NO MORE THAN TWO WORDS from the passage for each answer.",
+      "maxWords": 2,
+      "text": "According to one theory, bilingual people must always choose one language and {{q10}} the other. This improves a set of skills known as {{q11}}. Studies of older people suggest that using two languages may create a 'cognitive {{q12}}' that protects the brain. Critics say that positive results are more likely to be {{q13}}, which may exaggerate the benefits.",
+      "items": [
+        { "id": "q10", "answers": ["ignore"], "explanation": "Paragraph C: they must constantly select one and ignore the other." },
+        { "id": "q11", "answers": ["executive control"], "explanation": "Paragraph C: what psychologists call executive control." },
+        { "id": "q12", "answers": ["reserve"], "explanation": "Paragraph D: a kind of “cognitive reserve”." },
+        { "id": "q13", "answers": ["published"], "explanation": "Paragraph E: positive results are more likely to be published than negative ones." }
+      ]
+    }
+  ],
+  "phrases": [
+    { "phrase": "rather than", "inText": "rather than", "meaning": "instead of", "uz": "...o'rniga" },
+    { "phrase": "point out", "inText": "pointed out", "meaning": "tell people something important they had not noticed", "uz": "ta'kidlamoq, ko'rsatib o'tmoq" },
+    { "phrase": "carry out a study", "inText": "carried out in Canada", "meaning": "do a piece of research", "uz": "tadqiqot o'tkazmoq" },
+    { "phrase": "a range of", "inText": "a range of", "meaning": "several different", "uz": "bir qator, turli" },
+    { "phrase": "a large body of research", "inText": "a large body of research", "meaning": "a lot of studies", "uz": "ko'plab tadqiqotlar" },
+    { "phrase": "cope with", "inText": "cope with", "meaning": "deal successfully with something difficult", "uz": "...ga bardosh bermoq, uddalamoq" },
+    { "phrase": "fail to", "inText": "failed to", "meaning": "not succeed in doing", "uz": "...ga erisha olmaslik" },
+    { "phrase": "be capable of", "inText": "capable of", "meaning": "have the ability to do", "uz": "...ga qodir bo'lmoq" }
+  ]
+}

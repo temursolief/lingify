@@ -9,7 +9,8 @@ import { db } from "../src/lib/db";
 import { lemmaRanks } from "../src/lib/frequency";
 import { firstDue } from "../src/lib/srs";
 import type { Question } from "../src/lib/texts";
-import { loadLibrary } from "./library";
+import { loadIelts, loadLibrary } from "./library";
+import { estimateBand } from "../src/lib/ielts";
 import { addDays, dayOf } from "../src/lib/time";
 
 export const DEMO_PASSWORD = "lingify-demo";
@@ -20,6 +21,11 @@ async function seedTexts() {
     await db.text.upsert({ where: { slug }, create: { slug, ...data }, update: data });
   }
   console.log(`library: ${rows.length} texts, ${seriesTitles.size} series`);
+  const ielts = loadIelts();
+  for (const { slug, ...data } of ielts) {
+    await db.text.upsert({ where: { slug }, create: { slug, ...data }, update: data });
+  }
+  console.log(`ielts: ${ielts.length} passages`);
   if (missingGlossary.length) console.log(`no B1 definition yet (dictionary fallback): ${missingGlossary.join(", ")}`);
 }
 
@@ -49,7 +55,7 @@ const DEMO_STUDENTS: DemoStudent[] = [
 
 async function seedDemo() {
   const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
-  const texts = await db.text.findMany({ orderBy: { slug: "asc" } });
+  const texts = await db.text.findMany({ where: { track: "graded" }, orderBy: { slug: "asc" } });
 
   await db.user.deleteMany({ where: { email: { endsWith: "@lingify.test" } } });
 
@@ -180,10 +186,32 @@ async function seedDemo() {
     }
   }
 
+  const enrolled = await db.enrollment.findMany({ where: { classId: cls.id } });
+  const assignedText = await db.text.findUniqueOrThrow({ where: { slug: "the-new-neighbour" } });
+  await db.assignment.create({
+    data: {
+      classId: cls.id, kind: "TEXT", textId: assignedText.id, note: "Read it before Monday's lesson.", dueAt: addDays(now, -1),
+      recipients: { create: enrolled.map((e) => ({ studentId: e.userId })) },
+    },
+  });
+
+  const jasur = await db.user.findUniqueOrThrow({ where: { email: "jasur@lingify.test" } });
+  for (const [i, slug] of ["the-aral-sea", "how-habits-form"].entries()) {
+    const text = await db.text.findUniqueOrThrow({ where: { slug } });
+    const correct = 8 + i;
+    await db.ieltsAttempt.create({
+      data: {
+        userId: jasur.id, textId: text.id, answers: {}, correct, total: 13, seconds: 1080 + i * 60, band: estimateBand(correct, 13),
+        byType: { tfng: { correct: 3, total: 5 }, headings: { correct: 3, total: 4 }, completion: { correct: correct - 6, total: 4 } },
+        createdAt: addDays(now, -(4 - i * 2)),
+      },
+    });
+  }
+
   await db.assignment.create({
     data: {
       classId: cls.id, kind: "GOAL", goalType: "WORDS_WEEK", target: 2000, note: "Read at least 2,000 words this week.",
-      recipients: { create: (await db.enrollment.findMany({ where: { classId: cls.id } })).map((e) => ({ studentId: e.userId })) },
+      recipients: { create: enrolled.map((e) => ({ studentId: e.userId })) },
     },
   });
 

@@ -75,17 +75,74 @@
     {
       "phrase": "out of breath",
       "inText": "out of breath",
-      "meaning": "breathing fast after running or hurrying"
+      "meaning": "breathing fast after running or hurrying",
+      "uz": "hansirab, nafasi tiqilib"
     },
     {
       "phrase": "check in",
       "inText": "check guests in",
-      "meaning": "register someone when they arrive at a hotel"
+      "meaning": "register someone when they arrive at a hotel",
+      "uz": "ro'yxatdan o'tkazmoq"
     },
     {
       "phrase": "stay calm",
       "inText": "stayed calm",
-      "meaning": "not become angry or nervous"
+      "meaning": "not become angry or nervous",
+      "uz": "xotirjam bo'lmoq"
+    },
+    {
+      "phrase": "put on",
+      "inText": "put on",
+      "meaning": "dress in clothes",
+      "uz": "kiymoq"
+    },
+    {
+      "phrase": "leave the house",
+      "inText": "left the house",
+      "meaning": "go out of your home",
+      "uz": "uydan chiqmoq"
+    },
+    {
+      "phrase": "because of",
+      "inText": "because of",
+      "meaning": "for the reason of",
+      "uz": "...tufayli"
+    },
+    {
+      "phrase": "on the phone",
+      "inText": "on the phone",
+      "meaning": "talking using a phone",
+      "uz": "telefonda gaplashayotgan"
+    },
+    {
+      "phrase": "speak English well",
+      "inText": "speak English well",
+      "meaning": "use English easily and correctly",
+      "uz": "ingliz tilida yaxshi gapirmoq"
+    },
+    {
+      "phrase": "want your money back",
+      "inText": "wanted his money back",
+      "meaning": "ask to get your money again",
+      "uz": "pulini qaytarib olishni xohlamoq"
+    },
+    {
+      "phrase": "on the top floor",
+      "inText": "on the top floor",
+      "meaning": "on the highest level of a building",
+      "uz": "eng yuqori qavatda"
+    },
+    {
+      "phrase": "at the end of the day",
+      "inText": "At the end of the day",
+      "meaning": "when the day finishes",
+      "uz": "kun oxirida"
+    },
+    {
+      "phrase": "talk about",
+      "inText": "talk about",
+      "meaning": "speak on a subject",
+      "uz": "...haqida gapirmoq"
     }
   ],
   "grammar": [

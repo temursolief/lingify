@@ -3,7 +3,11 @@
   "title": "The Silk Road",
   "summary": "For more than a thousand years, a network of roads connected China and Europe. It carried much more than silk.",
   "genre": "Non-fiction",
-  "topics": ["history", "travel", "culture"],
+  "topics": [
+    "history",
+    "travel",
+    "culture"
+  ],
   "paragraphs": [
     "Two thousand years ago, there were no planes, trains or cars. But even then, people traded goods across thousands of kilometres. The most famous trade route in history is known as the Silk Road. In fact, it was not one road but a network of many paths that connected China with Central Asia, the Middle East and Europe.",
     "The name comes from silk, a beautiful and expensive material that was made in China. For a long time, only the Chinese knew how to make it, and they kept the method a secret. Rich people in Rome and other cities were willing to pay huge amounts of money for silk clothes.",
@@ -16,31 +20,56 @@
   "questions": [
     {
       "question": "What was the Silk Road?",
-      "options": ["One long road from China to Rome", "A network of trade routes connecting China and Europe", "A river used for transporting silk", "A modern railway"],
+      "options": [
+        "One long road from China to Rome",
+        "A network of trade routes connecting China and Europe",
+        "A river used for transporting silk",
+        "A modern railway"
+      ],
       "answer": 1,
       "explanation": "It was not one road but a network of many paths connecting China with other regions."
     },
     {
       "question": "Why was silk so expensive in Rome?",
-      "options": ["It was heavy to carry", "Only the Chinese knew how to make it", "Romans did not like it", "It was made from gold"],
+      "options": [
+        "It was heavy to carry",
+        "Only the Chinese knew how to make it",
+        "Romans did not like it",
+        "It was made from gold"
+      ],
       "answer": 1,
       "explanation": "For a long time only the Chinese knew how to make silk and kept the method secret."
     },
     {
       "question": "Why did prices become higher along the route?",
-      "options": ["Goods passed from trader to trader", "Camels were expensive", "Kings took all the money", "Silk became worse over time"],
+      "options": [
+        "Goods passed from trader to trader",
+        "Camels were expensive",
+        "Kings took all the money",
+        "Silk became worse over time"
+      ],
       "answer": 0,
       "explanation": "Goods passed from one trader to the next, and prices went up at every step."
     },
     {
       "question": "What were caravanserais?",
-      "options": ["Groups of camels", "Places for travellers to stay", "Types of silk", "Desert storms"],
+      "options": [
+        "Groups of camels",
+        "Places for travellers to stay",
+        "Types of silk",
+        "Desert storms"
+      ],
       "answer": 1,
       "explanation": "Caravanserais were places for travellers to stay in the trade cities."
     },
     {
       "question": "According to the writer, what were perhaps the most important things that travelled on the Silk Road?",
-      "options": ["Gold and silver", "Horses", "Ideas", "Camels"],
+      "options": [
+        "Gold and silver",
+        "Horses",
+        "Ideas",
+        "Camels"
+      ],
       "answer": 2,
       "explanation": "The writer says the most important things were not goods but ideas."
     }
@@ -52,9 +81,30 @@
       "example": "Travellers crossed high mountains, where the air was cold and thin, and huge deserts, where there was almost no water.",
       "exercise": {
         "question": "Choose the best word: Samarkand was a city ___ travellers bought supplies.",
-        "options": ["which", "who", "where", "what"],
+        "options": [
+          "which",
+          "who",
+          "where",
+          "what"
+        ],
         "answer": 2,
         "explanation": "We use where to talk about a place where something happens."
+      }
+    },
+    {
+      "structure": "Articles: the with superlatives and some names",
+      "explanation": "We use the before superlatives (the most famous, the oldest) and before some names, such as the Silk Road and the Middle East.",
+      "example": "The most famous trade route in history is known as the Silk Road.",
+      "exercise": {
+        "question": "Choose the correct words: Bukhara is one of ___ most beautiful cities in ___ world.",
+        "options": [
+          "the / the",
+          "a / a",
+          "the / a",
+          "– / the"
+        ],
+        "answer": 0,
+        "explanation": "Superlative: the most beautiful. There is only one world: the world."
       }
     }
   ]

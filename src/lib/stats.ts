@@ -1,9 +1,10 @@
 import "server-only";
 import type { Activity, GoalType } from "@/generated/prisma/client";
 import { db } from "./db";
+import { dueWhere } from "./vocab";
 import { addDays, dayKey, dayOf, streakFrom, weekStart } from "./time";
 
-export const ACTIVITIES: Activity[] = ["READING", "QUIZ", "VOCAB", "GRAMMAR", "REVIEW", "FLUENCY", "PLACEMENT"];
+export const ACTIVITIES: Activity[] = ["READING", "QUIZ", "VOCAB", "GRAMMAR", "REVIEW", "FLUENCY", "IELTS", "PLACEMENT"];
 export const ACTIVITY_LABEL: Record<Activity, string> = {
   READING: "Reading",
   QUIZ: "Comprehension",
@@ -11,6 +12,7 @@ export const ACTIVITY_LABEL: Record<Activity, string> = {
   GRAMMAR: "Grammar in context",
   REVIEW: "Word review",
   FLUENCY: "Speed reading",
+  IELTS: "IELTS practice",
   PLACEMENT: "Placement test",
 };
 
@@ -33,10 +35,10 @@ export async function studentStats(userId: string, days = 30) {
     }),
     db.vocabSnapshot.findMany({ where: { userId, day: { gte: since } }, orderBy: { day: "asc" } }),
     db.exerciseAttempt.groupBy({ by: ["kind", "correct"], where: { userId }, _count: true }),
-    db.lemmaState.count({ where: { userId, status: "KNOWN" } }),
+    db.lemmaState.count({ where: { userId, status: "KNOWN", isPhrase: false } }),
     db.lemmaState.count({ where: { userId, status: "LEARNING" } }),
     db.lemmaState.count({ where: { userId, status: "KNOWN", source: { not: "PLACEMENT" }, knownAt: { gte: thisWeek } } }),
-    db.lemmaState.count({ where: { userId, status: "LEARNING", srsDue: { lte: now } } }),
+    db.lemmaState.count({ where: dueWhere(userId, now) }),
   ]);
 
   const totalByActivity = Object.fromEntries(ACTIVITIES.map((a) => [a, 0])) as Record<Activity, number>;

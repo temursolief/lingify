@@ -50,3 +50,8 @@ export async function removeGoal(goalId: string) {
   await db.goal.updateMany({ where: { id: goalId, userId: user.id }, data: { active: false } });
   refresh();
 }
+
+export async function setUzbekGlosses(on: boolean) {
+  const user = await requireStudent();
+  await db.user.update({ where: { id: user.id }, data: { uzbekGlosses: z.boolean().parse(on) } });
+}

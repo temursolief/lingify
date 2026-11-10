@@ -3,7 +3,10 @@
   "title": "The New Neighbour",
   "summary": "Sam does not like the noisy new family next door, until one rainy evening changes everything.",
   "genre": "Short story",
-  "topics": ["friendship", "daily-life"],
+  "topics": [
+    "friendship",
+    "daily-life"
+  ],
   "paragraphs": [
     "Sam had lived in the same small flat for eight years. He liked his quiet life. Every morning he drank his coffee by the window, read the news on his phone and watered the plants on his balcony. In the evening he cooked a simple dinner and went to bed early. Nothing ever changed, and that was exactly how he wanted it.",
     "Then, in March, a new family moved into the flat next door. There was a mother, a father, two young boys and a very large dog. From the first day, the flat was full of noise. The boys ran up and down the stairs. The dog barked at every person who walked past. On Saturday mornings the father played loud music while he cleaned the kitchen.",
@@ -16,31 +19,56 @@
   "questions": [
     {
       "question": "Why was Sam unhappy when the new family arrived?",
-      "options": ["They were rude to him", "They made a lot of noise", "They took his parking place", "They broke his window"],
+      "options": [
+        "They were rude to him",
+        "They made a lot of noise",
+        "They took his parking place",
+        "They broke his window"
+      ],
       "answer": 1,
       "explanation": "The boys ran on the stairs, the dog barked and the father played loud music, so the flat was full of noise."
     },
     {
       "question": "What happened during the storm?",
-      "options": ["The lights in the building went out", "The dog ran away", "A window in Sam's flat broke", "Sam's books were stolen"],
+      "options": [
+        "The lights in the building went out",
+        "The dog ran away",
+        "A window in Sam's flat broke",
+        "Sam's books were stolen"
+      ],
       "answer": 2,
       "explanation": "The text says the wind was so strong that it broke a window in Sam's living room."
     },
     {
       "question": "How did the boys help?",
-      "options": ["They dried the floor and moved the books", "They called the police", "They fixed the window", "They cooked soup"],
+      "options": [
+        "They dried the floor and moved the books",
+        "They called the police",
+        "They fixed the window",
+        "They cooked soup"
+      ],
       "answer": 0,
       "explanation": "The boys came with towels, dried the floor and moved the books to a safe place."
     },
     {
       "question": "How did Sam feel about the family at the end of the story?",
-      "options": ["Still angry", "Afraid of them", "Friendly towards them", "Bored by them"],
+      "options": [
+        "Still angry",
+        "Afraid of them",
+        "Friendly towards them",
+        "Bored by them"
+      ],
       "answer": 2,
       "explanation": "He joins Omar on Saturdays, plays games with the boys and smiles when the dog barks."
     },
     {
       "question": "What is the main idea of the story?",
-      "options": ["Storms are dangerous in spring", "People can change our lives in good ways", "Dogs should not live in flats", "It is important to cook simple meals"],
+      "options": [
+        "Storms are dangerous in spring",
+        "People can change our lives in good ways",
+        "Dogs should not live in flats",
+        "It is important to cook simple meals"
+      ],
       "answer": 1,
       "explanation": "The family Sam disliked becomes an important and happy part of his life."
     }
@@ -52,7 +80,12 @@
       "example": "Sam had lived in the same small flat for eight years.",
       "exercise": {
         "question": "Which sentence uses the past perfect correctly?",
-        "options": ["When Omar arrived, the window has already broken.", "When Omar arrived, the window had already broken.", "When Omar arrived, the window already breaks.", "When Omar arrived, the window was already break."],
+        "options": [
+          "When Omar arrived, the window has already broken.",
+          "When Omar arrived, the window had already broken.",
+          "When Omar arrived, the window already breaks.",
+          "When Omar arrived, the window was already break."
+        ],
         "answer": 1,
         "explanation": "The window broke before Omar arrived, so we use had + past participle: had broken."
       }
@@ -63,9 +96,30 @@
       "example": "Rain was coming in, and water was running across the floor towards his books.",
       "exercise": {
         "question": "Choose the correct form: They ___ dinner when the storm started.",
-        "options": ["were eating", "are eating", "ate already", "have eaten"],
+        "options": [
+          "were eating",
+          "are eating",
+          "ate already",
+          "have eaten"
+        ],
         "answer": 0,
         "explanation": "The eating was in progress when the storm started, so we use the past continuous: were eating."
+      }
+    },
+    {
+      "structure": "Articles: a/an for new things, the for known things",
+      "explanation": "We use a/an when we mention something for the first time, or one of many. We use the when the reader already knows which one we mean.",
+      "example": "There was a mother, a father, two young boys and a very large dog.",
+      "exercise": {
+        "question": "Choose the correct words: I bought ___ book yesterday. ___ book is about bees.",
+        "options": [
+          "a / The",
+          "the / A",
+          "a / A",
+          "– / The"
+        ],
+        "answer": 0,
+        "explanation": "New book: a. Then we know which book: the."
       }
     }
   ]

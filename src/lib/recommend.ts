@@ -30,6 +30,10 @@ export type LibraryEntry = {
 export async function libraryFor(userId: string): Promise<LibraryEntry[]> {
   const [texts, { known, learning }, user, sessions, assignments, enrollments, ratings, stops] = await Promise.all([
     db.text.findMany({
+      where: {
+        track: "graded",
+        OR: [{ ownerId: null }, { owner: { classesTaught: { some: { enrollments: { some: { userId } } } } } }],
+      },
       select: { id: true, slug: true, title: true, summary: true, genre: true, topics: true, wordCount: true, lemmaCounts: true, series: true, seriesPart: true },
     }),
     wordSets(userId),

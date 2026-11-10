@@ -75,17 +75,74 @@
     {
       "phrase": "in a row",
       "inText": "in a row",
-      "meaning": "one after another, without a break"
+      "meaning": "one after another, without a break",
+      "uz": "ketma-ket"
     },
     {
       "phrase": "give up",
       "inText": "give up",
-      "meaning": "stop trying"
+      "meaning": "stop trying",
+      "uz": "voz kechmoq, taslim bo'lmoq"
     },
     {
       "phrase": "as hard as you can",
       "inText": "as hard as he could",
-      "meaning": "with all your strength"
+      "meaning": "with all your strength",
+      "uz": "bor kuchi bilan"
+    },
+    {
+      "phrase": "the most important thing",
+      "inText": "the most important thing",
+      "meaning": "what matters most",
+      "uz": "eng muhim narsa"
+    },
+    {
+      "phrase": "work long hours",
+      "inText": "worked long hours",
+      "meaning": "work for many hours every day",
+      "uz": "uzoq soatlab ishlamoq"
+    },
+    {
+      "phrase": "better than ever before",
+      "inText": "better than ever before",
+      "meaning": "better than at any time in the past",
+      "uz": "har qachongidan yaxshiroq"
+    },
+    {
+      "phrase": "score a goal",
+      "inText": "scored the first goal",
+      "meaning": "get the ball into the goal",
+      "uz": "gol urmoq"
+    },
+    {
+      "phrase": "fight hard",
+      "inText": "fought hard",
+      "meaning": "try very hard",
+      "uz": "qattiq kurashmoq"
+    },
+    {
+      "phrase": "trust each other",
+      "inText": "Trust each other",
+      "meaning": "believe that the others will help you",
+      "uz": "bir-biriga ishonmoq"
+    },
+    {
+      "phrase": "go wild",
+      "inText": "went wild",
+      "meaning": "become very excited",
+      "uz": "jo'shib ketmoq"
+    },
+    {
+      "phrase": "full of tears",
+      "inText": "full of tears",
+      "meaning": "crying",
+      "uz": "yoshga to'la"
+    },
+    {
+      "phrase": "hold someone tight",
+      "inText": "held him tight",
+      "meaning": "hug someone strongly",
+      "uz": "mahkam quchoqlamoq"
     }
   ],
   "grammar": [
@@ -130,6 +187,28 @@
         "answer": 0,
         "explanation": "tell + person + (not) to + verb reports an instruction."
       }
+    },
+    {
+      "key": "dependent-prepositions",
+      "examples": [
+        "His father looked at him for a long time.",
+        "The players listened to the coach in the changing room."
+      ],
+      "highlights": [
+        "looked at",
+        "listened to"
+      ],
+      "discovery": {
+        "question": "Which prepositions follow “look” and “listen” here?",
+        "options": [
+          "at and to",
+          "to and at",
+          "on and for"
+        ],
+        "answer": 0,
+        "explanation": "look at, listen to."
+      },
+      "uzNote": "O'zbek tilida qo'shimcha ishlatamiz (-dan, -ga, -ni), ingliz tilida esa so'zdan keyin predlog keladi: afraid of (...dan qo'rqmoq), depend on (...ga bog'liq), listen to (...ni tinglamoq). Bunday birikmalarni bitta butun sifatida yodlang."
     }
   ]
 }

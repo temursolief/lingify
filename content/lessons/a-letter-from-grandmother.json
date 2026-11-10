@@ -75,17 +75,74 @@
     {
       "phrase": "sort through",
       "inText": "sort through",
-      "meaning": "look at things one by one to decide what to keep"
+      "meaning": "look at things one by one to decide what to keep",
+      "uz": "saralab chiqmoq"
     },
     {
       "phrase": "grown up",
       "inText": "grown up",
-      "meaning": "an adult, no longer a child"
+      "meaning": "an adult, no longer a child",
+      "uz": "katta, voyaga yetgan"
     },
     {
       "phrase": "at the same time",
       "inText": "at the same time",
-      "meaning": "together, in the same moment"
+      "meaning": "together, in the same moment",
+      "uz": "bir vaqtning o'zida"
+    },
+    {
+      "phrase": "at the age of",
+      "inText": "at the age of",
+      "meaning": "when someone was a certain age",
+      "uz": "... yoshida"
+    },
+    {
+      "phrase": "make dinner",
+      "inText": "making dinner",
+      "meaning": "cook the evening meal",
+      "uz": "kechki ovqat tayyorlamoq"
+    },
+    {
+      "phrase": "decide to",
+      "inText": "decided to",
+      "meaning": "choose to do something",
+      "uz": "...ga qaror qilmoq"
+    },
+    {
+      "phrase": "grow up",
+      "inText": "growing up",
+      "meaning": "become an adult",
+      "uz": "ulg'aymoq, voyaga yetmoq"
+    },
+    {
+      "phrase": "be afraid of",
+      "inText": "afraid of",
+      "meaning": "feel fear about something",
+      "uz": "...dan qo'rqmoq"
+    },
+    {
+      "phrase": "make mistakes",
+      "inText": "making mistakes",
+      "meaning": "do something wrong",
+      "uz": "xato qilmoq"
+    },
+    {
+      "phrase": "spend time with",
+      "inText": "Spend time with",
+      "meaning": "be together with someone",
+      "uz": "...bilan vaqt o'tkazmoq"
+    },
+    {
+      "phrase": "get something back",
+      "inText": "get back",
+      "meaning": "have again something you lost",
+      "uz": "qaytarib olmoq"
+    },
+    {
+      "phrase": "without a word",
+      "inText": "without a word",
+      "meaning": "without saying anything",
+      "uz": "indamay, bir so'z demay"
     }
   ],
   "grammar": [
@@ -130,6 +187,28 @@
         "answer": 0,
         "explanation": "After a preposition, we use verb + -ing."
       }
+    },
+    {
+      "key": "dependent-prepositions",
+      "examples": [
+        "Her grandmother wrote about growing up during difficult years when there was not always enough food.",
+        "Sara and her mother talked about the letter for hours."
+      ],
+      "highlights": [
+        "wrote about",
+        "talked about"
+      ],
+      "discovery": {
+        "question": "Which preposition introduces the topic after “write” and “talk”?",
+        "options": [
+          "about",
+          "for",
+          "of"
+        ],
+        "answer": 0,
+        "explanation": "write about / talk about + topic."
+      },
+      "uzNote": "O'zbek tilida qo'shimcha ishlatamiz (-dan, -ga, -ni), ingliz tilida esa so'zdan keyin predlog keladi: afraid of (...dan qo'rqmoq), depend on (...ga bog'liq), listen to (...ni tinglamoq). Bunday birikmalarni bitta butun sifatida yodlang."
     }
   ]
 }

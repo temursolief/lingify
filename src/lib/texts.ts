@@ -34,11 +34,13 @@ export type GrammarPoint = {
   marks: Mark[];
   discovery: Question;
   exercise: Question;
+  /** a short note in Uzbek on why this structure is hard for Uzbek speakers */
+  uzNote?: string;
 };
 
 export type Choice = { question: string; options: string[]; answer: number };
 export type PreTeachWord = { word: string; lemma: string; definition: string; ccq: Choice };
-export type Phrase = { phrase: string; meaning: string; inText: string; marks: Mark[] };
+export type Phrase = { phrase: string; meaning: string; uz?: string; inText: string; marks: Mark[] };
 
 export type LemmaCounts = Record<string, number>;
 

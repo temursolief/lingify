@@ -75,17 +75,74 @@
     {
       "phrase": "on your way to",
       "inText": "on his way to",
-      "meaning": "while travelling to a place"
+      "meaning": "while travelling to a place",
+      "uz": "...ga ketayotib"
     },
     {
       "phrase": "in a hurry",
       "inText": "in a hurry",
-      "meaning": "needing to go or do something quickly"
+      "meaning": "needing to go or do something quickly",
+      "uz": "shoshib"
     },
     {
       "phrase": "leave it to me",
       "inText": "Leave it to me",
-      "meaning": "I will deal with it for you"
+      "meaning": "I will deal with it for you",
+      "uz": "buni menga qo'yib bering"
+    },
+    {
+      "phrase": "as usual",
+      "inText": "as usual",
+      "meaning": "in the normal way",
+      "uz": "odatdagidek"
+    },
+    {
+      "phrase": "get off",
+      "inText": "got off",
+      "meaning": "leave a bus or train",
+      "uz": "(transportdan) tushmoq"
+    },
+    {
+      "phrase": "pick something up",
+      "inText": "picked it up",
+      "meaning": "lift something from the floor",
+      "uz": "yerdan olmoq"
+    },
+    {
+      "phrase": "a large amount of",
+      "inText": "a large amount of",
+      "meaning": "a lot of",
+      "uz": "katta miqdordagi"
+    },
+    {
+      "phrase": "think about",
+      "inText": "thought about",
+      "meaning": "have something in your mind",
+      "uz": "...haqida o'ylamoq"
+    },
+    {
+      "phrase": "miss a class",
+      "inText": "missed his first class",
+      "meaning": "not go to a lesson",
+      "uz": "darsni qoldirmoq"
+    },
+    {
+      "phrase": "again and again",
+      "inText": "again and again",
+      "meaning": "many times",
+      "uz": "qayta-qayta"
+    },
+    {
+      "phrase": "ask someone questions about",
+      "inText": "asked him a few questions about",
+      "meaning": "want to know more about someone's life",
+      "uz": "...haqida savollar bermoq"
+    },
+    {
+      "phrase": "be proud",
+      "inText": "be proud",
+      "meaning": "feel pleased about someone's good actions",
+      "uz": "faxrlanmoq"
     }
   ],
   "grammar": [
@@ -109,6 +166,30 @@
         "answer": 0,
         "explanation": "had worked shows the earlier action. The past simple (was tired) is the later one."
       }
+    },
+    {
+      "key": "articles",
+      "examples": [
+        "When the bus stopped near the city park, an older man in a grey coat got off in a hurry.",
+        "It was an hour before Aziz found the bookshop."
+      ],
+      "highlights": [
+        "an older man",
+        "a grey coat",
+        "a hurry",
+        "an hour"
+      ],
+      "discovery": {
+        "question": "Why “an older man” and “an hour”, but “a grey coat”?",
+        "options": [
+          "an comes before a vowel sound, a before a consonant sound",
+          "an is only for people",
+          "an is for old things"
+        ],
+        "answer": 0,
+        "explanation": "“Hour” starts with a vowel sound /aʊ/, so we say an hour."
+      },
+      "uzNote": "O'zbek tilida artikl yo'q. Ingliz tilida yangi, birinchi marta aytilgan narsa oldidan a/an, ikkalamiz biladigan (oldin aytilgan) narsa oldidan the qo'yiladi."
     }
   ]
 }

@@ -75,17 +75,74 @@
     {
       "phrase": "you are not alone",
       "inText": "You are not alone",
-      "meaning": "other people have the same experience"
+      "meaning": "other people have the same experience",
+      "uz": "siz yolg'iz emassiz"
     },
     {
       "phrase": "slow down",
       "inText": "slowed down",
-      "meaning": "become slower"
+      "meaning": "become slower",
+      "uz": "sekinlashmoq"
     },
     {
       "phrase": "as long as",
       "inText": "as long as",
-      "meaning": "only if"
+      "meaning": "only if",
+      "uz": "...sa bo'ldi, sharti bilan"
+    },
+    {
+      "phrase": "study hard",
+      "inText": "studied hard",
+      "meaning": "study with a lot of effort",
+      "uz": "astoydil o'qimoq"
+    },
+    {
+      "phrase": "do well",
+      "inText": "done well",
+      "meaning": "get a good result",
+      "uz": "yaxshi natija ko'rsatmoq"
+    },
+    {
+      "phrase": "a normal part of",
+      "inText": "a normal part of",
+      "meaning": "something that usually happens in",
+      "uz": "...ning odatiy qismi"
+    },
+    {
+      "phrase": "at first",
+      "inText": "at first",
+      "meaning": "at the beginning",
+      "uz": "dastlab"
+    },
+    {
+      "phrase": "be about to",
+      "inText": "about to",
+      "meaning": "be going to do something very soon",
+      "uz": "...moqchi bo'lib turmoq"
+    },
+    {
+      "phrase": "test yourself",
+      "inText": "test yourself",
+      "meaning": "check what you know without help",
+      "uz": "o'zingizni sinab ko'ring"
+    },
+    {
+      "phrase": "get the answer wrong",
+      "inText": "get the answer wrong",
+      "meaning": "give an incorrect answer",
+      "uz": "noto'g'ri javob bermoq"
+    },
+    {
+      "phrase": "a powerful way to",
+      "inText": "a powerful way to",
+      "meaning": "a very effective method to",
+      "uz": "...ning samarali usuli"
+    },
+    {
+      "phrase": "do the rest",
+      "inText": "do the rest",
+      "meaning": "do everything that is left",
+      "uz": "qolganini bajarmoq"
     }
   ],
   "grammar": [
@@ -108,7 +165,8 @@
         ],
         "answer": 0,
         "explanation": "Have you ever + past participle asks about experiences at any time up to now."
-      }
+      },
+      "uzNote": "O'zbek tilida bu zamonning aniq o'xshashi yo'q. Present perfect (have/has + V3) o'tmishda bo'lib, hozirgacha davom etayotgan yoki hozirga natijasi bor ish uchun: I have read it (o'qiganman)."
     },
     {
       "key": "comparatives-modifiers",

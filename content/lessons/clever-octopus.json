@@ -75,17 +75,74 @@
     {
       "phrase": "get out",
       "inText": "got out",
-      "meaning": "leave a closed place"
+      "meaning": "leave a closed place",
+      "uz": "chiqib ketmoq"
     },
     {
       "phrase": "find your way",
       "inText": "find their way",
-      "meaning": "discover how to get somewhere"
+      "meaning": "discover how to get somewhere",
+      "uz": "yo'l topmoq"
     },
     {
       "phrase": "in less than",
       "inText": "in less than",
-      "meaning": "quicker than"
+      "meaning": "quicker than",
+      "uz": "...dan kamroq vaqtda"
+    },
+    {
+      "phrase": "become famous",
+      "inText": "became famous",
+      "meaning": "start to be known by many people",
+      "uz": "mashhur bo'lmoq"
+    },
+    {
+      "phrase": "lead to",
+      "inText": "led to",
+      "meaning": "go in the direction of",
+      "uz": "...ga olib bormoq"
+    },
+    {
+      "phrase": "be known for",
+      "inText": "known for",
+      "meaning": "be famous because of",
+      "uz": "...bilan tanilgan bo'lmoq"
+    },
+    {
+      "phrase": "make a decision",
+      "inText": "make some simple decisions",
+      "meaning": "decide something",
+      "uz": "qaror qabul qilmoq"
+    },
+    {
+      "phrase": "on its own",
+      "inText": "on its own",
+      "meaning": "alone, without help",
+      "uz": "o'zi mustaqil"
+    },
+    {
+      "phrase": "reach for",
+      "inText": "reach for",
+      "meaning": "move your arm to take something",
+      "uz": "...ga qo'l cho'zmoq"
+    },
+    {
+      "phrase": "change colour",
+      "inText": "change colour",
+      "meaning": "become a different colour",
+      "uz": "rangini o'zgartirmoq"
+    },
+    {
+      "phrase": "walk past",
+      "inText": "walked past",
+      "meaning": "go by something",
+      "uz": "yonidan o'tmoq"
+    },
+    {
+      "phrase": "ask questions about",
+      "inText": "asking questions about",
+      "meaning": "want to know more about",
+      "uz": "...haqida savol bermoq"
     }
   ],
   "grammar": [
@@ -108,7 +165,8 @@
         ],
         "answer": 0,
         "explanation": "have/has + past participle talks about experiences and results up to now, when the time is not important."
-      }
+      },
+      "uzNote": "O'zbek tilida bu zamonning aniq o'xshashi yo'q. Present perfect (have/has + V3) o'tmishda bo'lib, hozirgacha davom etayotgan yoki hozirga natijasi bor ish uchun: I have read it (o'qiganman)."
     },
     {
       "key": "linking-contrast",

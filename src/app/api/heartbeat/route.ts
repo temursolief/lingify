@@ -6,7 +6,7 @@ import { dayOf } from "@/lib/time";
 const MAX_SECONDS_PER_BEAT = 60;
 
 const schema = z.object({
-  activity: z.enum(["READING", "QUIZ", "VOCAB", "GRAMMAR", "REVIEW", "FLUENCY", "PLACEMENT"]),
+  activity: z.enum(["READING", "QUIZ", "VOCAB", "GRAMMAR", "REVIEW", "FLUENCY", "IELTS", "PLACEMENT"]),
   seconds: z.number().int().positive().max(MAX_SECONDS_PER_BEAT),
   sessionId: z.string().optional(),
 });

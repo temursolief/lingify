@@ -75,17 +75,74 @@
     {
       "phrase": "in return for",
       "inText": "in return for",
-      "meaning": "as payment or exchange for"
+      "meaning": "as payment or exchange for",
+      "uz": "...evaziga"
     },
     {
       "phrase": "in a way",
       "inText": "In a way",
-      "meaning": "partly; if you think about it in one way"
+      "meaning": "partly; if you think about it in one way",
+      "uz": "ma'lum ma'noda"
     },
     {
       "phrase": "a great success",
       "inText": "a great success",
-      "meaning": "something that worked very well"
+      "meaning": "something that worked very well",
+      "uz": "katta muvaffaqiyat"
+    },
+    {
+      "phrase": "pay for",
+      "inText": "pay for",
+      "meaning": "give money to buy something",
+      "uz": "...uchun to'lamoq"
+    },
+    {
+      "phrase": "a pair of",
+      "inText": "a pair of",
+      "meaning": "two things used together",
+      "uz": "bir juft"
+    },
+    {
+      "phrase": "take a lot of time and effort",
+      "inText": "takes a lot of time and effort",
+      "meaning": "need much time and work",
+      "uz": "ko'p vaqt va kuch talab qilmoq"
+    },
+    {
+      "phrase": "solve a problem",
+      "inText": "solve this problem",
+      "meaning": "find an answer to a problem",
+      "uz": "muammoni hal qilmoq"
+    },
+    {
+      "phrase": "be made of",
+      "inText": "made of",
+      "meaning": "use a material",
+      "uz": "...dan yasalgan bo'lmoq"
+    },
+    {
+      "phrase": "stay in the same place",
+      "inText": "stayed in the same place",
+      "meaning": "not move",
+      "uz": "bir joyda qolmoq"
+    },
+    {
+      "phrase": "bank account",
+      "inText": "bank accounts",
+      "meaning": "money you keep in a bank",
+      "uz": "bank hisobi"
+    },
+    {
+      "phrase": "easy to count",
+      "inText": "easy to count",
+      "meaning": "not difficult to count",
+      "uz": "sanash oson"
+    },
+    {
+      "phrase": "look like",
+      "inText": "look like",
+      "meaning": "seem; have the appearance of",
+      "uz": "...ga o'xshamoq"
     }
   ],
   "grammar": [
@@ -130,6 +187,31 @@
         "answer": 0,
         "explanation": "too + adjective + to + verb means it is more than possible for that action."
       }
+    },
+    {
+      "key": "articles",
+      "examples": [
+        "Today we pay for things with coins, notes, cards and phones.",
+        "Salt was very valuable in the past."
+      ],
+      "highlights": [
+        "coins",
+        "notes",
+        "cards",
+        "phones",
+        "Salt"
+      ],
+      "discovery": {
+        "question": "Why is there no a, an or the before “coins” and “salt”?",
+        "options": [
+          "They mean coins and salt in general, not particular ones",
+          "They are names",
+          "It is a mistake"
+        ],
+        "answer": 0,
+        "explanation": "General plural or uncountable nouns take no article."
+      },
+      "uzNote": "O'zbek tilida artikl yo'q. Ingliz tilida yangi, birinchi marta aytilgan narsa oldidan a/an, ikkalamiz biladigan (oldin aytilgan) narsa oldidan the qo'yiladi."
     }
   ]
 }

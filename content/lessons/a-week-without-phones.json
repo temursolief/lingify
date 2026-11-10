@@ -75,17 +75,74 @@
     {
       "phrase": "at first",
       "inText": "At first",
-      "meaning": "at the beginning"
+      "meaning": "at the beginning",
+      "uz": "dastlab, avvaliga"
     },
     {
       "phrase": "keep doing something",
       "inText": "kept touching",
-      "meaning": "continue doing something again and again"
+      "meaning": "continue doing something again and again",
+      "uz": "...ni to'xtovsiz qilmoq"
     },
     {
       "phrase": "wake up",
       "inText": "woke up",
-      "meaning": "stop sleeping"
+      "meaning": "stop sleeping",
+      "uz": "uyg'onmoq"
+    },
+    {
+      "phrase": "agree to",
+      "inText": "agreed to",
+      "meaning": "say yes to doing something",
+      "uz": "...ga rozi bo'lmoq"
+    },
+    {
+      "phrase": "check messages",
+      "inText": "check their messages",
+      "meaning": "look at new messages",
+      "uz": "xabarlarni tekshirmoq"
+    },
+    {
+      "phrase": "talk to each other",
+      "inText": "talking to each other",
+      "meaning": "have conversations together",
+      "uz": "bir-biri bilan gaplashmoq"
+    },
+    {
+      "phrase": "go to sleep",
+      "inText": "went to sleep",
+      "meaning": "start sleeping",
+      "uz": "uxlashga yotmoq"
+    },
+    {
+      "phrase": "be willing to",
+      "inText": "willing to",
+      "meaning": "be happy to do something",
+      "uz": "...ga tayyor bo'lmoq"
+    },
+    {
+      "phrase": "on the way to",
+      "inText": "on the way to",
+      "meaning": "while going to a place",
+      "uz": "...ga ketayotib"
+    },
+    {
+      "phrase": "spend time on",
+      "inText": "spend less time on",
+      "meaning": "use time doing something",
+      "uz": "...ga vaqt sarflamoq"
+    },
+    {
+      "phrase": "in the future",
+      "inText": "in the future",
+      "meaning": "in the time that will come",
+      "uz": "kelajakda"
+    },
+    {
+      "phrase": "show interest",
+      "inText": "shown interest",
+      "meaning": "show that you want to know more",
+      "uz": "qiziqish bildirmoq"
     }
   ],
   "grammar": [
@@ -110,7 +167,8 @@
         ],
         "answer": 0,
         "explanation": "have/has + past participle + since + a starting point describes a period continuing until now."
-      }
+      },
+      "uzNote": "O'zbek tilida bu zamonning aniq o'xshashi yo'q. Present perfect (have/has + V3) o'tmishda bo'lib, hozirgacha davom etayotgan yoki hozirga natijasi bor ish uchun: I have read it (o'qiganman)."
     },
     {
       "key": "future-in-past",

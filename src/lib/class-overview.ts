@@ -27,6 +27,7 @@ export type StudentRow = {
   grammarStage: number;
   canDoAchieved: number;
   bestFluency: number | null;
+  ieltsBand: number | null;
 };
 
 export async function teacherClass(classId: string, teacherId: string) {
@@ -76,6 +77,7 @@ export async function classOverview(classId: string): Promise<StudentRow[]> {
         grammarStage: profile.grammarStage,
         canDoAchieved: profile.canDo.filter((c) => c.status === "achieved").length,
         bestFluency: profile.fluency.best,
+        ieltsBand: profile.ieltsBand,
       };
     }),
   );

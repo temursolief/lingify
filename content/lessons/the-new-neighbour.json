@@ -75,17 +75,74 @@
     {
       "phrase": "get used to",
       "inText": "getting used to",
-      "meaning": "become familiar with something new"
+      "meaning": "become familiar with something new",
+      "uz": "...ga ko'nikmoq"
     },
     {
       "phrase": "fall asleep",
       "inText": "fell asleep",
-      "meaning": "start sleeping"
+      "meaning": "start sleeping",
+      "uz": "uxlab qolmoq"
     },
     {
       "phrase": "at the same time",
       "inText": "at the same time",
-      "meaning": "together, in the same moment"
+      "meaning": "together, in the same moment",
+      "uz": "bir vaqtning o'zida"
+    },
+    {
+      "phrase": "go to bed",
+      "inText": "went to bed",
+      "meaning": "lie down to sleep",
+      "uz": "uxlashga yotmoq"
+    },
+    {
+      "phrase": "move into",
+      "inText": "moved into",
+      "meaning": "start living in a new home",
+      "uz": "...ga ko'chib kelmoq"
+    },
+    {
+      "phrase": "next door",
+      "inText": "next door",
+      "meaning": "in the next house or flat",
+      "uz": "qo'shni xonadonda"
+    },
+    {
+      "phrase": "full of noise",
+      "inText": "full of noise",
+      "meaning": "very noisy",
+      "uz": "shovqinga to'la"
+    },
+    {
+      "phrase": "up and down",
+      "inText": "up and down",
+      "meaning": "in one direction and then the other",
+      "uz": "u yoqdan-bu yoqqa"
+    },
+    {
+      "phrase": "say sorry",
+      "inText": "said sorry",
+      "meaning": "apologise",
+      "uz": "kechirim so'ramoq"
+    },
+    {
+      "phrase": "a piece of",
+      "inText": "a piece of",
+      "meaning": "one part of something",
+      "uz": "bir bo'lak"
+    },
+    {
+      "phrase": "without waiting for",
+      "inText": "Without waiting for",
+      "meaning": "not waiting for",
+      "uz": "...ni kutmasdan"
+    },
+    {
+      "phrase": "work together",
+      "inText": "worked together",
+      "meaning": "do something as a team",
+      "uz": "birga ishlamoq"
     }
   ],
   "grammar": [
@@ -131,6 +188,30 @@
         "answer": 0,
         "explanation": "was/were + -ing describes an action in progress around a moment in the past."
       }
+    },
+    {
+      "key": "articles",
+      "examples": [
+        "There was a mother, a father, two young boys and a very large dog.",
+        "The dog barked at every person who walked past."
+      ],
+      "highlights": [
+        "a mother",
+        "a father",
+        "a very large dog",
+        "The dog"
+      ],
+      "discovery": {
+        "question": "The first sentence says “a very large dog”. Why does the second sentence say “the dog”?",
+        "options": [
+          "We already know which dog: it was mentioned before",
+          "“Dog” always takes the",
+          "Because the dog is big"
+        ],
+        "answer": 0,
+        "explanation": "First mention: a/an. After that, the reader knows which one: the."
+      },
+      "uzNote": "O'zbek tilida artikl yo'q. Ingliz tilida yangi, birinchi marta aytilgan narsa oldidan a/an, ikkalamiz biladigan (oldin aytilgan) narsa oldidan the qo'yiladi."
     }
   ]
 }

@@ -3,7 +3,10 @@
   "title": "The Big Match",
   "summary": "Timur is the smallest player on his football team. In the final match of the season, his father finally comes to watch.",
   "genre": "Short story",
-  "topics": ["sports", "family"],
+  "topics": [
+    "sports",
+    "family"
+  ],
   "paragraphs": [
     "Timur was twelve years old, and football was the most important thing in his life. He played for his school team every Saturday, and he practised every day after school in the yard behind his building. He was the smallest player on the team, but he was fast, and he could pass the ball better than anyone.",
     "There was only one problem. His father had never seen him play. He worked long hours as a taxi driver, often at weekends, and he was always too tired or too busy. Every Saturday, Timur looked at the people watching from the side of the field, hoping to see his father's face. He never did.",
@@ -19,31 +22,56 @@
   "questions": [
     {
       "question": "What was Timur good at?",
-      "options": ["Scoring with his head", "Passing the ball and running fast", "Being the goalkeeper", "Defending"],
+      "options": [
+        "Scoring with his head",
+        "Passing the ball and running fast",
+        "Being the goalkeeper",
+        "Defending"
+      ],
       "answer": 1,
       "explanation": "He was fast and could pass the ball better than anyone."
     },
     {
       "question": "Why had Timur's father never seen him play?",
-      "options": ["He did not like football", "He worked long hours, often at weekends", "He lived in another city", "Timur did not want him there"],
+      "options": [
+        "He did not like football",
+        "He worked long hours, often at weekends",
+        "He lived in another city",
+        "Timur did not want him there"
+      ],
       "answer": 1,
       "explanation": "He worked long hours as a taxi driver, often at weekends."
     },
     {
       "question": "What was the score at half time?",
-      "options": ["One to nil to Timur's team", "One each", "One to nil to the other team", "Two to one"],
+      "options": [
+        "One to nil to Timur's team",
+        "One each",
+        "One to nil to the other team",
+        "Two to one"
+      ],
       "answer": 2,
       "explanation": "At half time Timur's team were losing one to nil."
     },
     {
       "question": "How did Timur help his team score the first goal?",
-      "options": ["He scored it himself", "He passed the ball to Bobur", "He stopped a goal", "He talked to the coach"],
+      "options": [
+        "He scored it himself",
+        "He passed the ball to Bobur",
+        "He stopped a goal",
+        "He talked to the coach"
+      ],
       "answer": 1,
       "explanation": "He passed the ball perfectly to Bobur, who scored."
     },
     {
       "question": "Why was it the best day of Timur's life 'not only because of the goal'?",
-      "options": ["His team got a prize", "His father came to watch him", "He got a new football", "His coach praised him"],
+      "options": [
+        "His team got a prize",
+        "His father came to watch him",
+        "He got a new football",
+        "His coach praised him"
+      ],
       "answer": 1,
       "explanation": "His father finally came and saw him play."
     }
@@ -55,7 +83,12 @@
       "example": "They had won eight games in a row, and now they were in the final against the best team in the city.",
       "exercise": {
         "question": "Choose the correct form: By the final, Timur ___ in every game of the season.",
-        "options": ["has played", "had played", "plays", "was play"],
+        "options": [
+          "has played",
+          "had played",
+          "plays",
+          "was play"
+        ],
         "answer": 1,
         "explanation": "The games happened before the final, so we use had played."
       }
@@ -66,9 +99,30 @@
       "example": "In the changing room, the coach told them not to give up.",
       "exercise": {
         "question": "The coach said: “Don't stop running!” Choose the reported sentence.",
-        "options": ["The coach told them don't stop running.", "The coach told them not to stop running.", "The coach told them to not stopping.", "The coach said them not stop running."],
+        "options": [
+          "The coach told them don't stop running.",
+          "The coach told them not to stop running.",
+          "The coach told them to not stopping.",
+          "The coach said them not stop running."
+        ],
         "answer": 1,
         "explanation": "Negative command: told + person + not to + verb."
+      }
+    },
+    {
+      "structure": "Word + preposition: look at, listen to",
+      "explanation": "We look at something and listen to something. These prepositions always go with these verbs.",
+      "example": "His father looked at him for a long time.",
+      "exercise": {
+        "question": "Choose the correct word: Please listen ___ the teacher.",
+        "options": [
+          "to",
+          "at",
+          "for",
+          "on"
+        ],
+        "answer": 0,
+        "explanation": "listen to. In Uzbek “...ni tinglamoq” has no extra word, but English needs to."
       }
     }
   ]

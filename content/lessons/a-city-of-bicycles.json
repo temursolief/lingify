@@ -71,17 +71,74 @@
     {
       "phrase": "get around",
       "inText": "get around",
-      "meaning": "travel from place to place"
+      "meaning": "travel from place to place",
+      "uz": "u yoqdan-bu yoqqa borish"
     },
     {
       "phrase": "keep someone fit",
       "inText": "keeps them fit",
-      "meaning": "keep someone healthy and strong"
+      "meaning": "keep someone healthy and strong",
+      "uz": "sog'lom saqlamoq"
     },
     {
       "phrase": "traffic jam",
       "inText": "traffic jams",
-      "meaning": "a line of vehicles that cannot move"
+      "meaning": "a line of vehicles that cannot move",
+      "uz": "tirbandlik"
+    },
+    {
+      "phrase": "ride to work",
+      "inText": "ride to work",
+      "meaning": "go to work by bike",
+      "uz": "ishga velosipedda bormoq"
+    },
+    {
+      "phrase": "be full of",
+      "inText": "was full of",
+      "meaning": "have a lot of something",
+      "uz": "...ga to'la bo'lmoq"
+    },
+    {
+      "phrase": "can't afford to",
+      "inText": "could not afford to",
+      "meaning": "not have enough money to do something",
+      "uz": "...ga qurbi yetmaslik"
+    },
+    {
+      "phrase": "make something easier",
+      "inText": "make cycling easier",
+      "meaning": "help something become less difficult",
+      "uz": "...ni osonlashtirmoq"
+    },
+    {
+      "phrase": "for free",
+      "inText": "for free",
+      "meaning": "without paying",
+      "uz": "tekinga, bepul"
+    },
+    {
+      "phrase": "protect the environment",
+      "inText": "protect the environment",
+      "meaning": "keep nature safe from harm",
+      "uz": "atrof-muhitni himoya qilmoq"
+    },
+    {
+      "phrase": "save someone money",
+      "inText": "saves the country money",
+      "meaning": "help someone spend less",
+      "uz": "pul tejamoq"
+    },
+    {
+      "phrase": "not enough space",
+      "inText": "not enough space",
+      "meaning": "too little room",
+      "uz": "joy yetishmasligi"
+    },
+    {
+      "phrase": "impossible to imagine",
+      "inText": "impossible to imagine",
+      "meaning": "too hard even to think about",
+      "uz": "tasavvur qilib bo'lmaydigan"
     }
   ],
   "grammar": [

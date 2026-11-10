@@ -3,7 +3,11 @@
   "title": "The Woman Who Planted Trees",
   "summary": "Wangari Maathai started with a few trees in her back garden. Her movement went on to plant more than fifty million.",
   "genre": "Biography",
-  "topics": ["environment", "nature", "history"],
+  "topics": [
+    "environment",
+    "nature",
+    "history"
+  ],
   "paragraphs": [
     "Wangari Maathai was born in 1940 in a small village in Kenya. As a child, she loved the natural world around her home. There were green hills, clean streams and a large fig tree that her mother told her never to cut down. Wangari spent hours playing near the stream, watching the frogs and the clear water.",
     "She was an excellent student, and in 1960 she won a place to study in the United States. Later she returned to Kenya and continued her studies. In 1971 she became the first woman in East and Central Africa to get a doctorate, the highest university degree.",
@@ -17,31 +21,56 @@
   "questions": [
     {
       "question": "What did Wangari find when she visited her home village?",
-      "options": ["A new school", "The fig tree was gone and the stream was dry", "More forests than before", "Her family had moved away"],
+      "options": [
+        "A new school",
+        "The fig tree was gone and the stream was dry",
+        "More forests than before",
+        "Her family had moved away"
+      ],
       "answer": 1,
       "explanation": "The fig tree was gone, the stream was dry and many forests had been cut down."
     },
     {
       "question": "How did the Green Belt Movement start?",
-      "options": ["With a large government project", "With seven trees in her back garden", "With a march in the capital", "With money from the Nobel Prize"],
+      "options": [
+        "With a large government project",
+        "With seven trees in her back garden",
+        "With a march in the capital",
+        "With money from the Nobel Prize"
+      ],
       "answer": 1,
       "explanation": "She began by planting seven trees in her own back garden."
     },
     {
       "question": "How did the movement help women?",
-      "options": ["It gave them money and confidence", "It built them new houses", "It sent them to university abroad", "It found them jobs in the city"],
+      "options": [
+        "It gave them money and confidence",
+        "It built them new houses",
+        "It sent them to university abroad",
+        "It found them jobs in the city"
+      ],
       "answer": 0,
       "explanation": "Women were paid for every tree that survived, which gave them money and confidence."
     },
     {
       "question": "Why was Wangari arrested?",
-      "options": ["She cut down trees", "She spoke out against powerful people's building projects", "She did not pay taxes", "She left the country"],
+      "options": [
+        "She cut down trees",
+        "She spoke out against powerful people's building projects",
+        "She did not pay taxes",
+        "She left the country"
+      ],
       "answer": 1,
       "explanation": "She spoke out against powerful people who wanted to use forests and parks for building."
     },
     {
       "question": "What is the message of the bird story?",
-      "options": ["Small birds are brave", "Forest fires are dangerous", "Everyone should do the best they can", "Animals should help each other"],
+      "options": [
+        "Small birds are brave",
+        "Forest fires are dangerous",
+        "Everyone should do the best they can",
+        "Animals should help each other"
+      ],
       "answer": 2,
       "explanation": "The bird says it is doing the best it can, and Wangari said all of us should do this."
     }
@@ -53,9 +82,30 @@
       "example": "Many forests had been cut down to make space for farms that grew tea and coffee for sale abroad.",
       "exercise": {
         "question": "Choose the correct form: When she returned, the stream ___ for years.",
-        "options": ["had been polluted", "has been polluted", "was polluting", "had polluted"],
+        "options": [
+          "had been polluted",
+          "has been polluted",
+          "was polluting",
+          "had polluted"
+        ],
         "answer": 0,
         "explanation": "The stream received the action before she returned, so we use the past perfect passive."
+      }
+    },
+    {
+      "structure": "Word + preposition: think about",
+      "explanation": "We think about a problem, a person or a plan. The preposition about goes with think when we mean considering something.",
+      "example": "Wangari thought about the problem and came to a simple answer: plant trees.",
+      "exercise": {
+        "question": "Choose the correct word: I often think ___ my family.",
+        "options": [
+          "about",
+          "at",
+          "for",
+          "to"
+        ],
+        "answer": 0,
+        "explanation": "think about someone or something."
       }
     }
   ]

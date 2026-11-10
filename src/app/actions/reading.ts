@@ -5,7 +5,7 @@ import { requireStudent } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { lookupDefinition, type DictionaryData } from "@/lib/dictionary";
 import { glossaryEntry, guessOptions, type GlossaryEntry } from "@/lib/glossary";
-import { phraseQuestion } from "@/lib/lesson";
+import { collocationQuestion, phraseQuestion } from "@/lib/lesson";
 import { firstDue } from "@/lib/srs";
 import {
   coverageOf,
@@ -19,7 +19,7 @@ import {
   type SkillQuestion,
   type Token,
 } from "@/lib/texts";
-import { addToLearning, markLookedUp, recordSnapshot, wordSets } from "@/lib/vocab";
+import { addToLearning, markLookedUp, recordReading, recordSnapshot, wordSets } from "@/lib/vocab";
 
 const RESUME_WITHIN_MS = 12 * 3_600_000;
 /** Below this much active reading time the WPM figure would be noise. */
@@ -115,19 +115,17 @@ export async function dictionaryFor(lemma: string): Promise<DictionaryData | nul
   return lookupDefinition(z.string().min(1).max(60).parse(lemma));
 }
 
-export async function completeReading(sessionId: string): Promise<{ wpm: number | null }> {
+export async function completeReading(sessionId: string): Promise<{ wpm: number | null; pickedUp: number }> {
   const user = await requireStudent();
   const session = await ownSession(sessionId, user.id);
-  if (session.completedAt) return { wpm: session.wpm };
+  if (session.completedAt) return { wpm: session.wpm, pickedUp: 0 };
 
   const now = new Date();
   const rawWpm = session.activeSeconds >= MIN_SECONDS_FOR_WPM ? session.text.wordCount / (session.activeSeconds / 60) : null;
   const wpm = rawWpm !== null && rawWpm <= MAX_PLAUSIBLE_WPM ? rawWpm : null;
-  const lemmas = Object.keys(session.text.lemmaCounts as LemmaCounts);
 
   await db.$transaction([
     db.readingSession.update({ where: { id: session.id }, data: { completedAt: now, wpm, abandonedAt: null, abandonReason: null } }),
-    db.lemmaState.updateMany({ where: { userId: user.id, status: "LEARNING", lemma: { in: lemmas } }, data: { exposures: { increment: 1 } } }),
     db.assignmentRecipient.updateMany({
       where: { studentId: user.id, completedAt: null, assignment: { kind: "TEXT", textId: session.textId } },
       data: { completedAt: now },
@@ -135,8 +133,9 @@ export async function completeReading(sessionId: string): Promise<{ wpm: number 
     db.event.create({ data: { userId: user.id, type: "text_completed", textId: session.textId, data: { sessionId, wpm } } }),
     db.user.update({ where: { id: user.id }, data: { lastActiveAt: now } }),
   ]);
+  const { pickedUp } = await recordReading(user.id, session.text);
   await recordSnapshot(user.id);
-  return { wpm: wpm && Math.round(wpm) };
+  return { wpm: wpm && Math.round(wpm), pickedUp };
 }
 
 /** Stopping a text is a normal reader's choice: nothing is marked as failed, and the reason tunes recommendations. */
@@ -155,7 +154,7 @@ export type AnswerFeedback = { correct: boolean; answer: number; explanation: st
 
 const answerSchema = z.object({
   sessionId: z.string(),
-  kind: z.enum(["COMPREHENSION", "GIST", "CCQ", "GRAMMAR", "DISCOVERY", "PHRASE"]),
+  kind: z.enum(["COMPREHENSION", "GIST", "CCQ", "GRAMMAR", "DISCOVERY", "PHRASE", "COLLOCATION"]),
   index: z.number().int().min(0),
   choice: z.number().int().min(0),
 });
@@ -198,12 +197,26 @@ export async function answerItem(input: z.infer<typeof answerSchema>): Promise<A
       }
       break;
     }
+    case "COLLOCATION": {
+      const phrases = text.phrases as Phrase[];
+      const q = phrases[index] ? collocationQuestion(phrases, index) : null;
+      if (q) item = { ...q, explanation: `The phrase is “${phrases[index].phrase}”.` };
+      skill = "collocation";
+      break;
+    }
   }
   if (!item) throw new Error("Question not found");
 
   const correct = choice === item.answer;
   await db.exerciseAttempt.create({
-    data: { userId: user.id, textId: session.textId, kind, itemKey: `${session.textId}:${kind}:${index}`, skill, correct },
+    data: {
+      userId: user.id,
+      textId: session.textId,
+      kind: kind === "COLLOCATION" ? "PHRASE" : kind,
+      itemKey: `${session.textId}:${kind}:${index}`,
+      skill,
+      correct,
+    },
   });
 
   if (kind === "GIST") {
@@ -266,10 +279,12 @@ export async function savePhrase(input: { sessionId: string; index: number }) {
       contextSentence: session.text.sentences[tokens[0].i],
       contextWord: surface,
       contextTextId: session.textId,
+      contexts: [{ sentence: session.text.sentences[tokens[0].i], word: surface, textId: session.textId }],
       srsDue: firstDue(new Date()),
     },
     update: { meaning: phrase.meaning, isPhrase: true },
   });
+  await db.event.create({ data: { userId: user.id, type: "phrase_saved", textId: session.textId, data: { sessionId, phrase: key } } });
 }
 
 const ratingSchema = z.object({

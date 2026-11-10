@@ -43,6 +43,8 @@ export async function assignText(_: FormState, formData: FormData): Promise<Form
   const cls = await ownClass(String(formData.get("classId")));
   const textId = String(formData.get("textId") ?? "");
   const note = String(formData.get("note") ?? "").trim().slice(0, 200) || null;
+  const dueRaw = String(formData.get("dueAt") ?? "");
+  const dueAt = /^\d{4}-\d{2}-\d{2}$/.test(dueRaw) ? new Date(`${dueRaw}T23:59:00`) : null;
   const text = await db.text.findUnique({ where: { id: textId } });
   if (!text) return { error: "Choose a text." };
 
@@ -65,6 +67,7 @@ export async function assignText(_: FormState, formData: FormData): Promise<Form
       kind: "TEXT",
       textId: text.id,
       note,
+      dueAt,
       recipients: { create: eligible.map((studentId) => ({ studentId })) },
     },
   });
@@ -111,4 +114,13 @@ export async function removeStudent(classId: string, studentId: string) {
     db.enrollment.deleteMany({ where: { classId: cls.id, userId: studentId } }),
   ]);
   refresh();
+}
+
+export async function setDailyMinutes(_: FormState, formData: FormData): Promise<FormState> {
+  const cls = await ownClass(String(formData.get("classId")));
+  const minutes = z.coerce.number().int().min(5).max(180).safeParse(formData.get("minutes"));
+  if (!minutes.success) return { error: "Choose between 5 and 180 minutes." };
+  await db.class.update({ where: { id: cls.id }, data: { dailyMinutes: minutes.data } });
+  refresh();
+  return { ok: `Daily target set to ${minutes.data} minutes.` };
 }

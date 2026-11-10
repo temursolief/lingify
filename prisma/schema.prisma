@@ -13,6 +13,8 @@ enum Role {
 }
 
 enum WordStatus {
+  /// met in reading but never looked up; may become known through enough encounters
+  SEEN
   LEARNING
   KNOWN
 }
@@ -21,6 +23,7 @@ enum WordSource {
   PLACEMENT
   LOOKUP
   REVIEW
+  READING
 }
 
 enum Activity {
@@ -31,6 +34,7 @@ enum Activity {
   REVIEW
   PLACEMENT
   FLUENCY
+  IELTS
 }
 
 enum AttemptKind {
@@ -73,6 +77,10 @@ model User {
   estimatedVocab Int?
   createdAt      DateTime  @default(now())
   lastActiveAt   DateTime?
+  /// show Uzbek translations next to English definitions
+  uzbekGlosses   Boolean   @default(true)
+  telegramCode   String?   @unique
+  telegramChatId String?   @unique
 
   classesTaught Class[]               @relation("TeacherClasses")
   enrollments   Enrollment[]
@@ -87,17 +95,21 @@ model User {
   events        Event[]
   ratings       TextRating[]
   fluencyRuns   FluencyRun[]
+  ieltsAttempts IeltsAttempt[]
+  ownTexts      Text[]                @relation("TeacherTexts")
 }
 
 model Class {
-  id          String       @id @default(cuid())
-  name        String
-  joinCode    String       @unique
-  teacherId   String
-  teacher     User         @relation("TeacherClasses", fields: [teacherId], references: [id], onDelete: Cascade)
-  createdAt   DateTime     @default(now())
-  enrollments Enrollment[]
-  assignments Assignment[]
+  id           String       @id @default(cuid())
+  name         String
+  joinCode     String       @unique
+  teacherId    String
+  teacher      User         @relation("TeacherClasses", fields: [teacherId], references: [id], onDelete: Cascade)
+  /// minimum active minutes per day the teacher expects
+  dailyMinutes Int          @default(20)
+  createdAt    DateTime     @default(now())
+  enrollments  Enrollment[]
+  assignments  Assignment[]
 }
 
 model Enrollment {
@@ -139,12 +151,22 @@ model Text {
   phrases     Json     @default("[]")
   series      String?
   seriesPart  Int?
+  /// "graded" library text or "ielts" practice passage
+  track       String   @default("graded")
+  level       String   @default("B1")
+  /// IELTS question groups for track = "ielts"
+  ielts       Json?
+  timeLimit   Int?
+  /// texts written by a teacher are only visible to that teacher's classes
+  ownerId     String?
+  owner       User?    @relation("TeacherTexts", fields: [ownerId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
 
-  sessions    ReadingSession[]
-  assignments Assignment[]
-  ratings     TextRating[]
-  fluencyRuns FluencyRun[]
+  sessions      ReadingSession[]
+  assignments   Assignment[]
+  ratings       TextRating[]
+  fluencyRuns   FluencyRun[]
+  ieltsAttempts IeltsAttempt[]
 }
 
 model LemmaState {
@@ -166,6 +188,10 @@ model LemmaState {
   /// multi-word phrase saved from a text (not counted in coverage)
   isPhrase        Boolean    @default(false)
   meaning         String?
+  /// every sentence the student has met this item in: { sentence, word, textId }[]
+  contexts        Json       @default("[]")
+  /// times met in finished texts while not yet looked up
+  encounters      Int        @default(0)
   knownAt         DateTime?
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
@@ -324,6 +350,25 @@ model FluencyRun {
   createdAt   DateTime @default(now())
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   text        Text     @relation(fields: [textId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model IeltsAttempt {
+  id        String   @id @default(cuid())
+  userId    String
+  textId    String
+  /// { [questionId]: answer }
+  answers   Json
+  correct   Int
+  total     Int
+  /// { [questionType]: { correct, total } }
+  byType    Json
+  seconds   Int
+  band      Float
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  text      Text     @relation(fields: [textId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
 }

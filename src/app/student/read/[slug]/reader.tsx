@@ -6,6 +6,7 @@ import {
   abandonReading,
   addPreTaught,
   answerItem,
+  savePhrase,
   completeReading,
   dictionaryFor,
   guessWord,
@@ -16,7 +17,9 @@ import {
 } from "@/app/actions/reading";
 import { ActivityTracker, flushActivity } from "@/components/activity-tracker";
 import { ChoiceQuestion, feedbackLine } from "@/components/choice-question";
-import { Badge, Button, Card, cx } from "@/components/ui";
+import { setUzbekGlosses } from "@/app/actions/student";
+import { Button, Card, cx } from "@/components/ui";
+import { phraseQuestion } from "@/lib/lesson";
 import type { DictionaryData } from "@/lib/dictionary";
 import type { Mark, Token } from "@/lib/texts";
 
@@ -27,7 +30,7 @@ type Lesson = {
   prediction: Choice | null;
   preTeach: { word: string; lemma: string; definition: string; ccq: Choice }[];
   gist: string | null;
-  phrases: { phrase: string; meaning: string; marks: Mark[] }[];
+  phrases: { phrase: string; meaning: string; uz?: string; marks: Mark[] }[];
   grammar: { structure: string; marks: Mark[] }[];
 };
 type Popover = {
@@ -38,6 +41,8 @@ type Popover = {
   result?: LookupResult;
   guess?: { choice: number | null; correct: boolean; answer: number };
   dictionary?: DictionaryData | null | "loading";
+  /** set when the tapped word belongs to a useful phrase: the phrase is taught instead of the single word */
+  chunk?: { index: number; phase: "guess" | "result"; feedback?: { correct: boolean; answer: number }; saved: boolean };
 };
 
 const FONT_SIZES = ["text-lg", "text-xl", "text-2xl"] as const;
@@ -88,9 +93,10 @@ type Props = {
   readBefore: boolean;
   series: { title: string; part: number; total: number } | null;
   lesson: Lesson;
+  uzbek: boolean;
 };
 
-export function Reader({ text, coverage, pleasure, learningLemmas, readBefore, series, lesson }: Props) {
+export function Reader({ text, coverage, pleasure, learningLemmas, readBefore, series, lesson, uzbek }: Props) {
   const router = useRouter();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -110,12 +116,11 @@ export function Reader({ text, coverage, pleasure, learningLemmas, readBefore, s
   return (
     <div className="mx-auto max-w-3xl">
       {sessionId && <ActivityTracker activity="READING" sessionId={sessionId} />}
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Badge>{text.genre}</Badge>
-        <Badge tone={pleasure ? "good" : "accent"}>{pleasure ? "Pleasure read" : "Study read"}</Badge>
-        {series && <Badge>{series.title} · part {series.part} of {series.total}</Badge>}
-        <span className="text-sm text-muted">You know {Math.round(coverage * 100)}% of the words</span>
-      </div>
+      <p className="mb-2 text-sm text-muted">
+        {text.genre}
+        {series && ` · ${series.title}, part ${series.part} of ${series.total}`} · you know {Math.round(coverage * 100)}% of the words
+        {pleasure && <span className="text-good"> · easy read</span>}
+      </p>
       <h1 className="font-serif text-3xl font-semibold leading-tight sm:text-4xl">{text.title}</h1>
       {error && <p className="mt-4 rounded-lg bg-bad-soft p-3 text-sm text-bad">{error}</p>}
 
@@ -128,6 +133,7 @@ export function Reader({ text, coverage, pleasure, learningLemmas, readBefore, s
           pleasure={pleasure}
           learningLemmas={learningLemmas}
           lesson={lesson}
+          uzbek={uzbek}
           onFinish={async () => {
             if (!sessionId) return;
             await flushActivity();
@@ -258,6 +264,7 @@ function ReadingView({
   pleasure,
   learningLemmas,
   lesson,
+  uzbek: initialUzbek,
   onFinish,
   onStop,
 }: {
@@ -266,6 +273,7 @@ function ReadingView({
   pleasure: boolean;
   learningLemmas: string[];
   lesson: Lesson;
+  uzbek: boolean;
   onFinish: () => Promise<void>;
   onStop: (reason: "TOO_HARD" | "NOT_INTERESTED" | "NO_TIME") => Promise<void>;
 }) {
@@ -276,10 +284,20 @@ function ReadingView({
   const [popover, setPopover] = useState<Popover | null>(null);
   const [lookedUp, setLookedUp] = useState<Set<string>>(new Set());
   const [stopping, setStopping] = useState(false);
+  const [uzbek, setUzbek] = useState(initialUzbek);
+  const [savedChunks, setSavedChunks] = useState<Set<number>>(new Set());
   const [busy, startBusy] = useTransition();
   const containerRef = useRef<HTMLDivElement>(null);
   const learning = new Set([...learningLemmas, ...lesson.preTeach.map((w) => w.lemma), ...lookedUp]);
   const phraseMarks = useMemo(() => markIndex(lesson.phrases.flatMap((p) => p.marks)), [lesson.phrases]);
+  // Which phrase (if any) each token belongs to, so tapping a word inside a phrase teaches the whole phrase.
+  const phraseAt = useMemo(() => {
+    const map = new Map<string, number>();
+    lesson.phrases.forEach((p, index) => {
+      for (const key of markIndex(p.marks)) if (!map.has(key)) map.set(key, index);
+    });
+    return map;
+  }, [lesson.phrases]);
   const grammarMarks = useMemo(() => markIndex(lesson.grammar.flatMap((g) => g.marks)), [lesson.grammar]);
   const sentenceTokens = useMemo(() => {
     const bySentence = new Map<number, Token[]>();
@@ -319,13 +337,68 @@ function ReadingView({
       .catch(() => update(token, { dictionary: null }));
   };
 
-  const openWord = (token: Token, el: HTMLElement) => {
-    if (!sessionId || !token.l || !containerRef.current) return;
+  const toggleUzbek = () => {
+    setUzbek(!uzbek);
+    setUzbekGlosses(!uzbek).catch(() => undefined);
+  };
+
+  const position = (el: HTMLElement) => {
     const box = el.getBoundingClientRect();
-    const parent = containerRef.current.getBoundingClientRect();
+    const parent = containerRef.current!.getBoundingClientRect();
     const width = Math.min(352, parent.width);
-    const left = Math.max(0, Math.min(box.left - parent.left, parent.width - width));
-    setPopover({ token, top: box.bottom - parent.top + 6, left, phase: "loading" });
+    return { top: box.bottom - parent.top + 6, left: Math.max(0, Math.min(box.left - parent.left, parent.width - width)) };
+  };
+
+  const openChunk = (token: Token, el: HTMLElement, index: number) => {
+    if (!sessionId || !containerRef.current) return;
+    setPopover({ token, ...position(el), phase: "result", chunk: { index, phase: savedChunks.has(index) ? "result" : "guess", saved: savedChunks.has(index) } });
+  };
+
+  const revealChunk = (token: Token, index: number, choice: number | null) => {
+    if (!sessionId) return;
+    const save = () =>
+      savePhrase({ sessionId, index })
+        .then(() => {
+          setSavedChunks((s) => new Set(s).add(index));
+          setPopover((p) => (p && p.token === token && p.chunk ? { ...p, chunk: { ...p.chunk, saved: true } } : p));
+        })
+        .catch(() => undefined);
+    if (choice === null) {
+      setPopover((p) => (p && p.token === token && p.chunk ? { ...p, chunk: { ...p.chunk, phase: "result" } } : p));
+      save();
+      return;
+    }
+    answerItem({ sessionId, kind: "PHRASE", index, choice })
+      .then((f) => setPopover((p) => (p && p.token === token && p.chunk ? { ...p, chunk: { ...p.chunk, phase: "result", feedback: f } } : p)))
+      .catch(() => undefined)
+      .finally(save);
+  };
+
+  const openWord = (token: Token, el: HTMLElement, key?: string) => {
+    if (!sessionId || !token.l || !containerRef.current) return;
+    const chunkIndex = key ? phraseAt.get(key) : undefined;
+    if (chunkIndex !== undefined) {
+      openChunk(token, el, chunkIndex);
+      return;
+    }
+    lookupAt(token, position(el));
+  };
+
+  const showWordInstead = () => {
+    if (popover) lookupAt(popover.token, { top: popover.top, left: popover.left });
+  };
+
+  const chunkSentence = (token: Token, index: number) => {
+    const keys = markIndex(lesson.phrases[index].marks);
+    return (sentenceTokens.get(token.i) ?? []).map((t) => {
+      const para = text.paragraphs.findIndex((p) => p.includes(t));
+      return { text: t.v, space: t.s, bold: keys.has(`${para}:${text.paragraphs[para].indexOf(t)}`) };
+    });
+  };
+
+  const lookupAt = (token: Token, pos: { top: number; left: number }) => {
+    if (!sessionId || !token.l) return;
+    setPopover({ token, ...pos, phase: "loading" });
     setLookedUp((s) => new Set(s).add(token.l!));
     lookupWord({ sessionId, lemma: token.l, word: token.v, sentenceIndex: token.i })
       .then((result) => {
@@ -345,10 +418,10 @@ function ReadingView({
       .catch(() => update(token, { phase: "result" }));
   };
 
-  const onWordKey = (e: KeyboardEvent<HTMLSpanElement>, token: Token) => {
+  const onWordKey = (e: KeyboardEvent<HTMLSpanElement>, token: Token, key: string) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-      openWord(token, e.currentTarget);
+      openWord(token, e.currentTarget, key);
     }
   };
 
@@ -363,10 +436,10 @@ function ReadingView({
   return (
     <>
       {lesson.gist && (
-        <div className="mt-5 rounded-xl border border-accent/30 bg-accent-soft p-4 text-sm">
+        <div className="mt-5 rounded-md border border-accent/30 bg-accent-soft p-4 text-sm">
           <p className="font-medium text-accent">Read for the main idea</p>
           <p className="mt-1">{lesson.gist}</p>
-          <p className="mt-1 text-muted">Try to keep going when you meet a new word. You can often understand it from the sentence.</p>
+          <p className="mt-1 text-muted">Keep going when you meet a new word: you can often guess it from the sentence. Click a word only if you need it.</p>
         </div>
       )}
 
@@ -405,8 +478,6 @@ function ReadingView({
       )}
       {showGrammar && <p className="mt-3 text-sm text-muted">Highlighted: {lesson.grammar.map((g) => g.structure).join(" · ")}</p>}
 
-      <p className="mt-4 text-sm text-muted">{text.wordCount} words · Tap a word if you need it. First, try to guess its meaning.</p>
-
       <div ref={containerRef} className={cx("relative mt-6 space-y-5 font-serif leading-relaxed", FONT_SIZES[fontSize])}>
         {text.paragraphs.map((para, p) => (
           <p key={p}>
@@ -428,8 +499,8 @@ function ReadingView({
                     role="button"
                     tabIndex={0}
                     aria-label={`Look up ${token.v}`}
-                    onClick={(e: MouseEvent<HTMLSpanElement>) => openWord(token, e.currentTarget)}
-                    onKeyDown={(e) => onWordKey(e, token)}
+                    onClick={(e: MouseEvent<HTMLSpanElement>) => openWord(token, e.currentTarget, key)}
+                    onKeyDown={(e) => onWordKey(e, token, key)}
                     className={cx(
                       "cursor-pointer rounded-sm transition-colors hover:bg-accent-soft",
                       isLearning && !inGrammar && "bg-learning/70",
@@ -454,13 +525,27 @@ function ReadingView({
             style={{ top: popover.top, left: popover.left }}
           >
             <div className="flex items-start justify-between gap-2">
-              <p className="text-lg font-semibold">{popover.token.l}</p>
+              <p className="text-lg font-semibold">{popover.chunk ? lesson.phrases[popover.chunk.index].phrase : popover.token.l}</p>
               <div className="flex gap-1">
+                <Button
+                  variant={uzbek ? "primary" : "secondary"}
+                  className="px-2 py-1 text-sm"
+                  aria-pressed={uzbek}
+                  title="Show Uzbek translations"
+                  onClick={toggleUzbek}
+                >
+                  UZ
+                </Button>
                 <Button
                   variant="secondary"
                   className="px-2 py-1"
                   aria-label="Hear pronunciation"
-                  onClick={() => speak(popover.token.l!, popover.dictionary && popover.dictionary !== "loading" ? popover.dictionary.audio : undefined)}
+                  onClick={() =>
+                    speak(
+                      popover.chunk ? lesson.phrases[popover.chunk.index].phrase : popover.token.l!,
+                      !popover.chunk && popover.dictionary && popover.dictionary !== "loading" ? popover.dictionary.audio : undefined,
+                    )
+                  }
                 >
                   🔊
                 </Button>
@@ -468,9 +553,22 @@ function ReadingView({
               </div>
             </div>
 
-            {popover.phase === "loading" && <p className="mt-2 text-sm text-muted">One moment…</p>}
+            {popover.chunk && (
+              <ChunkView
+                phrase={lesson.phrases[popover.chunk.index]}
+                question={phraseQuestion(lesson.phrases, popover.chunk.index)}
+                word={popover.token.v}
+                sentence={chunkSentence(popover.token, popover.chunk.index)}
+                state={popover.chunk}
+                uzbek={uzbek}
+                onAnswer={(choice) => revealChunk(popover.token, popover.chunk!.index, choice)}
+                onShowWord={showWordInstead}
+              />
+            )}
 
-            {popover.phase === "guess" && popover.result?.guess && (
+            {!popover.chunk && popover.phase === "loading" && <p className="mt-2 text-sm text-muted">One moment…</p>}
+
+            {!popover.chunk && popover.phase === "guess" && popover.result?.guess && (
               <div className="mt-2 text-sm">
                 <p className="font-serif text-base italic text-muted">{contextSentence(popover.token)}</p>
                 <p className="mt-3 font-medium">What do you think it means here?</p>
@@ -492,7 +590,7 @@ function ReadingView({
               </div>
             )}
 
-            {popover.phase === "result" && (
+            {!popover.chunk && popover.phase === "result" && (
               <div className="mt-2 space-y-2 text-sm">
                 {popover.guess && (
                   <p className={cx("font-medium", popover.guess.correct ? "text-good" : "text-warn")}>
@@ -503,6 +601,7 @@ function ReadingView({
                   <div>
                     <span className="text-sm text-muted">{popover.result.entry.pos}</span>
                     <p className="text-base">{popover.result.entry.definition}</p>
+                    {uzbek && popover.result.entry.uz && <p className="text-muted">O‘zbekcha: {popover.result.entry.uz}</p>}
                   </div>
                 )}
                 {popover.dictionary === "loading" && <p className="text-muted">Looking up…</p>}
@@ -558,5 +657,59 @@ function ReadingView({
         )}
       </div>
     </>
+  );
+}
+
+function ChunkView({ phrase, question, word, sentence, state, uzbek, onAnswer, onShowWord }: {
+  phrase: { phrase: string; meaning: string; uz?: string };
+  question: { options: string[] };
+  word: string;
+  sentence: { text: string; space: string; bold: boolean }[];
+  state: NonNullable<Popover["chunk"]>;
+  uzbek: boolean;
+  onAnswer: (choice: number | null) => void;
+  onShowWord: () => void;
+}) {
+  return (
+    <div className="mt-2 text-sm">
+      <p className="text-muted">“{word}” is part of a useful phrase. Learn the words together.</p>
+      <p className="mt-2 text-base italic text-muted">
+        {sentence.map((t, i) => (
+          <span key={i}>
+            {i ? t.space : ""}
+            {t.bold ? <strong className="text-accent">{t.text}</strong> : t.text}
+          </span>
+        ))}
+      </p>
+      {state.phase === "guess" ? (
+        <>
+          <p className="mt-3 font-medium">What does “{phrase.phrase}” mean here?</p>
+          <div className="mt-2 space-y-1.5">
+            {question.options.map((option, i) => (
+              <button key={i} type="button" onClick={() => onAnswer(i)} className="block w-full rounded-md border border-line px-3 py-2 text-left hover:bg-paper">
+                {option}
+              </button>
+            ))}
+          </div>
+          <button type="button" onClick={() => onAnswer(null)} className="mt-2 text-muted underline hover:text-ink">
+            I don&apos;t know, show me
+          </button>
+        </>
+      ) : (
+        <div className="mt-3 space-y-2">
+          {state.feedback && (
+            <p className={cx("font-medium", state.feedback.correct ? "text-good" : "text-warn")}>
+              {state.feedback.correct ? "Great guess! You worked it out from the sentence." : feedbackLine(false)}
+            </p>
+          )}
+          <p className="text-base">{phrase.meaning}</p>
+          {uzbek && phrase.uz && <p className="text-muted">O‘zbekcha: {phrase.uz}</p>}
+          <p className="border-t border-line pt-2 text-xs text-muted">{state.saved ? "Saved to your review as a phrase." : "Saving to your review…"}</p>
+        </div>
+      )}
+      <button type="button" onClick={onShowWord} className="mt-2 block text-muted underline hover:text-ink">
+        Show only the word “{word}”
+      </button>
+    </div>
   );
 }

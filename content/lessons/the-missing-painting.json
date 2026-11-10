@@ -71,17 +71,74 @@
     {
       "phrase": "go off",
       "inText": "gone off",
-      "meaning": "start ringing or making a noise (an alarm)"
+      "meaning": "start ringing (an alarm)",
+      "uz": "chalinmoq (signal)"
     },
     {
       "phrase": "bend down",
       "inText": "bent down",
-      "meaning": "move your body lower towards the ground"
+      "meaning": "move your body lower towards the ground",
+      "uz": "engashmoq"
     },
     {
       "phrase": "for a moment",
       "inText": "for a moment",
-      "meaning": "for a very short time"
+      "meaning": "for a very short time",
+      "uz": "bir lahza"
+    },
+    {
+      "phrase": "be worth more than",
+      "inText": "worth more than",
+      "meaning": "have a value higher than",
+      "uz": "...dan qimmatroq turmoq"
+    },
+    {
+      "phrase": "an hour later",
+      "inText": "an hour later",
+      "meaning": "sixty minutes after",
+      "uz": "bir soatdan keyin"
+    },
+    {
+      "phrase": "go home",
+      "inText": "gone home",
+      "meaning": "return to your house",
+      "uz": "uyga ketmoq"
+    },
+    {
+      "phrase": "spend the evening",
+      "inText": "spent the evening",
+      "meaning": "pass the evening doing something",
+      "uz": "kechqurunni o'tkazmoq"
+    },
+    {
+      "phrase": "look carefully at",
+      "inText": "looked carefully at",
+      "meaning": "look at something with attention",
+      "uz": "...ga diqqat bilan qaramoq"
+    },
+    {
+      "phrase": "come from",
+      "inText": "come from",
+      "meaning": "start or appear from a place",
+      "uz": "...dan kelmoq"
+    },
+    {
+      "phrase": "offer someone money",
+      "inText": "offered her a lot of money",
+      "meaning": "say you will give someone money",
+      "uz": "pul taklif qilmoq"
+    },
+    {
+      "phrase": "need something badly",
+      "inText": "needed the money badly",
+      "meaning": "need something very much",
+      "uz": "...ga juda muhtoj bo'lmoq"
+    },
+    {
+      "phrase": "make a mistake",
+      "inText": "the only mistake you made",
+      "meaning": "do something wrong",
+      "uz": "xato qilmoq"
     }
   ],
   "grammar": [

@@ -1,9 +1,11 @@
 import "server-only";
+import { pickContext } from "./contexts";
 import { db } from "./db";
 import type { DictionaryData } from "./dictionary";
 import { lemmaRanks } from "./frequency";
 import { glossaryEntry } from "./glossary";
 import type { Phrase } from "./texts";
+import { dueWhere } from "./vocab";
 
 export type ReviewCard = {
   lemma: string;
@@ -16,6 +18,10 @@ export type ReviewCard = {
   exposures: number;
   streak: number;
   isPhrase: boolean;
+  /** a word already learned, back for a spaced check-up */
+  checkup: boolean;
+  /** how many different sentences this item has been met in */
+  contexts: number;
 };
 
 const SESSION_SIZE = 20;
@@ -38,12 +44,12 @@ export async function reviewQueue(userId: string) {
   const now = new Date();
   const [due, recent, totalDue] = await Promise.all([
     db.lemmaState.findMany({
-      where: { userId, status: "LEARNING", srsDue: { lte: now } },
+      where: dueWhere(userId, now),
       orderBy: { srsDue: "asc" },
       take: SESSION_SIZE,
     }),
     db.exerciseAttempt.findMany({ where: { userId, kind: "REVIEW" }, orderBy: { answeredAt: "desc" }, take: RECENT_ATTEMPTS }),
-    db.lemmaState.count({ where: { userId, status: "LEARNING", srsDue: { lte: now } } }),
+    db.lemmaState.count({ where: dueWhere(userId, now) }),
   ]);
 
   const accuracy = recent.length ? recent.filter((a) => a.correct).length / recent.length : 0;
@@ -57,11 +63,12 @@ export async function reviewQueue(userId: string) {
   const definitions = new Map(entries.map((e) => [e.word, (e.data as DictionaryData).meanings[0]?.definition ?? null]));
 
   const cards: ReviewCard[] = due.map((d) => {
-    const answer = d.contextWord ?? d.lemma;
-    const gapped = d.contextSentence ? d.contextSentence.replace(new RegExp(`\\b${escape(answer)}\\b`), "_____") : null;
+    const ctx = pickContext(d);
+    const answer = ctx.word;
+    const gapped = ctx.sentence ? ctx.sentence.replace(new RegExp(`\\b${escape(answer)}\\b`), "_____") : null;
     let options: string[] | null = null;
     if (mode === "choice") {
-      const others = due.filter((o) => o.lemma !== d.lemma && o.isPhrase === d.isPhrase).map((o) => (o.contextWord ?? o.lemma).toLowerCase());
+      const others = due.filter((o) => o.lemma !== d.lemma && o.isPhrase === d.isPhrase).map((o) => pickContext(o).word.toLowerCase());
       const fillers = d.isPhrase
         ? allPhrases
         : lemmaRanks
@@ -74,7 +81,7 @@ export async function reviewQueue(userId: string) {
     }
     return {
       lemma: d.lemma,
-      gapped: gapped && gapped !== d.contextSentence ? gapped : null,
+      gapped: gapped && gapped !== ctx.sentence ? gapped : null,
       hint: d.isPhrase ? d.meaning : (glossaryEntry(d.lemma)?.definition ?? definitions.get(d.lemma) ?? null),
       firstLetter: answer[0],
       length: answer.length,
@@ -82,6 +89,8 @@ export async function reviewQueue(userId: string) {
       exposures: d.exposures,
       streak: d.srsStreak,
       isPhrase: d.isPhrase,
+      checkup: d.status === "KNOWN",
+      contexts: Array.isArray(d.contexts) ? d.contexts.length : 1,
     };
   });
 

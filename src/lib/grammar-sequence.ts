@@ -3,6 +3,7 @@
  * English Grammar Profile levels). Grammar practice follows the student's place in this sequence.
  */
 export const GRAMMAR_SEQUENCE = [
+  { key: "articles", stage: 1, label: "Articles: a / an / the" },
   { key: "be-going-to", stage: 1, label: "going to for plans" },
   { key: "past-continuous", stage: 1, label: "Past continuous" },
   { key: "comparatives-modifiers", stage: 1, label: "Much / far + comparative" },
@@ -11,6 +12,7 @@ export const GRAMMAR_SEQUENCE = [
   { key: "present-perfect-since", stage: 2, label: "Present perfect with since / for" },
   { key: "first-conditional", stage: 2, label: "First conditional" },
   { key: "modals-possibility", stage: 2, label: "might / may for possibility" },
+  { key: "dependent-prepositions", stage: 2, label: "Word + preposition (depend on, afraid of)" },
   { key: "present-passive", stage: 3, label: "Present passive" },
   { key: "past-passive", stage: 3, label: "Past passive" },
   { key: "linking-contrast", stage: 3, label: "although / while for contrast" },

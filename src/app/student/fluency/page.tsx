@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { LineChart } from "@/components/charts";
-import { Badge, Card, EmptyState, PageHeader, PageSkeleton, Stat } from "@/components/ui";
+import { Badge, Card, EmptyState, PageHeader, PageSkeleton } from "@/components/ui";
 import { requireStudent } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { libraryFor } from "@/lib/recommend";
-import { dayKey, dayOf } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Speed reading" };
 
@@ -30,22 +28,18 @@ async function FluencyContent() {
     .sort((a, b) => Number(b.completed) - Number(a.completed) || b.coverage - a.coverage);
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-4xl space-y-6">
       <PageHeader
         title="Speed reading"
-        subtitle="Read an easy text a little faster than usual, then answer one question to check you understood. Fluency grows with easy, fast reading."
+        subtitle="Read an easy text a little faster than usual, then answer one question. Easy, fast reading builds fluency."
+        action={
+          <div className="text-right">
+            <div className="text-sm text-muted">Your target</div>
+            <div className="text-[1.75rem] leading-none font-semibold tabular-nums">{target} wpm</div>
+            {best && <div className="text-sm text-muted">best {Math.round(best)} wpm</div>}
+          </div>
+        }
       />
-      <div className="grid grid-cols-3 gap-3">
-        <Stat label="Best speed" value={best ? `${Math.round(best)} wpm` : "–"} />
-        <Stat label="Next target" value={`${target} wpm`} hint="10% faster than your best" />
-        <Stat label="Runs" value={runs.length} hint={runs.length ? `${valid.length} counted` : "Start with any text below"} />
-      </div>
-      {runs.length > 1 && (
-        <Card>
-          <h2 className="mb-4 font-semibold">Words per minute</h2>
-          <LineChart data={valid.map((r) => ({ day: dayKey(dayOf(r.createdAt)), value: Math.round(r.wpm), title: r.text.title }))} unit=" wpm" label="Speed reading words per minute" />
-        </Card>
-      )}
       <Card>
         <h2 className="font-semibold">Choose an easy text</h2>
         <p className="mb-4 text-sm text-muted">Texts you have already read, or where you know at least 98% of the words.</p>

@@ -1,13 +1,13 @@
 import glossary from "../../content/glossary.json";
 
-export type GlossaryEntry = { pos: string; definition: string };
+export type GlossaryEntry = { pos: string; definition: string; uz: string | null };
 
-const entries = glossary as unknown as Record<string, [string, string]>;
+const entries = glossary as unknown as Record<string, [string, string, string?]>;
 
 /** Learner-friendly B1 definition written for this library, if we have one. */
 export function glossaryEntry(lemma: string): GlossaryEntry | null {
   const e = entries[lemma];
-  return e ? { pos: e[0], definition: e[1] } : null;
+  return e ? { pos: e[0], definition: e[1], uz: e[2] ?? null } : null;
 }
 
 function hash(s: string) {

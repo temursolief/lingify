@@ -75,17 +75,74 @@
     {
       "phrase": "switch off",
       "inText": "switched off",
-      "meaning": "stop working, like a machine"
+      "meaning": "stop working, like a machine",
+      "uz": "o'chmoq"
     },
     {
       "phrase": "build up",
       "inText": "build up",
-      "meaning": "slowly increase"
+      "meaning": "slowly increase",
+      "uz": "asta-sekin to'planmoq"
     },
     {
       "phrase": "fall asleep",
       "inText": "fall asleep",
-      "meaning": "start sleeping"
+      "meaning": "start sleeping",
+      "uz": "uxlab qolmoq"
+    },
+    {
+      "phrase": "spend ... years of your life",
+      "inText": "spend about thirty years of your life",
+      "meaning": "pass that many years of your life",
+      "uz": "umrining ... yilini o'tkazmoq"
+    },
+    {
+      "phrase": "long-term memory",
+      "inText": "long-term memory",
+      "meaning": "memory that keeps things for a long time",
+      "uz": "uzoq muddatli xotira"
+    },
+    {
+      "phrase": "protect someone from",
+      "inText": "protect us from",
+      "meaning": "keep someone safe from",
+      "uz": "...dan himoya qilmoq"
+    },
+    {
+      "phrase": "fight infections",
+      "inText": "fight infections",
+      "meaning": "stop illnesses caused by germs",
+      "uz": "infeksiyalarga qarshi kurashmoq"
+    },
+    {
+      "phrase": "get a cold",
+      "inText": "get colds",
+      "meaning": "become ill with a cold",
+      "uz": "shamollamoq"
+    },
+    {
+      "phrase": "make mistakes",
+      "inText": "make more mistakes",
+      "meaning": "do things wrong",
+      "uz": "xato qilmoq"
+    },
+    {
+      "phrase": "increase the risk of",
+      "inText": "increase the risk of",
+      "meaning": "make something bad more likely",
+      "uz": "...xavfini oshirmoq"
+    },
+    {
+      "phrase": "get up",
+      "inText": "get up",
+      "meaning": "get out of bed",
+      "uz": "o'rnidan turmoq"
+    },
+    {
+      "phrase": "put something away",
+      "inText": "put your phone away",
+      "meaning": "put something back in its usual place",
+      "uz": "joyiga qo'ymoq"
     }
   ],
   "grammar": [

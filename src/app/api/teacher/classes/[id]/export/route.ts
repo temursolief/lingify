@@ -20,7 +20,7 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/teacher/cla
     "Name", "Email", "Last active", "Minutes this week", "Reading min (week)", "Comprehension min (week)", "Vocabulary min (week)",
     "Grammar min (week)", "Review min (week)", "Minutes total", "Words read (week)", "Words read (total)", "Texts completed",
     "Known words", "Known words +30 days", "Learning words", "Comprehension % (last 5)", "Avg WPM (last 5)", "Streak days", "Alerts",
-    "Weakest skill", "Grammar stage", "Can-do achieved (of 9)", "Best speed-reading WPM",
+    "Weakest skill", "Grammar stage", "Can-do achieved (of 11)", "Best speed-reading WPM", "IELTS reading band (est.)",
     ...(rows[0]?.skills.map((s) => `${s.label} % (first try)`) ?? []),
   ];
   const lines = rows.map((r) => [
@@ -28,7 +28,7 @@ export async function GET(_request: Request, ctx: RouteContext<"/api/teacher/cla
     r.weekMinutesByActivity.quiz, r.weekMinutesByActivity.vocab, r.weekMinutesByActivity.grammar, r.weekMinutesByActivity.review,
     r.totalMinutes, r.weekWords, r.totalWords, r.textsCompleted, r.knownCount, r.knownGrowth30, r.learningCount, r.comprehension,
     r.avgWpm, r.streak, r.flags.map((f) => `${f.label} (${f.detail})`).join("; "),
-    r.weakestSkill, r.grammarStage, r.canDoAchieved, r.bestFluency,
+    r.weakestSkill, r.grammarStage, r.canDoAchieved, r.bestFluency, r.ieltsBand,
     ...r.skills.map((s) => (s.accuracy === null ? null : Math.round(s.accuracy * 100))),
   ]);
   const csv = [header, ...lines].map((line) => line.map(csvCell).join(",")).join("\n");

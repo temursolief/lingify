@@ -10,6 +10,7 @@ import { grammarInfo } from "../src/lib/grammar-sequence";
 import { canonicalLemma } from "../src/lib/lemma";
 import { findMarks } from "../src/lib/marks";
 import { lemmatizeWord, tokenize } from "../src/lib/nlp";
+import type { IeltsTask } from "../src/lib/ielts";
 import { READING_SKILLS, type Choice, type GrammarPoint, type Question, type ReadingSkill } from "../src/lib/texts";
 
 type TextFile = {
@@ -32,8 +33,8 @@ type LessonFile = {
   skills: ReadingSkill[];
   extraQuestion: Question & { skill: ReadingSkill };
   response: string;
-  phrases: { phrase: string; inText: string; meaning: string }[];
-  grammar: { key: string; examples: string[]; highlights: string[]; discovery: Question }[];
+  phrases: { phrase: string; inText: string; meaning: string; uz?: string }[];
+  grammar: { key: string; examples: string[]; highlights: string[]; discovery: Question; uzNote?: string }[];
 };
 
 const root = path.resolve(import.meta.dirname, "..");
@@ -100,7 +101,7 @@ export function loadLibrary() {
       checkChoice(t.slug, lg.discovery, `discovery question for ${lg.key}`);
       checkChoice(t.slug, g.exercise, `exercise for ${lg.key}`);
       const marks = lg.highlights.flatMap((h) => findMarks(paragraphs, h));
-      return { ...g, key: lg.key, examples: lg.examples, highlights: lg.highlights, marks, discovery: lg.discovery };
+      return { ...g, key: lg.key, examples: lg.examples, highlights: lg.highlights, marks, discovery: lg.discovery, uzNote: lg.uzNote };
     });
 
     for (const lemma of Object.keys(lemmaCounts)) {
@@ -135,4 +136,74 @@ export function loadLibrary() {
   });
 
   return { rows, seriesTitles, missingGlossary: [...missingGlossary].sort() };
+}
+
+type IeltsFile = {
+  slug: string;
+  title: string;
+  summary: string;
+  topics: string[];
+  level: string;
+  timeLimit: number;
+  paragraphs: string[];
+  tasks: IeltsTask[];
+  phrases: { phrase: string; inText: string; meaning: string; uz?: string }[];
+};
+
+/** IELTS practice passages: every completion answer must appear in the passage, and every index must be valid. */
+export function loadIelts() {
+  const dir = path.join(root, "content/ielts");
+  return readdirSync(dir).filter((f) => f.endsWith(".json")).sort().map((file) => {
+    const t = read<IeltsFile>(path.join(dir, file));
+    const fail = (msg: string) => {
+      throw new Error(`ielts/${t.slug}: ${msg}`);
+    };
+    const { paragraphs, sentences, lemmaCounts, wordCount } = tokenize(t.paragraphs);
+    const body = t.paragraphs.join(" ").toLowerCase();
+    const ids = new Set<string>();
+    for (const task of t.tasks) {
+      for (const item of task.items) {
+        if (ids.has(item.id)) fail(`duplicate question id ${item.id}`);
+        ids.add(item.id);
+      }
+      if (task.type === "tfng") {
+        for (const it of task.items) if (!["TRUE", "FALSE", "NOT GIVEN"].includes(it.answer)) fail(`bad answer for ${it.id}`);
+      } else if (task.type === "headings") {
+        for (const it of task.items) {
+          if (it.paragraph < 0 || it.paragraph >= t.paragraphs.length) fail(`bad paragraph for ${it.id}`);
+          if (it.answer < 0 || it.answer >= task.headings.length) fail(`bad heading for ${it.id}`);
+        }
+      } else {
+        for (const it of task.items) {
+          if (!it.answers.length) fail(`no answers for ${it.id}`);
+          if (!body.includes(it.answers[0].toLowerCase())) fail(`answer "${it.answers[0]}" for ${it.id} is not in the passage`);
+          if (it.answers[0].split(" ").length > task.maxWords) fail(`answer for ${it.id} is longer than ${task.maxWords} words`);
+        }
+        if (task.type === "summary") for (const it of task.items) if (!task.text.includes(`{{${it.id}}}`)) fail(`summary has no gap for ${it.id}`);
+      }
+    }
+    const phrases = t.phrases.map((ph) => {
+      const marks = findMarks(paragraphs, ph.inText);
+      if (!marks.length) fail(`phrase "${ph.inText}" is not in the passage`);
+      return { ...ph, marks };
+    });
+    return {
+      slug: t.slug,
+      title: t.title,
+      summary: t.summary,
+      genre: "IELTS Academic",
+      topics: t.topics,
+      paragraphs,
+      sentences,
+      lemmaCounts,
+      wordCount,
+      questions: [],
+      grammar: [],
+      phrases,
+      track: "ielts",
+      level: t.level,
+      timeLimit: t.timeLimit,
+      ielts: t.tasks,
+    };
+  });
 }

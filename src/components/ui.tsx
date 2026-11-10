@@ -67,13 +67,34 @@ export function Stat({ label, value, hint }: { label: string; value: ReactNode; 
 
 export function PageHeader({ title, subtitle, action }: { title: string; subtitle?: ReactNode; action?: ReactNode }) {
   return (
-    <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+    <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 className="text-[2.25rem] leading-tight font-semibold">{title}</h1>
-        {subtitle && <p className="mt-2">{subtitle}</p>}
+        <h1 className="text-[1.75rem] leading-tight font-semibold">{title}</h1>
+        {subtitle && <p className="mt-1 text-muted">{subtitle}</p>}
       </div>
       {action}
     </div>
+  );
+}
+
+/** Bootstrap nav-tabs: one row of links, the current one joined to the content below. */
+export function Tabs({ items, current }: { items: { key: string; label: ReactNode; href: string }[]; current: string }) {
+  return (
+    <nav className="mb-6 flex gap-1 overflow-x-auto border-b border-line">
+      {items.map((t) => (
+        <Link
+          key={t.key}
+          href={t.href}
+          aria-current={t.key === current ? "page" : undefined}
+          className={cx(
+            "-mb-px rounded-t-md border px-4 py-2 whitespace-nowrap no-underline",
+            t.key === current ? "border-line border-b-page bg-page text-ink" : "border-transparent text-accent hover:border-grid hover:border-b-line",
+          )}
+        >
+          {t.label}
+        </Link>
+      ))}
+    </nav>
   );
 }
 

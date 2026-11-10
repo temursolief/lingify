@@ -18,7 +18,15 @@ type GrammarItem = {
   preview: boolean;
   stageLabel: string;
 };
-type PhraseItem = Choice & { phrase: string; inText: string; sentence: string };
+type PhraseItem = Choice & {
+  index: number;
+  phrase: string;
+  inText: string;
+  meaning: string;
+  uz: string | null;
+  sentence: string;
+  collocation: (Choice & { hint: string }) | null;
+};
 type Rating = { enjoyment: number; difficulty: number; recommend: boolean };
 
 type Props = {
@@ -36,6 +44,7 @@ type Props = {
   phrases: PhraseItem[];
   grammar: GrammarItem[];
   grammarStage: number;
+  uzbek: boolean;
   response: string;
   rating: Rating | null;
   next: { slug: string; title: string; inSeries: boolean } | null;
@@ -212,9 +221,11 @@ export function Practice(props: Props) {
         <PhraseCard
           key={`p${index}`}
           item={phrases[index]}
+          uzbek={props.uzbek}
           label={`Phrase ${index + 1} of ${phrases.length}`}
-          check={(choice) => answerItem({ sessionId, kind: "PHRASE", index, choice })}
-          save={() => savePhrase({ sessionId, index })}
+          check={(choice) => answerItem({ sessionId, kind: "PHRASE", index: phrases[index].index, choice })}
+          complete={(choice) => answerItem({ sessionId, kind: "COLLOCATION", index: phrases[index].index, choice })}
+          save={() => savePhrase({ sessionId, index: phrases[index].index })}
           onAnswered={counted}
           onNext={() => advance(phrases.length)}
         />
@@ -311,14 +322,17 @@ function VocabQuestion({ label, progress, item, check, onAnswered, onNext }: {
   );
 }
 
-function PhraseCard({ item, label, check, save, onAnswered, onNext }: {
+function PhraseCard({ item, uzbek, label, check, complete, save, onAnswered, onNext }: {
   item: PhraseItem;
+  uzbek: boolean;
   label: string;
   check: (choice: number) => Promise<{ correct: boolean; answer: number; explanation: string }>;
+  complete: (choice: number) => Promise<{ correct: boolean; answer: number; explanation: string }>;
   save: () => Promise<void>;
   onAnswered: (correct: boolean) => void;
   onNext: () => void;
 }) {
+  const [meaningDone, setMeaningDone] = useState(false);
   const [answered, setAnswered] = useState(false);
   const [saved, setSaved] = useState(false);
   const [pending, start] = useTransition();
@@ -332,10 +346,24 @@ function PhraseCard({ item, label, check, save, onAnswered, onNext }: {
         options={item.options}
         check={check}
         onAnswered={(correct) => {
-          setAnswered(true);
+          setMeaningDone(true);
+          if (!item.collocation) setAnswered(true);
           onAnswered(correct);
         }}
       />
+      {meaningDone && uzbek && item.uz && <p className="mt-2 text-muted">O‘zbekcha: {item.uz}</p>}
+      {meaningDone && item.collocation && (
+        <div className="mt-5 border-t border-line pt-4">
+          <ChoiceQuestion
+            compact
+            question={item.collocation.question}
+            header={<p className="mb-1 text-sm text-muted">Now use it: which word makes the phrase?</p>}
+            options={item.collocation.options}
+            check={complete}
+            onAnswered={() => setAnswered(true)}
+          />
+        </div>
+      )}
       {answered && (
         <div className="mt-4 flex flex-wrap gap-2">
           <Button

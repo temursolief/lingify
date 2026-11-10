@@ -1,7 +1,8 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Badge, Card, EmptyState, PageHeader, ProgressBar, Stat, PageSkeleton } from "@/components/ui";
+import { Badge, Card, EmptyState, PageHeader, ProgressBar, PageSkeleton } from "@/components/ui";
+import { ProgressTabs } from "../progress/progress-tabs";
 import { requireStudent } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { GRADUATE_STREAK } from "@/lib/srs";
@@ -29,17 +30,12 @@ async function WordsPageContent() {
 
   return (
     <div>
-      <PageHeader title="My words" subtitle="Words you looked up while reading, and how close you are to knowing them." />
-      <div className="mb-6 grid grid-cols-3 gap-3">
-        <Stat label="Learning" value={learning.length} hint={`${due} due now`} />
-        <Stat label="Learned here" value={learned.length} hint="moved to known after reviews" />
-        <Stat label="Known in total" value={knownCount.toLocaleString()} />
-      </div>
-
+      <PageHeader title="Progress" />
+      <ProgressTabs current="words" />
       <Card>
-        <h2 className="mb-1 font-semibold">Learning</h2>
+        <h2 className="mb-1 font-semibold">Learning <span className="font-normal text-muted">· {learning.length} words, {due} due now</span></h2>
         <p className="mb-4 text-sm text-muted">
-          A word becomes known after {GRADUATE_STREAK} correct reviews in a row. Meeting it again in other texts helps too.
+          A word becomes known after {GRADUATE_STREAK} correct reviews in a row. You know {knownCount.toLocaleString()} words in total.
         </p>
         {learning.length === 0 ? (
           <EmptyState title="No words yet">Tap words while reading to collect them here.</EmptyState>
@@ -57,7 +53,7 @@ async function WordsPageContent() {
                   <div className="min-w-0 text-sm text-muted">
                     {w.contextSentence && <p className="truncate font-serif italic">“{w.contextSentence}”</p>}
                     {text && <Link href={`/student/read/${text.slug}`} className="text-xs underline">{text.title}</Link>}
-                    <span className="text-xs"> · seen in {w.exposures} text{w.exposures === 1 ? "" : "s"} · looked up {w.lookups}×</span>
+
                   </div>
                   <div className="text-xs text-muted">
                     <ProgressBar value={w.srsStreak / GRADUATE_STREAK} label={`${w.lemma} progress`} />

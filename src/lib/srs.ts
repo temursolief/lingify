@@ -45,3 +45,23 @@ export function schedule(state: SrsState, correct: boolean, now: Date): SrsResul
     graduated,
   };
 }
+
+/** First check-up after a word is learned, and the longest gap between check-ups. */
+export const MAINTENANCE_FIRST_DAYS = 30;
+const MAINTENANCE_MAX_DAYS = 365;
+
+/** Check-ups for words already known: a pass spaces them further apart, a miss sends the word back to learning. */
+export function maintain(state: SrsState, correct: boolean, now: Date): SrsResult & { forgotten: boolean } {
+  if (!correct) {
+    return { ...schedule({ ...state, srsStreak: 0 }, false, now), forgotten: true };
+  }
+  const interval = Math.min(MAINTENANCE_MAX_DAYS, Math.max(MAINTENANCE_FIRST_DAYS, Math.round(state.srsInterval * 2.5)));
+  return {
+    ...state,
+    srsInterval: interval,
+    srsReviews: state.srsReviews + 1,
+    srsDue: new Date(now.getTime() + interval * 86_400_000),
+    graduated: false,
+    forgotten: false,
+  };
+}

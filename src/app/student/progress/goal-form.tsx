@@ -9,7 +9,7 @@ const selectClass = "rounded-lg border border-line bg-surface px-3 py-2 focus:bo
 export function GoalForm() {
   const [state, action, pending] = useActionState(setGoal, undefined);
   return (
-    <form action={action} className="mt-5 flex flex-wrap items-end gap-2 border-t border-line pt-4">
+    <form action={action} className="mt-3 flex flex-wrap items-end gap-2">
       <label className="text-sm">
         <span className="mb-1 block text-muted">Each week I want to…</span>
         <select name="type" className={selectClass} defaultValue="WORDS_WEEK">

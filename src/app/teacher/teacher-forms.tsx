@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useTransition } from "react";
-import { assignGoal, assignText, createClass, deleteAssignment, removeStudent, type FormState } from "@/app/actions/teacher";
+import { assignGoal, assignText, createClass, deleteAssignment, removeStudent, setDailyMinutes, type FormState } from "@/app/actions/teacher";
 import { Button } from "@/components/ui";
 
 const inputClass = "rounded-lg border border-line bg-surface px-3 py-2 focus:border-[#86b7fe] focus:outline-none focus:ring-4 focus:ring-accent/25";
@@ -37,16 +37,20 @@ export function AssignTextForm({ classId, texts }: { classId: string; texts: { i
   return (
     <form action={action} className="flex flex-wrap items-end gap-2">
       <input type="hidden" name="classId" value={classId} />
-      <label className="flex-1 text-sm">
+      <label className="w-full text-sm">
         <span className="mb-1 block text-muted">Text</span>
         <select name="textId" required className={`${inputClass} w-full`} defaultValue="">
           <option value="" disabled>Choose a text…</option>
           {texts.map((t) => <option key={t.id} value={t.id}>{t.title} ({t.genre})</option>)}
         </select>
       </label>
+      <label className="text-sm">
+        <span className="mb-1 block text-muted">Due date</span>
+        <input name="dueAt" type="date" className={inputClass} />
+      </label>
       <label className="flex-1 text-sm">
         <span className="mb-1 block text-muted">Note (optional)</span>
-        <input name="note" maxLength={200} className={`${inputClass} w-full`} placeholder="Read before Friday" />
+        <input name="note" maxLength={200} className={`${inputClass} w-full`} placeholder="Read carefully" />
       </label>
       <Button type="submit" disabled={pending}>Assign</Button>
       <Feedback state={state} />
@@ -105,5 +109,20 @@ export function RemoveStudentButton({ classId, studentId, name }: { classId: str
     >
       Remove from class
     </Button>
+  );
+}
+
+export function DailyMinutesForm({ classId, minutes }: { classId: string; minutes: number }) {
+  const [state, action, pending] = useActionState(setDailyMinutes, undefined);
+  return (
+    <form action={action} className="flex flex-wrap items-end gap-2">
+      <input type="hidden" name="classId" value={classId} />
+      <label className="text-sm">
+        <span className="mb-1 block text-muted">Minutes of practice every day</span>
+        <input name="minutes" type="number" min={5} max={180} defaultValue={minutes} className={`${inputClass} w-28`} />
+      </label>
+      <Button type="submit" variant="secondary" disabled={pending}>Save</Button>
+      <Feedback state={state} />
+    </form>
   );
 }

@@ -75,17 +75,74 @@
     {
       "phrase": "in fact",
       "inText": "In fact",
-      "meaning": "used to give the true or more exact information"
+      "meaning": "used to give the true or more exact information",
+      "uz": "aslida"
     },
     {
       "phrase": "keep something a secret",
       "inText": "kept the method a secret",
-      "meaning": "not tell anyone about something"
+      "meaning": "not tell anyone about something",
+      "uz": "sir saqlamoq"
     },
     {
       "phrase": "do business",
       "inText": "did business",
-      "meaning": "buy and sell things; trade"
+      "meaning": "buy and sell things; trade",
+      "uz": "savdo qilmoq"
+    },
+    {
+      "phrase": "be known as",
+      "inText": "known as",
+      "meaning": "be called",
+      "uz": "...deb nomlanmoq"
+    },
+    {
+      "phrase": "come from",
+      "inText": "comes from",
+      "meaning": "have its beginning in",
+      "uz": "...dan kelib chiqmoq"
+    },
+    {
+      "phrase": "for a long time",
+      "inText": "For a long time",
+      "meaning": "during many years",
+      "uz": "uzoq vaqt davomida"
+    },
+    {
+      "phrase": "huge amounts of",
+      "inText": "huge amounts of",
+      "meaning": "very large quantities of",
+      "uz": "juda katta miqdorda"
+    },
+    {
+      "phrase": "grow rich",
+      "inText": "grew rich",
+      "meaning": "become rich",
+      "uz": "boyib ketmoq"
+    },
+    {
+      "phrase": "spread from one ... to another",
+      "inText": "spread from one culture to another",
+      "meaning": "move between places or groups",
+      "uz": "biridan boshqasiga tarqalmoq"
+    },
+    {
+      "phrase": "for example",
+      "inText": "for example",
+      "meaning": "used before giving an example",
+      "uz": "masalan"
+    },
+    {
+      "phrase": "share knowledge",
+      "inText": "shared knowledge",
+      "meaning": "tell others what you know",
+      "uz": "bilim almashmoq"
+    },
+    {
+      "phrase": "in recent years",
+      "inText": "In recent years",
+      "meaning": "during the last few years",
+      "uz": "so'nggi yillarda"
     }
   ],
   "grammar": [
@@ -110,6 +167,30 @@
         "answer": 0,
         "explanation": "We use where to add information about a place."
       }
+    },
+    {
+      "key": "articles",
+      "examples": [
+        "The most famous trade route in history is known as the Silk Road.",
+        "Samarkand is one of the oldest cities in the world."
+      ],
+      "highlights": [
+        "The most famous",
+        "the Silk Road",
+        "the oldest",
+        "the world"
+      ],
+      "discovery": {
+        "question": "What kind of words come after “the” in these sentences?",
+        "options": [
+          "Superlatives (most famous, oldest) and some names",
+          "All countries and cities",
+          "Plural nouns"
+        ],
+        "answer": 0,
+        "explanation": "Superlatives always take the. Some names (the Silk Road) do too, but most city names (Samarkand) do not."
+      },
+      "uzNote": "O'zbek tilida artikl yo'q. Ingliz tilida yangi, birinchi marta aytilgan narsa oldidan a/an, ikkalamiz biladigan (oldin aytilgan) narsa oldidan the qo'yiladi."
     }
   ]
 }

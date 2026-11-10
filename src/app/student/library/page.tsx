@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { PageHeader, PageSkeleton } from "@/components/ui";
 import { requireStudent } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -7,7 +8,7 @@ import { libraryFor } from "@/lib/recommend";
 import { MIN_COVERAGE } from "@/lib/texts";
 import { LibraryBrowser } from "./library-browser";
 
-export const metadata: Metadata = { title: "Library" };
+export const metadata: Metadata = { title: "Read" };
 
 async function LibraryPageContent({ searchParams }: PageProps<"/student/library">) {
   const user = await requireStudent();
@@ -18,13 +19,14 @@ async function LibraryPageContent({ searchParams }: PageProps<"/student/library"
   ]);
   const wpm = recent.length ? recent.reduce((n, r) => n + r.wpm!, 0) / recent.length : 110;
   return (
-    <div>
+    <div className="mx-auto max-w-4xl">
       <PageHeader
-        title="Library"
-        subtitle={`Texts open when you know at least ${MIN_COVERAGE * 100}% of their words. Texts at 98% or more are easy reads.`}
+        title="Read"
+        subtitle={`A text opens when you know ${MIN_COVERAGE * 100}% of its words.`}
+        action={<Link href="/student/fluency">Speed reading practice</Link>}
       />
       {stopped && (
-        <div className="mb-5 rounded-xl bg-good-soft p-4 text-sm text-good">
+        <div className="mb-5 rounded-md bg-good-soft p-3 text-sm text-good">
           No problem. Choosing what to read is part of being a good reader. Here are some other texts you might enjoy.
         </div>
       )}

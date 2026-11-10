@@ -12,13 +12,36 @@ function pct(v: number | null) {
   return v === null ? "–" : `${Math.round(v * 100)}%`;
 }
 
-export function StudentStatsView({ stats, readLinks = true }: { stats: StudentStats; readLinks?: boolean }) {
+/** `simple`: the student view, three numbers and two charts; teachers get every chart. */
+export function StudentStatsView({ stats, readLinks = true, simple = false }: { stats: StudentStats; readLinks?: boolean; simple?: boolean }) {
   const daily = stats.daily.map((d) => ({
     day: d.day,
     ...Object.fromEntries(CHART_ACTIVITIES.map((a) => [a, Math.round(d[a] / 60)])),
   }));
   const growth = stats.vocabGrowth.map((v) => ({ day: v.day, value: v.known }));
   const firstKnown = stats.vocabGrowth[0]?.known ?? stats.knownCount;
+
+  if (simple) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-3 gap-3">
+          <Stat label="Known words" value={stats.knownCount.toLocaleString()} hint={`+${(stats.knownCount - firstKnown).toLocaleString()} in 30 days`} />
+          <Stat label="This week" value={formatMinutes(stats.weekSeconds)} hint={`${stats.weekWordsRead.toLocaleString()} words read`} />
+          <Stat label="Streak" value={`${stats.streak} day${stats.streak === 1 ? "" : "s"}`} hint={`${stats.textsCompleted} texts finished`} />
+        </div>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card>
+            <h2 className="mb-4 font-semibold">Words you know</h2>
+            <LineChart data={growth} label="Known words" />
+          </Card>
+          <Card>
+            <h2 className="mb-4 font-semibold">Minutes per day</h2>
+            <StackedBars data={daily} series={SERIES} label="Minutes per day by activity" />
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

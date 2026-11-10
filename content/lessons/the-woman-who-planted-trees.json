@@ -75,17 +75,74 @@
     {
       "phrase": "cut down",
       "inText": "cut down",
-      "meaning": "make a tree fall by cutting it"
+      "meaning": "make a tree fall by cutting it",
+      "uz": "kesib tashlamoq"
     },
     {
       "phrase": "speak out against",
       "inText": "spoke out against",
-      "meaning": "say publicly that you think something is wrong"
+      "meaning": "say publicly that you think something is wrong",
+      "uz": "...ga qarshi ochiq gapirmoq"
     },
     {
       "phrase": "the best I can",
       "inText": "the best I can",
-      "meaning": "as well as I am able"
+      "meaning": "as well as I am able",
+      "uz": "qo'limdan kelgancha"
+    },
+    {
+      "phrase": "spend hours doing something",
+      "inText": "spent hours playing",
+      "meaning": "use many hours doing something",
+      "uz": "soatlab ... bilan mashg'ul bo'lmoq"
+    },
+    {
+      "phrase": "win a place",
+      "inText": "won a place",
+      "meaning": "be chosen to study at a school or university",
+      "uz": "o'qishga qabul qilinmoq"
+    },
+    {
+      "phrase": "make space for",
+      "inText": "make space for",
+      "meaning": "give room to",
+      "uz": "...ga joy ochmoq"
+    },
+    {
+      "phrase": "further and further",
+      "inText": "further and further",
+      "meaning": "a longer distance each time",
+      "uz": "tobora uzoqroq"
+    },
+    {
+      "phrase": "come to an answer",
+      "inText": "came to a simple answer",
+      "meaning": "find an answer after thinking",
+      "uz": "javobga kelmoq"
+    },
+    {
+      "phrase": "hold something together",
+      "inText": "hold the soil together",
+      "meaning": "keep the parts of something joined",
+      "uz": "...ni birga ushlab turmoq"
+    },
+    {
+      "phrase": "change your own life",
+      "inText": "change their own lives",
+      "meaning": "make your life different",
+      "uz": "o'z hayotini o'zgartirmoq"
+    },
+    {
+      "phrase": "over the years",
+      "inText": "Over the years",
+      "meaning": "during many years",
+      "uz": "yillar davomida"
+    },
+    {
+      "phrase": "fight poverty",
+      "inText": "fighting poverty",
+      "meaning": "try to end people being poor",
+      "uz": "qashshoqlikka qarshi kurashmoq"
     }
   ],
   "grammar": [
@@ -109,6 +166,28 @@
         "answer": 0,
         "explanation": "had been + past participle: something was done to something before a past moment."
       }
+    },
+    {
+      "key": "dependent-prepositions",
+      "examples": [
+        "Wangari thought about the problem and came to a simple answer: plant trees.",
+        "The women talked about the trees they had planted."
+      ],
+      "highlights": [
+        "thought about",
+        "talked about"
+      ],
+      "discovery": {
+        "question": "Which preposition comes after “think” when we consider a problem?",
+        "options": [
+          "about",
+          "on",
+          "for"
+        ],
+        "answer": 0,
+        "explanation": "think about something."
+      },
+      "uzNote": "O'zbek tilida qo'shimcha ishlatamiz (-dan, -ga, -ni), ingliz tilida esa so'zdan keyin predlog keladi: afraid of (...dan qo'rqmoq), depend on (...ga bog'liq), listen to (...ni tinglamoq). Bunday birikmalarni bitta butun sifatida yodlang."
     }
   ]
 }
