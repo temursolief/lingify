@@ -1,9 +1,5 @@
 {
-  "slug": "how-habits-form",
   "title": "How Habits Are Made",
-  "summary": "What psychology says about why habits form, why they are hard to break and how to build better ones.",
-  "topics": ["health", "science", "school"],
-  "level": "B2",
   "timeLimit": 20,
   "paragraphs": [
     "Much of what we do each day is not the result of conscious decisions. Researchers at Duke University estimated that around 40 per cent of our daily actions are habits: behaviours that we repeat in the same situations with little thought. Brushing our teeth, checking our phones when we wake up and taking the same route to work are all examples. Habits are useful because they save mental energy, allowing the brain to focus on new or difficult problems.",
@@ -13,16 +9,45 @@
     "Breaking a bad habit is often harder than building a good one, partly because the cues are everywhere. Research suggests that willpower alone is not a reliable strategy. A more effective approach is to change the environment so that the cue appears less often. For example, people who want to spend less time on their phones are more successful if they leave the phone in another room than if they simply try to resist checking it. Similarly, placing fruit on the kitchen table rather than in the fridge makes people more likely to eat it.",
     "These findings have practical applications in education. Students who study at the same time and in the same place each day find it easier to start working, because the time and place act as cues. Small, specific goals, such as reading for twenty minutes after dinner, are more likely to become habits than vague intentions like 'study more'. Understanding how habits work does not make change effortless, but it can make the effort far more likely to succeed."
   ],
-  "tasks": [
+  "questionGroups": [
     {
       "type": "tfng",
       "instructions": "Do the following statements agree with the information in the passage? Choose TRUE, FALSE or NOT GIVEN.",
-      "items": [
-        { "id": "q1", "statement": "About two-fifths of our daily actions are habits.", "answer": "TRUE", "explanation": "Paragraph A: around 40 per cent of our daily actions are habits." },
-        { "id": "q2", "statement": "The idea that habits take 21 days to form comes from scientific research on habits.", "answer": "FALSE", "explanation": "Paragraph C: it came from a surgeon's observations about patients' appearance, not habit research." },
-        { "id": "q3", "statement": "Most volunteers in the 2009 study chose a behaviour related to exercise.", "answer": "NOT GIVEN", "explanation": "The passage gives one example (drinking water) but does not say what most volunteers chose." },
-        { "id": "q4", "statement": "In the 2009 study, missing one day seriously damaged the habit-forming process.", "answer": "FALSE", "explanation": "Paragraph D: missing a single day did not significantly affect the process." },
-        { "id": "q5", "statement": "Keeping a phone in another room helps people use it less than trying to resist it.", "answer": "TRUE", "explanation": "Paragraph E: people are more successful if they leave the phone in another room." }
+      "questions": [
+        {
+          "number": 1,
+          "evidence": "A",
+          "explanation": "Paragraph A: around 40 per cent of our daily actions are habits.",
+          "statement": "About two-fifths of our daily actions are habits.",
+          "answer": "TRUE"
+        },
+        {
+          "number": 2,
+          "evidence": "C",
+          "explanation": "Paragraph C: it came from a surgeon's observations about patients' appearance, not habit research.",
+          "statement": "The idea that habits take 21 days to form comes from scientific research on habits.",
+          "answer": "FALSE"
+        },
+        {
+          "number": 3,
+          "explanation": "The passage gives one example (drinking water) but does not say what most volunteers chose.",
+          "statement": "Most volunteers in the 2009 study chose a behaviour related to exercise.",
+          "answer": "NOT GIVEN"
+        },
+        {
+          "number": 4,
+          "evidence": "D",
+          "explanation": "Paragraph D: missing a single day did not significantly affect the process.",
+          "statement": "In the 2009 study, missing one day seriously damaged the habit-forming process.",
+          "answer": "FALSE"
+        },
+        {
+          "number": 5,
+          "evidence": "E",
+          "explanation": "Paragraph E: people are more successful if they leave the phone in another room.",
+          "statement": "Keeping a phone in another room helps people use it less than trying to resist it.",
+          "answer": "TRUE"
+        }
       ]
     },
     {
@@ -37,34 +62,79 @@
         "Habits in different cultures",
         "The role of rewards in school"
       ],
-      "items": [
-        { "id": "q6", "paragraph": 1, "answer": 0, "explanation": "Paragraph B describes the habit loop: cue, routine and reward." },
-        { "id": "q7", "paragraph": 2, "answer": 2, "explanation": "Paragraph C tests the 21-day belief against the 2009 study." },
-        { "id": "q8", "paragraph": 3, "answer": 3, "explanation": "Paragraph D says missing a single day did not matter." },
-        { "id": "q9", "paragraph": 4, "answer": 4, "explanation": "Paragraph E recommends changing the environment to avoid cues." }
+      "questions": [
+        {
+          "number": 6,
+          "evidence": "B",
+          "explanation": "Paragraph B describes the habit loop: cue, routine and reward.",
+          "paragraph": "B",
+          "answer": "i"
+        },
+        {
+          "number": 7,
+          "evidence": "C",
+          "explanation": "Paragraph C tests the 21-day belief against the 2009 study.",
+          "paragraph": "C",
+          "answer": "iii"
+        },
+        {
+          "number": 8,
+          "evidence": "D",
+          "explanation": "Paragraph D says missing a single day did not matter.",
+          "paragraph": "D",
+          "answer": "iv"
+        },
+        {
+          "number": 9,
+          "evidence": "E",
+          "explanation": "Paragraph E recommends changing the environment to avoid cues.",
+          "paragraph": "E",
+          "answer": "v"
+        }
       ]
     },
     {
       "type": "summary",
       "instructions": "Complete the summary below. Choose NO MORE THAN TWO WORDS from the passage for each answer.",
       "maxWords": 2,
-      "text": "A habit begins with a {{q10}}, which triggers a routine and is followed by a reward. A study found that new behaviours took 66 days on average to become {{q11}}. When a small failure makes someone give up completely, psychologists call it the {{q12}} effect. For students, a regular time and place for study work as cues, and {{q13}} goals are more effective than vague intentions.",
-      "items": [
-        { "id": "q10", "answers": ["cue"], "explanation": "Paragraph B: first there is a cue." },
-        { "id": "q11", "answers": ["automatic"], "explanation": "Paragraph C: it took 66 days for the behaviour to become automatic." },
-        { "id": "q12", "answers": ["what-the-hell", "what the hell"], "explanation": "Paragraph D: known as the “what-the-hell effect”." },
-        { "id": "q13", "answers": ["small, specific", "specific", "small"], "explanation": "Paragraph F: small, specific goals are more likely to become habits." }
+      "text": "A habit begins with a {{10}}, which triggers a routine and is followed by a reward. A study found that new behaviours took 66 days on average to become {{11}}. When a small failure makes someone give up completely, psychologists call it the {{12}} effect. For students, a regular time and place for study work as cues, and {{13}} goals are more effective than vague intentions.",
+      "questions": [
+        {
+          "number": 10,
+          "evidence": "B",
+          "explanation": "Paragraph B: first there is a cue.",
+          "answers": [
+            "cue"
+          ]
+        },
+        {
+          "number": 11,
+          "evidence": "C",
+          "explanation": "Paragraph C: it took 66 days for the behaviour to become automatic.",
+          "answers": [
+            "automatic"
+          ]
+        },
+        {
+          "number": 12,
+          "evidence": "D",
+          "explanation": "Paragraph D: known as the “what-the-hell effect”.",
+          "answers": [
+            "what-the-hell",
+            "what the hell"
+          ]
+        },
+        {
+          "number": 13,
+          "evidence": "F",
+          "explanation": "Paragraph F: small, specific goals are more likely to become habits.",
+          "answers": [
+            "small, specific",
+            "specific",
+            "small"
+          ]
+        }
       ]
     }
-  ],
-  "phrases": [
-    { "phrase": "be the result of", "inText": "the result of", "meaning": "be caused by", "uz": "...ning natijasi bo'lmoq" },
-    { "phrase": "be more likely to", "inText": "more likely to", "meaning": "have a bigger chance of doing", "uz": "...ehtimoli ko'proq bo'lmoq" },
-    { "phrase": "on average", "inText": "On average", "meaning": "usually, when all cases are considered", "uz": "o'rtacha" },
-    { "phrase": "keep a resolution", "inText": "keep a resolution", "meaning": "do what you decided to do", "uz": "qarorida qat'iy turmoq" },
-    { "phrase": "lead to", "inText": "leads people to", "meaning": "cause", "uz": "...ga olib kelmoq" },
-    { "phrase": "an effective approach", "inText": "A more effective approach", "meaning": "a way of doing something that works well", "uz": "samarali yondashuv" },
-    { "phrase": "act as", "inText": "act as", "meaning": "have the function of", "uz": "...vazifasini bajarmoq" },
-    { "phrase": "practical applications", "inText": "practical applications", "meaning": "uses in real life", "uz": "amaliy qo'llanilishi" }
   ]
 }

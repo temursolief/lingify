@@ -2,122 +2,129 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { GoalList } from "@/components/goal-list";
-import { LearningProfileView } from "@/components/learning-profile";
-import { StudentStatsView } from "@/components/student-stats";
-import { Badge, Card, PageHeader, PageSkeleton, Tabs } from "@/components/ui";
+import { ErrorBreakdownView } from "@/components/error-breakdown";
+import { Card, PageHeader, PageSkeleton, Tabs, cx } from "@/components/ui";
 import { requireTeacher } from "@/lib/auth";
-import { teacherClass } from "@/lib/class-overview";
+import { studentSummary, teacherClass } from "@/lib/class-overview";
 import { db } from "@/lib/db";
-import { flagsFor } from "@/lib/flags";
-import { learningProfile } from "@/lib/profile";
-import { goalProgress, studentStats } from "@/lib/stats";
+import { errorBreakdown } from "@/lib/insights";
+import { paragraphLetter } from "@/lib/passage-format";
+import { ERROR_TAG_LABEL, type Evidence } from "@/lib/passages";
 import { RemoveStudentButton } from "../../../../teacher-forms";
 
 export const metadata: Metadata = { title: "Student" };
 
-const TABS = [
-  { key: "overview", label: "Overview" },
-  { key: "skills", label: "Skills" },
-  { key: "ielts", label: "IELTS" },
-  { key: "activity", label: "All statistics" },
-];
+type History = { answer: string; correct: boolean; evidence: Evidence | null; at: string }[];
 
-async function StudentDetailPageContent(props: PageProps<"/teacher/classes/[id]/students/[studentId]">) {
+async function StudentContent(props: PageProps<"/teacher/classes/[id]/students/[studentId]">) {
   const teacher = await requireTeacher();
   const { id, studentId } = await props.params;
-  const tabParam = (await props.searchParams).tab as string | undefined;
+  const sp = await props.searchParams;
   const cls = await teacherClass(id, teacher.id);
   if (!cls) notFound();
-  const enrollment = await db.enrollment.findUnique({
-    where: { userId_classId: { userId: studentId, classId: cls.id } },
-    include: { user: true },
-  });
+  const enrollment = await db.enrollment.findUnique({ where: { userId_classId: { userId: studentId, classId: cls.id } }, include: { user: true } });
   if (!enrollment) notFound();
   const student = enrollment.user;
 
-  const [stats, flags, goals, learning, ielts] = await Promise.all([
-    studentStats(student.id),
-    flagsFor(student.id),
-    goalProgress(student.id),
-    db.lemmaState.findMany({ where: { userId: student.id, status: "LEARNING" }, orderBy: { lookups: "desc" }, take: 40, select: { lemma: true, lookups: true, isPhrase: true } }),
-    db.ieltsAttempt.findMany({ where: { userId: student.id }, orderBy: { createdAt: "desc" }, take: 8, include: { text: { select: { title: true } } } }),
+  const [summary, breakdown, attempts] = await Promise.all([
+    studentSummary(student.id),
+    errorBreakdown([student.id]),
+    db.passageAttempt.findMany({
+      where: { userId: student.id, firstSubmittedAt: { not: null } },
+      orderBy: { firstSubmittedAt: "desc" },
+      include: { passage: { select: { id: true, title: true } }, answers: { orderBy: { number: "asc" } } },
+    }),
   ]);
-
-  const tab = TABS.some((t) => t.key === tabParam) ? tabParam! : "overview";
   const base = `/teacher/classes/${cls.id}/students/${student.id}`;
+  const tab = sp.tab === "mistakes" ? "mistakes" : "work";
+  const openId = typeof sp.p === "string" ? attempts.find((a) => a.passageId === sp.p)?.id : attempts[0]?.id;
 
   return (
-    <div>
-      <Link href={`/teacher/classes/${cls.id}`} className="text-sm text-muted no-underline hover:text-ink">← {cls.name}</Link>
+    <>
       <PageHeader
         title={student.name}
-        subtitle={`${student.email} · started at about ${student.estimatedVocab?.toLocaleString() ?? "?"} known words`}
+        subtitle={`${summary.band ? `Band ${summary.band}` : "No band yet"} · ${summary.passagesDone} passages done · ${summary.cardsThisWeek} flashcards this week`}
         action={<RemoveStudentButton classId={cls.id} studentId={student.id} name={student.name} />}
       />
-      <Tabs current={tab} items={TABS.map((t) => ({ ...t, href: t.key === "overview" ? base : `${base}?tab=${t.key}` }))} />
+      <Tabs
+        current={tab}
+        items={[
+          { key: "work", label: "Passages", href: base },
+          { key: "mistakes", label: "Mistakes", href: `${base}?tab=mistakes` },
+        ]}
+      />
+      <div className="mb-4 text-sm"><Link href={`/teacher/classes/${cls.id}`}>← {cls.name}</Link></div>
 
-      {tab === "overview" && (
-        <div className="space-y-6">
-          {flags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {flags.map((f) => <Badge key={f.kind} tone={f.kind === "inactive" ? "warn" : "bad"}>⚠ {f.label}: {f.detail}</Badge>)}
-            </div>
-          )}
-          <StudentStatsView stats={stats} simple />
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Card>
-              <h2 className="font-semibold">Goals</h2>
-              <GoalList goals={goals} />
-            </Card>
-            <Card>
-              <h2 className="font-semibold">Words they are learning</h2>
-              <p className="mb-3 text-sm text-muted">Most looked-up first. Good candidates to talk about in class.</p>
-              {learning.length ? (
-                <div className="flex flex-wrap gap-1.5">
-                  {learning.map((w) => <Badge key={w.lemma} tone={w.isPhrase ? "accent" : "neutral"}>{w.lemma}{w.lookups > 1 ? ` ×${w.lookups}` : ""}</Badge>)}
-                </div>
-              ) : (
-                <p className="text-sm text-muted">None yet.</p>
-              )}
-            </Card>
-          </div>
+      {tab === "mistakes" ? (
+        <div className="mx-auto max-w-3xl"><ErrorBreakdownView data={breakdown} who="you" /></div>
+      ) : attempts.length === 0 ? (
+        <Card className="py-8 text-center text-muted">No passages submitted yet.</Card>
+      ) : (
+        <div className="mx-auto max-w-4xl space-y-3">
+          {attempts.map((a) => (
+            <details key={a.id} open={a.id === openId} className="rounded-xl bg-surface shadow-bubble">
+              <summary className="flex cursor-pointer items-center gap-3 px-4 py-3">
+                <span className="min-w-0 flex-1 truncate font-medium">{a.passage.title}</span>
+                <span className="text-sm text-muted tabular-nums">
+                  first try {a.firstCorrect}/{a.total} · band {a.band} · {a.completedAt ? <span className="text-good">all corrected</span> : <span className="text-bad">{a.answers.filter((q) => !q.correct).length} still red</span>}
+                </span>
+              </summary>
+              <table className="mx-4 mb-4 w-[calc(100%-2rem)] text-left text-sm">
+                <thead className="border-b border-line text-muted">
+                  <tr>
+                    <th className="py-1.5 pr-2 font-normal">Q</th>
+                    <th className="py-1.5 pr-2 font-normal">Tries</th>
+                    <th className="py-1.5 pr-2 font-normal">Answers given</th>
+                    <th className="py-1.5 pr-2 font-normal">Where they looked</th>
+                    <th className="py-1.5 font-normal">Why missed</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-line align-top">
+                  {a.answers.map((q) => {
+                    const history = q.history as History;
+                    const ev = q.evidence as Evidence | null;
+                    return (
+                      <tr key={q.number}>
+                        <td className="py-1.5 pr-2">
+                          <span className={cx("inline-block w-7 rounded-sm text-center text-xs leading-5 text-white", q.firstCorrect ? "bg-good" : q.correct ? "bg-[#f0a020]" : "bg-bad")}>{q.number}</span>
+                        </td>
+                        <td className="py-1.5 pr-2 tabular-nums">{q.tries}</td>
+                        <td className="py-1.5 pr-2">
+                          {history.map((h, i) => (
+                            <span key={i} className={cx("mr-1.5", h.correct ? "text-good" : "text-bad line-through")}>{h.answer || "—"}</span>
+                          ))}
+                        </td>
+                        <td className="max-w-xs py-1.5 pr-2">
+                          {ev ? (
+                            <>
+                              <span className={cx("mr-1 font-medium", q.evidenceOk === false ? "text-bad" : q.evidenceOk ? "text-good" : "text-muted")}>
+                                {paragraphLetter(ev.paragraph)}
+                                {q.evidenceOk === false && " (wrong paragraph)"}
+                              </span>
+                              <span className="font-serif text-muted italic">“{ev.text.length > 90 ? `${ev.text.slice(0, 90)}…` : ev.text}”</span>
+                            </>
+                          ) : (
+                            <span className="text-muted">–</span>
+                          )}
+                        </td>
+                        <td className="py-1.5">{q.errorTag ? ERROR_TAG_LABEL[q.errorTag].title : <span className="text-muted">–</span>}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </details>
+          ))}
         </div>
       )}
-
-      {tab === "skills" && <LearningProfileView profile={await learningProfile(student.id, stats)} viewer="teacher" />}
-
-      {tab === "ielts" &&
-        (ielts.length === 0 ? (
-          <p className="text-muted">No IELTS passages taken yet.</p>
-        ) : (
-          <table className="w-full text-left">
-            <thead className="border-b border-line text-sm text-muted">
-              <tr><th className="py-2 font-normal">Passage</th><th className="py-2 text-right font-normal">Score</th><th className="py-2 text-right font-normal">Band (est.)</th><th className="py-2 text-right font-normal">Time</th><th className="py-2 text-right font-normal">Date</th></tr>
-            </thead>
-            <tbody className="divide-y divide-line">
-              {ielts.map((a) => (
-                <tr key={a.id}>
-                  <td className="py-2">{a.text.title}</td>
-                  <td className="py-2 text-right tabular-nums">{a.correct}/{a.total}</td>
-                  <td className="py-2 text-right tabular-nums">{a.band}</td>
-                  <td className="py-2 text-right tabular-nums">{Math.round(a.seconds / 60)} min</td>
-                  <td className="py-2 text-right">{a.createdAt.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ))}
-
-      {tab === "activity" && <StudentStatsView stats={stats} readLinks={false} />}
-    </div>
+    </>
   );
 }
 
-export default function StudentDetailPage(props: PageProps<"/teacher/classes/[id]/students/[studentId]">) {
+export default function StudentPage(props: PageProps<"/teacher/classes/[id]/students/[studentId]">) {
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <StudentDetailPageContent {...props} />
+      <StudentContent {...props} />
     </Suspense>
   );
 }

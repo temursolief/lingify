@@ -32,10 +32,18 @@ export async function requireUser(role?: "STUDENT" | "TEACHER") {
   return user;
 }
 
-export async function requireStudent({ allowWithoutPlacement = false } = {}) {
-  const user = await requireUser("STUDENT");
-  if (!allowWithoutPlacement && !user.placementDone) redirect("/student/placement");
-  return user;
-}
+export const requireStudent = () => requireUser("STUDENT");
 
 export const requireTeacher = () => requireUser("TEACHER");
+
+/** Admin teachers upload Anki decks for the whole system. Set ADMIN_EMAILS="a@school.uz,b@school.uz" in .env. */
+export function isAdmin(email: string) {
+  const list = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
+  return list.includes(email.toLowerCase());
+}
+
+export async function requireAdmin() {
+  const user = await requireTeacher();
+  if (!isAdmin(user.email)) redirect("/teacher");
+  return user;
+}

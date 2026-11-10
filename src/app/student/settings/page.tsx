@@ -11,7 +11,7 @@ import { UzbekToggle } from "./uzbek-toggle";
 export const metadata: Metadata = { title: "Settings" };
 
 async function SettingsContent() {
-  const user = await requireStudent({ allowWithoutPlacement: true });
+  const user = await requireStudent();
   const classes = await db.enrollment.findMany({ where: { userId: user.id }, include: { class: { include: { teacher: { select: { name: true } } } } } });
   return (
     <>
@@ -19,7 +19,7 @@ async function SettingsContent() {
       <div className="mx-auto max-w-2xl space-y-4">
         <Card>
           <p className="font-semibold">Uzbek translations</p>
-          <p className="mt-1 text-muted">Show a short Uzbek translation next to English meanings of words and phrases.</p>
+          <p className="mt-1 text-muted">Add a short Uzbek translation to the flashcards you make from passages.</p>
           <UzbekToggle on={user.uzbekGlosses} />
         </Card>
         <Card>

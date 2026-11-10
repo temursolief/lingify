@@ -1,0 +1,125 @@
+{
+  "title": "The History of Glass",
+  "timeLimit": 20,
+  "paragraphs": [
+    "Glass is one of the oldest materials made by humans. The earliest glass objects, small beads, were produced in Mesopotamia around 3,500 years ago.",
+    "For centuries glass remained a luxury. It was only when Roman craftsmen learned to blow glass through a tube that it became cheap enough for ordinary households.",
+    "Today, glass is used in everything from phone screens to fibre-optic cables, and researchers continue to develop new types for medicine and energy."
+  ],
+  "questionGroups": [
+    {
+      "type": "tfng",
+      "instructions": "Do the following statements agree with the information given in the passage? Write TRUE, FALSE or NOT GIVEN.",
+      "questions": [
+        {
+          "number": 1,
+          "statement": "The first glass objects were beads.",
+          "answer": "TRUE",
+          "evidence": "A",
+          "explanation": "Paragraph A: the earliest glass objects, small beads…"
+        },
+        {
+          "number": 2,
+          "statement": "Glass-blowing was invented in Mesopotamia.",
+          "answer": "FALSE",
+          "evidence": "B"
+        },
+        {
+          "number": 3,
+          "statement": "Most glass today is made in Asia.",
+          "answer": "NOT GIVEN"
+        }
+      ]
+    },
+    {
+      "type": "mcq",
+      "instructions": "Choose the correct letter, A, B, C or D.",
+      "questions": [
+        {
+          "number": 4,
+          "question": "Glass became affordable because",
+          "options": [
+            "new sand was discovered",
+            "craftsmen began blowing it",
+            "the Romans lowered taxes",
+            "beads went out of fashion"
+          ],
+          "answer": "B",
+          "evidence": "B"
+        }
+      ]
+    },
+    {
+      "type": "headings",
+      "instructions": "Choose the correct heading for each paragraph from the list of headings below.",
+      "headings": [
+        "An ancient invention",
+        "Glass in modern life",
+        "Dangers of glass",
+        "From luxury to everyday object"
+      ],
+      "questions": [
+        {
+          "number": 5,
+          "paragraph": "A",
+          "answer": "i"
+        },
+        {
+          "number": 6,
+          "paragraph": "B",
+          "answer": "iv"
+        }
+      ]
+    },
+    {
+      "type": "matching",
+      "instructions": "Which paragraph contains the following information? Write the correct letter, A–C.",
+      "questions": [
+        {
+          "number": 7,
+          "statement": "a mention of current scientific work",
+          "answer": "C"
+        }
+      ]
+    },
+    {
+      "type": "completion",
+      "instructions": "Complete the sentences below. Choose NO MORE THAN TWO WORDS from the passage for each answer.",
+      "maxWords": 2,
+      "questions": [
+        {
+          "number": 8,
+          "text": "Glass is now found in phone screens and ___ cables.",
+          "answers": [
+            "fibre-optic",
+            "fiber-optic"
+          ],
+          "evidence": "C"
+        }
+      ]
+    },
+    {
+      "type": "summary",
+      "instructions": "Complete the summary below. Choose ONE WORD ONLY from the passage for each answer.",
+      "maxWords": 1,
+      "title": "Glass through time",
+      "text": "Glass was first made in {{9}}. It stayed a {{10}} until the Romans found a cheaper method.",
+      "questions": [
+        {
+          "number": 9,
+          "answers": [
+            "Mesopotamia"
+          ],
+          "evidence": "A"
+        },
+        {
+          "number": 10,
+          "answers": [
+            "luxury"
+          ],
+          "evidence": "B"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,295 @@
+import { z } from "zod";
+
+/**
+ * The JSON format teachers upload for an IELTS Academic Reading passage. It is the format stored in the database too,
+ * so what the teacher writes is exactly what students get. The Format guide page shows this schema with an example.
+ *
+ * Questions are numbered like the real exam (1, 2, 3 …) and every number must be unique within the passage.
+ * Paragraphs are labelled A, B, C … in the order given; use those letters for `evidence`, `paragraph` and matching answers.
+ */
+
+const letter = z
+  .string()
+  .regex(/^[A-Z]$/, "Use a capital paragraph letter such as \"C\"")
+  .describe("paragraph letter");
+
+const base = {
+  number: z.number().int().min(1).max(60),
+  /** optional: the paragraph that proves the answer, so Lingify can tell location errors from comprehension errors */
+  evidence: letter.optional(),
+  /** optional: shown only after the student has found the right answer */
+  explanation: z.string().max(600).optional(),
+};
+
+const instructions = z.string().min(1).max(600);
+
+export const tfngGroup = z.object({
+  type: z.literal("tfng"),
+  instructions,
+  questions: z.array(z.object({ ...base, statement: z.string().min(1).max(400), answer: z.enum(["TRUE", "FALSE", "NOT GIVEN"]) })).min(1),
+});
+
+export const ynngGroup = z.object({
+  type: z.literal("ynng"),
+  instructions,
+  questions: z.array(z.object({ ...base, statement: z.string().min(1).max(400), answer: z.enum(["YES", "NO", "NOT GIVEN"]) })).min(1),
+});
+
+export const mcqGroup = z.object({
+  type: z.literal("mcq"),
+  instructions,
+  questions: z
+    .array(
+      z.object({
+        ...base,
+        question: z.string().min(1).max(400),
+        /** written without the letter: Lingify adds A, B, C, D */
+        options: z.array(z.string().min(1).max(300)).min(2).max(6),
+        answer: letter,
+      }),
+    )
+    .min(1),
+});
+
+export const headingsGroup = z.object({
+  type: z.literal("headings"),
+  instructions,
+  /** written without numerals: Lingify adds i, ii, iii … */
+  headings: z.array(z.string().min(1).max(200)).min(2).max(12),
+  questions: z.array(z.object({ ...base, paragraph: letter, answer: z.string().regex(/^(i|ii|iii|iv|v|vi|vii|viii|ix|x|xi|xii)$/, "Use a lower-case roman numeral such as \"iii\"") })).min(1),
+});
+
+export const matchingGroup = z.object({
+  type: z.literal("matching"),
+  instructions,
+  questions: z.array(z.object({ ...base, statement: z.string().min(1).max(400), answer: letter })).min(1),
+});
+
+export const completionGroup = z.object({
+  type: z.literal("completion"),
+  instructions,
+  maxWords: z.number().int().min(1).max(5),
+  /** each sentence has one gap written as ___ (three underscores) */
+  questions: z.array(z.object({ ...base, text: z.string().includes("___", { message: "Mark the gap with ___" }), answers: z.array(z.string().min(1).max(60)).min(1) })).min(1),
+});
+
+export const summaryGroup = z.object({
+  type: z.literal("summary"),
+  instructions,
+  maxWords: z.number().int().min(1).max(5),
+  title: z.string().max(120).optional(),
+  /** the summary, with each gap written as {{number}}, e.g. "Early research was {{12}} because…" */
+  text: z.string().min(1).max(3000),
+  questions: z.array(z.object({ ...base, answers: z.array(z.string().min(1).max(60)).min(1) })).min(1),
+});
+
+export const questionGroup = z.discriminatedUnion("type", [tfngGroup, ynngGroup, mcqGroup, headingsGroup, matchingGroup, completionGroup, summaryGroup]);
+
+export const passageSchema = z
+  .object({
+    title: z.string().min(1).max(160),
+    timeLimit: z.number().int().min(5).max(60).default(20),
+    paragraphs: z.array(z.string().min(1).max(4000)).min(1).max(26),
+    questionGroups: z.array(questionGroup).min(1),
+  })
+  .superRefine((p, ctx) => {
+    const seen = new Set<number>();
+    const lastLetter = paragraphLetter(p.paragraphs.length - 1);
+    p.questionGroups.forEach((g, gi) => {
+      g.questions.forEach((q, qi) => {
+        const path = ["questionGroups", gi, "questions", qi];
+        if (seen.has(q.number)) ctx.addIssue({ code: "custom", path: [...path, "number"], message: `Question ${q.number} appears twice` });
+        seen.add(q.number);
+        const letters = [q.evidence, g.type === "headings" ? (q as { paragraph: string }).paragraph : null, g.type === "matching" ? (q as { answer: string }).answer : null];
+        for (const l of letters) {
+          if (l && l > lastLetter) ctx.addIssue({ code: "custom", path, message: `Paragraph ${l} does not exist (the last one is ${lastLetter})` });
+        }
+        if (g.type === "mcq" && (q as { answer: string }).answer.charCodeAt(0) - 65 >= (q as { options: string[] }).options.length) {
+          ctx.addIssue({ code: "custom", path: [...path, "answer"], message: `Answer ${(q as { answer: string }).answer} is not one of the options` });
+        }
+        if (g.type === "headings" && ROMAN.indexOf((q as { answer: string }).answer) >= g.headings.length) {
+          ctx.addIssue({ code: "custom", path: [...path, "answer"], message: `There is no heading ${(q as { answer: string }).answer}` });
+        }
+      });
+      if (g.type === "summary") {
+        for (const q of g.questions) {
+          if (!g.text.includes(`{{${q.number}}}`)) ctx.addIssue({ code: "custom", path: ["questionGroups", gi, "text"], message: `The summary has no gap {{${q.number}}}` });
+        }
+      }
+    });
+  });
+
+export type PassageInput = z.input<typeof passageSchema>;
+export type PassageData = z.output<typeof passageSchema>;
+export type QuestionGroup = z.output<typeof questionGroup>;
+export type GroupType = QuestionGroup["type"];
+
+export const ROMAN = ["i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix", "x", "xi", "xii"];
+export const paragraphLetter = (i: number) => String.fromCharCode(65 + i);
+
+export const GROUP_LABEL: Record<GroupType, string> = {
+  tfng: "True / False / Not Given",
+  ynng: "Yes / No / Not Given",
+  mcq: "Multiple choice",
+  headings: "Matching headings",
+  matching: "Matching information",
+  completion: "Sentence completion",
+  summary: "Summary completion",
+};
+
+/** Readable error lines for the upload form, e.g. "questionGroups → 2 → questions → 1 → answer: …". */
+export function formatIssues(error: z.ZodError) {
+  return error.issues.slice(0, 12).map((i) => `${i.path.length ? i.path.join(" → ") + ": " : ""}${i.message}`);
+}
+
+export function parsePassageJson(raw: string): { ok: true; data: PassageData } | { ok: false; errors: string[] } {
+  let json: unknown;
+  try {
+    json = JSON.parse(raw);
+  } catch (e) {
+    return { ok: false, errors: [`This is not valid JSON: ${(e as Error).message}`] };
+  }
+  const parsed = passageSchema.safeParse(json);
+  return parsed.success ? { ok: true, data: parsed.data } : { ok: false, errors: formatIssues(parsed.error) };
+}
+
+/* ---------------- what the browser may see ---------------- */
+
+/** Questions without answers, evidence or explanations: safe to send before a question is answered correctly. */
+export function publicGroups(groups: QuestionGroup[]) {
+  return groups.map((g) => {
+    const HIDDEN = new Set(["answer", "answers", "evidence", "explanation"]);
+    const strip = (q: object) => Object.fromEntries(Object.entries(q).filter(([k]) => !HIDDEN.has(k)));
+    return { ...g, questions: g.questions.map(strip) } as unknown as PublicGroup;
+  });
+}
+
+export type PublicGroup =
+  | { type: "tfng" | "ynng" | "matching"; instructions: string; questions: { number: number; statement: string }[] }
+  | { type: "mcq"; instructions: string; questions: { number: number; question: string; options: string[] }[] }
+  | { type: "headings"; instructions: string; headings: string[]; questions: { number: number; paragraph: string }[] }
+  | { type: "completion"; instructions: string; maxWords: number; questions: { number: number; text: string }[] }
+  | { type: "summary"; instructions: string; maxWords: number; title?: string; text: string; questions: { number: number }[] };
+
+/* ---------------- grading ---------------- */
+
+export function normalizeAnswer(s: string) {
+  return s
+    .toLowerCase()
+    .replace(/[’‘]/g, "'")
+    .replace(/[.,;:!?"“”]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^(the|a|an) /, "");
+}
+
+export type QuestionKey = { number: number; type: GroupType; evidence?: string; explanation?: string; check: (given: string) => boolean };
+
+/** Every question in the passage with a function that checks an answer. Answers never leave the server. */
+export function answerKey(groups: QuestionGroup[]): QuestionKey[] {
+  return groups.flatMap((g) =>
+    g.questions.map((q): QuestionKey => {
+      const common = { number: q.number, type: g.type, evidence: q.evidence, explanation: q.explanation };
+      switch (g.type) {
+        case "tfng":
+        case "ynng":
+        case "mcq":
+        case "matching":
+        case "headings": {
+          const expected = (q as { answer: string }).answer;
+          return { ...common, check: (given) => given.trim().toUpperCase() === expected.toUpperCase() };
+        }
+        case "completion":
+        case "summary": {
+          const answers = (q as { answers: string[] }).answers.map(normalizeAnswer);
+          return {
+            ...common,
+            check: (given) => {
+              const n = normalizeAnswer(given);
+              const words = n.split(" ").filter(Boolean).length;
+              return words > 0 && words <= g.maxWords && answers.includes(n);
+            },
+          };
+        }
+      }
+    }),
+  );
+}
+
+/** Raw score out of 40 → band, following the published IELTS Academic Reading conversion. */
+const BAND_TABLE: [number, number][] = [
+  [39, 9], [37, 8.5], [35, 8], [33, 7.5], [30, 7], [27, 6.5], [23, 6], [19, 5.5], [15, 5], [13, 4.5], [10, 4], [8, 3.5], [6, 3], [4, 2.5], [0, 2],
+];
+
+/** One passage is a third of a real test, so its score is scaled to 40 before converting: an estimate, not a real band. */
+export function estimateBand(correct: number, total: number) {
+  const raw = total ? Math.round((correct / total) * 40) : 0;
+  return BAND_TABLE.find(([min]) => raw >= min)![1];
+}
+
+/* ---------------- the example on the Format guide ---------------- */
+
+export const EXAMPLE_PASSAGE: PassageInput = {
+  title: "The History of Glass",
+  timeLimit: 20,
+  paragraphs: [
+    "Glass is one of the oldest materials made by humans. The earliest glass objects, small beads, were produced in Mesopotamia around 3,500 years ago.",
+    "For centuries glass remained a luxury. It was only when Roman craftsmen learned to blow glass through a tube that it became cheap enough for ordinary households.",
+    "Today, glass is used in everything from phone screens to fibre-optic cables, and researchers continue to develop new types for medicine and energy.",
+  ],
+  questionGroups: [
+    {
+      type: "tfng",
+      instructions: "Do the following statements agree with the information given in the passage? Write TRUE, FALSE or NOT GIVEN.",
+      questions: [
+        { number: 1, statement: "The first glass objects were beads.", answer: "TRUE", evidence: "A", explanation: "Paragraph A: the earliest glass objects, small beads…" },
+        { number: 2, statement: "Glass-blowing was invented in Mesopotamia.", answer: "FALSE", evidence: "B" },
+        { number: 3, statement: "Most glass today is made in Asia.", answer: "NOT GIVEN" },
+      ],
+    },
+    {
+      type: "mcq",
+      instructions: "Choose the correct letter, A, B, C or D.",
+      questions: [
+        {
+          number: 4,
+          question: "Glass became affordable because",
+          options: ["new sand was discovered", "craftsmen began blowing it", "the Romans lowered taxes", "beads went out of fashion"],
+          answer: "B",
+          evidence: "B",
+        },
+      ],
+    },
+    {
+      type: "headings",
+      instructions: "Choose the correct heading for each paragraph from the list of headings below.",
+      headings: ["An ancient invention", "Glass in modern life", "Dangers of glass", "From luxury to everyday object"],
+      questions: [
+        { number: 5, paragraph: "A", answer: "i" },
+        { number: 6, paragraph: "B", answer: "iv" },
+      ],
+    },
+    {
+      type: "matching",
+      instructions: "Which paragraph contains the following information? Write the correct letter, A–C.",
+      questions: [{ number: 7, statement: "a mention of current scientific work", answer: "C" }],
+    },
+    {
+      type: "completion",
+      instructions: "Complete the sentences below. Choose NO MORE THAN TWO WORDS from the passage for each answer.",
+      maxWords: 2,
+      questions: [{ number: 8, text: "Glass is now found in phone screens and ___ cables.", answers: ["fibre-optic", "fiber-optic"], evidence: "C" }],
+    },
+    {
+      type: "summary",
+      instructions: "Complete the summary below. Choose ONE WORD ONLY from the passage for each answer.",
+      maxWords: 1,
+      title: "Glass through time",
+      text: "Glass was first made in {{9}}. It stayed a {{10}} until the Romans found a cheaper method.",
+      questions: [
+        { number: 9, answers: ["Mesopotamia"], evidence: "A" },
+        { number: 10, answers: ["luxury"], evidence: "B" },
+      ],
+    },
+  ],
+};

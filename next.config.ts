@@ -8,6 +8,9 @@ const nextConfig: NextConfig = {
     // Detect lost connections, show the offline banner and retry navigations once the network is back.
     useOffline: true,
   },
+  async redirects() {
+    return [{ source: "/student", destination: "/student/passages", permanent: false }];
+  },
   async headers() {
     return [
       {

@@ -3,13 +3,12 @@
 import { randomInt } from "node:crypto";
 import { refresh } from "next/cache";
 import { z } from "zod";
-import { requireTeacher } from "@/lib/auth";
+import { requireAdmin, requireTeacher } from "@/lib/auth";
 import { teacherClass } from "@/lib/class-overview";
 import { db } from "@/lib/db";
-import { coverageOf, MIN_COVERAGE, type LemmaCounts } from "@/lib/texts";
-import { wordSets } from "@/lib/vocab";
+import { parsePassageJson } from "@/lib/passage-format";
 
-export type FormState = { error?: string; ok?: string; skipped?: { name: string; coverage: number }[] } | undefined;
+export type FormState = { error?: string; errors?: string[]; ok?: string } | undefined;
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
@@ -38,75 +37,6 @@ async function ownClass(classId: string) {
   return cls;
 }
 
-/** Assigns a text only to students who already know at least 95% of its words; the rest are reported back. */
-export async function assignText(_: FormState, formData: FormData): Promise<FormState> {
-  const cls = await ownClass(String(formData.get("classId")));
-  const textId = String(formData.get("textId") ?? "");
-  const note = String(formData.get("note") ?? "").trim().slice(0, 200) || null;
-  const dueRaw = String(formData.get("dueAt") ?? "");
-  const dueAt = /^\d{4}-\d{2}-\d{2}$/.test(dueRaw) ? new Date(`${dueRaw}T23:59:00`) : null;
-  const text = await db.text.findUnique({ where: { id: textId } });
-  if (!text) return { error: "Choose a text." };
-
-  const students = await db.enrollment.findMany({ where: { classId: cls.id }, include: { user: { select: { id: true, name: true } } } });
-  if (!students.length) return { error: "This class has no students yet." };
-
-  const eligible: string[] = [];
-  const skipped: { name: string; coverage: number }[] = [];
-  for (const { user } of students) {
-    const { known } = await wordSets(user.id);
-    const { coverage } = coverageOf(text.lemmaCounts as LemmaCounts, known);
-    if (coverage >= MIN_COVERAGE) eligible.push(user.id);
-    else skipped.push({ name: user.name, coverage });
-  }
-  if (!eligible.length) return { error: `“${text.title}” is above every student's current level, so it was not assigned.`, skipped };
-
-  await db.assignment.create({
-    data: {
-      classId: cls.id,
-      kind: "TEXT",
-      textId: text.id,
-      note,
-      dueAt,
-      recipients: { create: eligible.map((studentId) => ({ studentId })) },
-    },
-  });
-  refresh();
-  return { ok: `Assigned “${text.title}” to ${eligible.length} student${eligible.length === 1 ? "" : "s"}.`, skipped };
-}
-
-const goalSchema = z.object({
-  classId: z.string(),
-  goalType: z.enum(["WORDS_WEEK", "TEXTS_WEEK", "MINUTES_WEEK"]),
-  target: z.coerce.number().int().min(1).max(100_000),
-  note: z.string().max(200).optional(),
-});
-
-export async function assignGoal(_: FormState, formData: FormData): Promise<FormState> {
-  const parsed = goalSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { error: "Choose a goal type and a target above zero." };
-  const cls = await ownClass(parsed.data.classId);
-  const students = await db.enrollment.findMany({ where: { classId: cls.id }, select: { userId: true } });
-  await db.assignment.create({
-    data: {
-      classId: cls.id,
-      kind: "GOAL",
-      goalType: parsed.data.goalType,
-      target: parsed.data.target,
-      note: parsed.data.note?.trim() || null,
-      recipients: { create: students.map((s) => ({ studentId: s.userId })) },
-    },
-  });
-  refresh();
-  return { ok: "Weekly goal set for the class." };
-}
-
-export async function deleteAssignment(assignmentId: string) {
-  const teacher = await requireTeacher();
-  await db.assignment.deleteMany({ where: { id: assignmentId, class: { teacherId: teacher.id } } });
-  refresh();
-}
-
 export async function removeStudent(classId: string, studentId: string) {
   const cls = await ownClass(classId);
   await db.$transaction([
@@ -116,11 +46,76 @@ export async function removeStudent(classId: string, studentId: string) {
   refresh();
 }
 
-export async function setDailyMinutes(_: FormState, formData: FormData): Promise<FormState> {
-  const cls = await ownClass(String(formData.get("classId")));
-  const minutes = z.coerce.number().int().min(5).max(180).safeParse(formData.get("minutes"));
-  if (!minutes.success) return { error: "Choose between 5 and 180 minutes." };
-  await db.class.update({ where: { id: cls.id }, data: { dailyMinutes: minutes.data } });
+function slugify(title: string) {
+  const base = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) || "passage";
+  return `${base}-${randomInt(36 ** 4).toString(36)}`;
+}
+
+/** Validates the uploaded JSON against the documented format and saves it as one of the teacher's passages. */
+export async function uploadPassage(_: FormState, formData: FormData): Promise<FormState> {
+  const teacher = await requireTeacher();
+  const file = formData.get("file");
+  const raw = file instanceof File && file.size ? await file.text() : String(formData.get("json") ?? "");
+  if (!raw.trim()) return { error: "Choose a .json file or paste the JSON." };
+  if (raw.length > 400_000) return { error: "That file is too large for one passage." };
+  const parsed = parsePassageJson(raw);
+  if (!parsed.ok) return { error: "The passage was not saved. Fix these points and upload again:", errors: parsed.errors };
+  const { title, timeLimit, paragraphs, questionGroups } = parsed.data;
+  await db.passage.create({ data: { slug: slugify(title), title, timeLimit, paragraphs, groups: questionGroups, ownerId: teacher.id } });
   refresh();
-  return { ok: `Daily target set to ${minutes.data} minutes.` };
+  const count = questionGroups.reduce((n, g) => n + g.questions.length, 0);
+  return { ok: `“${title}” saved: ${paragraphs.length} paragraphs, ${count} questions. Assign it from a class.` };
+}
+
+export async function deletePassage(passageId: string) {
+  const teacher = await requireTeacher();
+  await db.passage.deleteMany({ where: { id: passageId, ownerId: teacher.id } });
+  refresh();
+}
+
+const assignSchema = z.object({
+  classId: z.string(),
+  passageId: z.string().min(1, "Choose a passage."),
+  dueAt: z.string().optional(),
+  note: z.string().max(200).optional(),
+});
+
+/** Assigns a passage to the whole class or to the students ticked in the form. */
+export async function assignPassage(_: FormState, formData: FormData): Promise<FormState> {
+  const parsed = assignSchema.safeParse(Object.fromEntries([...formData.entries()].filter(([k]) => k !== "students")));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const cls = await ownClass(parsed.data.classId);
+  const teacherId = cls.teacherId;
+  const passage = await db.passage.findFirst({ where: { id: parsed.data.passageId, OR: [{ ownerId: null }, { ownerId: teacherId }] } });
+  if (!passage) return { error: "Choose a passage." };
+
+  const enrolled = (await db.enrollment.findMany({ where: { classId: cls.id }, select: { userId: true } })).map((e) => e.userId);
+  const picked = formData.getAll("students").map(String).filter((id) => enrolled.includes(id));
+  const students = picked.length ? picked : enrolled;
+  if (!students.length) return { error: "This class has no students yet." };
+
+  const dueAt = parsed.data.dueAt ? new Date(`${parsed.data.dueAt}T23:59:00`) : null;
+  await db.assignment.create({
+    data: {
+      classId: cls.id,
+      passageId: passage.id,
+      note: parsed.data.note?.trim() || null,
+      dueAt,
+      recipients: { create: students.map((studentId) => ({ studentId })) },
+    },
+  });
+  refresh();
+  return { ok: `Assigned “${passage.title}” to ${students.length === enrolled.length ? "the whole class" : `${students.length} student${students.length === 1 ? "" : "s"}`}.` };
+}
+
+export async function deleteAssignment(assignmentId: string) {
+  const teacher = await requireTeacher();
+  await db.assignment.deleteMany({ where: { id: assignmentId, class: { teacherId: teacher.id } } });
+  refresh();
+}
+
+export async function deleteDeck(deckId: string) {
+  await requireAdmin();
+  await db.deck.deleteMany({ where: { id: deckId, ownerId: null } });
+  refresh();
 }

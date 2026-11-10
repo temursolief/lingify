@@ -12,58 +12,25 @@ enum Role {
   TEACHER
 }
 
-enum WordStatus {
-  /// met in reading but never looked up; may become known through enough encounters
-  SEEN
-  LEARNING
-  KNOWN
-}
-
-enum WordSource {
-  PLACEMENT
-  LOOKUP
-  REVIEW
-  READING
-}
-
 enum Activity {
-  READING
-  QUIZ
-  VOCAB
-  GRAMMAR
-  REVIEW
-  PLACEMENT
-  FLUENCY
   IELTS
-}
-
-enum AttemptKind {
-  COMPREHENSION
-  VOCAB
-  GRAMMAR
   REVIEW
-  GIST
-  GUESS
-  CCQ
-  DISCOVERY
-  PHRASE
 }
 
-enum AbandonReason {
-  TOO_HARD
-  NOT_INTERESTED
-  NO_TIME
+/// Anki card states.
+enum CardQueue {
+  NEW
+  LEARNING
+  REVIEW
+  RELEARNING
 }
 
-enum AssignmentKind {
-  TEXT
-  GOAL
-}
-
-enum GoalType {
-  WORDS_WEEK
-  TEXTS_WEEK
-  MINUTES_WEEK
+/// Why a student missed a question the first time, chosen after they correct it.
+enum ErrorTag {
+  VOCAB
+  DISTRACTOR
+  LOGIC
+  CARELESS
 }
 
 model User {
@@ -72,44 +39,33 @@ model User {
   name           String
   passwordHash   String
   role           Role
-  topicPrefs     String[]
-  placementDone  Boolean   @default(false)
-  estimatedVocab Int?
   createdAt      DateTime  @default(now())
   lastActiveAt   DateTime?
-  /// show Uzbek translations next to English definitions
+  /// show Uzbek translations on cards made from passages
   uzbekGlosses   Boolean   @default(true)
   telegramCode   String?   @unique
   telegramChatId String?   @unique
 
   classesTaught Class[]               @relation("TeacherClasses")
   enrollments   Enrollment[]
-  words         LemmaState[]
-  sessions      ReadingSession[]
-  attempts      ExerciseAttempt[]
   activityTime  ActivityTime[]
-  snapshots     VocabSnapshot[]
-  placements    PlacementTest[]
-  goals         Goal[]
   recipients    AssignmentRecipient[]
-  events        Event[]
-  ratings       TextRating[]
-  fluencyRuns   FluencyRun[]
-  ieltsAttempts IeltsAttempt[]
-  ownTexts      Text[]                @relation("TeacherTexts")
+  ownPassages   Passage[]             @relation("TeacherPassages")
+  attempts      PassageAttempt[]
+  decks         Deck[]                @relation("DeckOwner")
+  cardStates    CardState[]
+  reviewLogs    ReviewLog[]
 }
 
 model Class {
-  id           String       @id @default(cuid())
-  name         String
-  joinCode     String       @unique
-  teacherId    String
-  teacher      User         @relation("TeacherClasses", fields: [teacherId], references: [id], onDelete: Cascade)
-  /// minimum active minutes per day the teacher expects
-  dailyMinutes Int          @default(20)
-  createdAt    DateTime     @default(now())
-  enrollments  Enrollment[]
-  assignments  Assignment[]
+  id          String       @id @default(cuid())
+  name        String
+  joinCode    String       @unique
+  teacherId   String
+  teacher     User         @relation("TeacherClasses", fields: [teacherId], references: [id], onDelete: Cascade)
+  createdAt   DateTime     @default(now())
+  enrollments Enrollment[]
+  assignments Assignment[]
 }
 
 model Enrollment {
@@ -122,176 +78,32 @@ model Enrollment {
   @@id([userId, classId])
 }
 
-model Text {
-  id          String   @id @default(cuid())
-  slug        String   @unique
+/// An IELTS Academic Reading passage. `ownerId` null = built into Lingify, visible to everyone.
+model Passage {
+  id          String           @id @default(cuid())
+  slug        String           @unique
   title       String
-  summary     String
-  genre       String
-  topics      String[]
-  /// Token[][] — one array per paragraph
-  paragraphs  Json
-  sentences   String[]
-  /// { lemma: count }
-  lemmaCounts Json
-  wordCount   Int
-  /// { question, options, answer, explanation }[]
-  questions   Json
-  /// { key, structure, explanation, example, examples, marks, discovery, exercise }[]
-  grammar     Json
-  leadIn      String   @default("")
-  /// { question, options, answer }
-  prediction  Json?
-  /// { word, lemma, definition, ccq: { question, options, answer } }[]
-  preTeach    Json     @default("[]")
-  /// { question, options, answer, explanation }
-  gist        Json?
-  response    String   @default("")
-  /// { phrase, meaning, marks }[]
-  phrases     Json     @default("[]")
-  series      String?
-  seriesPart  Int?
-  /// "graded" library text or "ielts" practice passage
-  track       String   @default("graded")
-  level       String   @default("B1")
-  /// IELTS question groups for track = "ielts"
-  ielts       Json?
-  timeLimit   Int?
-  /// texts written by a teacher are only visible to that teacher's classes
+  /// paragraphs, labelled A, B, C… in order
+  paragraphs  String[]
+  /// QuestionGroup[] in the documented upload format (src/lib/passage-format.ts)
+  groups      Json
+  timeLimit   Int              @default(20)
   ownerId     String?
-  owner       User?    @relation("TeacherTexts", fields: [ownerId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
-
-  sessions      ReadingSession[]
-  assignments   Assignment[]
-  ratings       TextRating[]
-  fluencyRuns   FluencyRun[]
-  ieltsAttempts IeltsAttempt[]
-}
-
-model LemmaState {
-  userId          String
-  lemma           String
-  status          WordStatus
-  source          WordSource
-  exposures       Int        @default(0)
-  lookups         Int        @default(0)
-  contextSentence String?
-  contextWord     String?
-  contextTextId   String?
-  srsInterval     Int        @default(0)
-  srsEase         Float      @default(2.5)
-  srsDue          DateTime?
-  srsStreak       Int        @default(0)
-  srsReviews      Int        @default(0)
-  srsLapses       Int        @default(0)
-  /// multi-word phrase saved from a text (not counted in coverage)
-  isPhrase        Boolean    @default(false)
-  meaning         String?
-  /// every sentence the student has met this item in: { sentence, word, textId }[]
-  contexts        Json       @default("[]")
-  /// times met in finished texts while not yet looked up
-  encounters      Int        @default(0)
-  knownAt         DateTime?
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
-  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@id([userId, lemma])
-  @@index([userId, status, srsDue])
-}
-
-model ReadingSession {
-  id            String         @id @default(cuid())
-  userId        String
-  textId        String
-  startedAt     DateTime       @default(now())
-  completedAt   DateTime?
-  activeSeconds Int            @default(0)
-  wpm           Float?
-  coverage      Float
-  lookupCount   Int            @default(0)
-  quizScore     Float?
-  prediction    Int?
-  gistCorrect   Boolean?
-  abandonedAt   DateTime?
-  abandonReason AbandonReason?
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  text          Text           @relation(fields: [textId], references: [id], onDelete: Cascade)
-
-  @@index([userId, completedAt])
-}
-
-model ExerciseAttempt {
-  id         String      @id @default(cuid())
-  userId     String
-  textId     String?
-  kind       AttemptKind
-  itemKey    String
-  correct    Boolean
-  /// reading sub-skill for comprehension questions, grammar key for grammar items
-  skill      String?
-  answeredAt DateTime    @default(now())
-  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, kind, answeredAt])
-}
-
-model ActivityTime {
-  userId   String
-  day      DateTime @db.Date
-  activity Activity
-  seconds  Int      @default(0)
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@id([userId, day, activity])
-}
-
-model VocabSnapshot {
-  userId        String
-  day           DateTime @db.Date
-  knownCount    Int
-  learningCount Int
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@id([userId, day])
-}
-
-model PlacementTest {
-  id          String    @id @default(cuid())
-  userId      String
-  startedAt   DateTime  @default(now())
-  completedAt DateTime?
-  /// { word, band, pseudo, answer? }[]
-  items       Json
-  /// { band, known, total, falseAlarms }[]
-  results     Json?
-  estimate    Int?
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model Goal {
-  id        String   @id @default(cuid())
-  userId    String
-  type      GoalType
-  target    Int
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  owner       User?            @relation("TeacherPassages", fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt   DateTime         @default(now())
+  assignments Assignment[]
+  attempts    PassageAttempt[]
 }
 
 model Assignment {
   id         String                @id @default(cuid())
   classId    String
-  kind       AssignmentKind
-  textId     String?
-  goalType   GoalType?
-  target     Int?
+  passageId  String
   note       String?
   dueAt      DateTime?
   createdAt  DateTime              @default(now())
   class      Class                 @relation(fields: [classId], references: [id], onDelete: Cascade)
-  text       Text?                 @relation(fields: [textId], references: [id], onDelete: Cascade)
+  passage    Passage               @relation(fields: [passageId], references: [id], onDelete: Cascade)
   recipients AssignmentRecipient[]
 }
 
@@ -305,6 +117,135 @@ model AssignmentRecipient {
   @@id([assignmentId, studentId])
 }
 
+/// One student working through one passage: a timed first submission, then corrections until every answer is green.
+model PassageAttempt {
+  id               String          @id @default(cuid())
+  userId           String
+  passageId        String
+  startedAt        DateTime        @default(now())
+  /// first submission: the exam-like score
+  firstSubmittedAt DateTime?
+  firstSeconds     Int?
+  firstCorrect     Int?
+  total            Int
+  band             Float?
+  /// every question answered correctly
+  completedAt      DateTime?
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  passage          Passage         @relation(fields: [passageId], references: [id], onDelete: Cascade)
+  answers          QuestionAnswer[]
+
+  @@index([userId, passageId])
+  @@index([passageId])
+}
+
+/// The state of one question in an attempt, with every try kept for the teacher.
+model QuestionAnswer {
+  attemptId    String
+  number       Int
+  type         String
+  answer       String
+  correct      Boolean
+  firstCorrect Boolean
+  tries        Int            @default(1)
+  /// { paragraph, start, end, text } where the student showed their proof for the latest try
+  evidence     Json?
+  /// the student's proof was in the paragraph the teacher marked as evidence
+  evidenceOk   Boolean?
+  errorTag     ErrorTag?
+  /// { answer, correct, evidence, at }[]
+  history      Json           @default("[]")
+  attempt      PassageAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  @@id([attemptId, number])
+}
+
+/// An Anki deck: imported from .apkg by an admin teacher (ownerId null, shared with every student) or a student's own deck.
+model Deck {
+  id        String      @id @default(cuid())
+  name      String
+  ownerId   String?
+  owner     User?       @relation("DeckOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  /// card styling from the Anki note types: { [noteTypeId]: css }
+  css       Json        @default("{}")
+  createdAt DateTime    @default(now())
+  cards     Card[]
+  media     DeckMedia[]
+}
+
+model Card {
+  id        String      @id @default(cuid())
+  deckId    String
+  /// rendered question and answer HTML
+  front     String
+  back      String
+  noteType  String      @default("")
+  /// order cards are introduced in (Anki's "due" for new cards)
+  position  Int         @default(0)
+  createdAt DateTime    @default(now())
+  deck      Deck        @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  states    CardState[]
+  logs      ReviewLog[]
+
+  @@index([deckId, position])
+}
+
+model DeckMedia {
+  deckId String
+  name   String
+  mime   String
+  data   Bytes
+  deck   Deck   @relation(fields: [deckId], references: [id], onDelete: Cascade)
+
+  @@id([deckId, name])
+}
+
+/// One student's schedule for one card (Anki SM-2 with a 20-day maximum interval).
+model CardState {
+  userId   String
+  cardId   String
+  queue    CardQueue @default(NEW)
+  due      DateTime
+  /// days, for review cards
+  interval Int       @default(0)
+  /// ease factor in permille, like Anki (2500 = 250%)
+  ease     Int       @default(2500)
+  reps     Int       @default(0)
+  lapses   Int       @default(0)
+  /// index into the learning/relearning steps
+  step     Int       @default(0)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  card     Card      @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@id([userId, cardId])
+  @@index([userId, due])
+}
+
+model ReviewLog {
+  id       String   @id @default(cuid())
+  userId   String
+  cardId   String
+  /// 1 Again, 2 Hard, 3 Good, 4 Easy
+  rating   Int
+  queue    CardQueue
+  interval Int
+  at       DateTime @default(now())
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  card     Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@index([userId, at])
+}
+
+model ActivityTime {
+  userId   String
+  day      DateTime @db.Date
+  activity Activity
+  seconds  Int      @default(0)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, day, activity])
+}
+
 model DictionaryEntry {
   word      String   @id
   found     Boolean
@@ -313,62 +254,10 @@ model DictionaryEntry {
   fetchedAt DateTime @default(now())
 }
 
-model Event {
-  id     String   @id @default(cuid())
-  userId String
-  type   String
-  textId String?
-  data   Json?
-  at     DateTime @default(now())
-  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, type, at])
-}
-
-model TextRating {
-  userId     String
-  textId     String
-  /// 1 = not for me, 2 = it was OK, 3 = loved it
-  enjoyment  Int
-  /// -1 too easy, 0 just right, 1 too hard
-  difficulty Int
-  recommend  Boolean  @default(false)
-  updatedAt  DateTime @updatedAt
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  text       Text     @relation(fields: [textId], references: [id], onDelete: Cascade)
-
-  @@id([userId, textId])
-}
-
-model FluencyRun {
-  id          String   @id @default(cuid())
-  userId      String
-  textId      String
-  seconds     Int
-  wpm         Float
-  gistCorrect Boolean?
-  createdAt   DateTime @default(now())
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  text        Text     @relation(fields: [textId], references: [id], onDelete: Cascade)
-
-  @@index([userId, createdAt])
-}
-
-model IeltsAttempt {
-  id        String   @id @default(cuid())
-  userId    String
-  textId    String
-  /// { [questionId]: answer }
-  answers   Json
-  correct   Int
-  total     Int
-  /// { [questionType]: { correct, total } }
-  byType    Json
-  seconds   Int
-  band      Float
+/// Meanings written by the AI for chunks highlighted in passages, cached so each chunk/sentence pair costs once.
+model ChunkMeaning {
+  key       String   @id
+  meaning   String
+  uz        String?
   createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  text      Text     @relation(fields: [textId], references: [id], onDelete: Cascade)
-
-  @@index([userId, createdAt])
 }

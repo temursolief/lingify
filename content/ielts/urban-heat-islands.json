@@ -1,9 +1,5 @@
 {
-  "slug": "urban-heat-islands",
   "title": "Cooling the Urban Heat Island",
-  "summary": "Why cities are hotter than the countryside around them, and the solutions planners are testing.",
-  "topics": ["cities", "environment", "science"],
-  "level": "B2",
   "timeLimit": 20,
   "paragraphs": [
     "On a hot summer evening, the centre of a large city can be up to ten degrees warmer than the farmland just outside it. This effect, known as the urban heat island, was first described in the early nineteenth century by Luke Howard, an amateur scientist who recorded temperatures in and around London. Today, with more than half of the world's population living in cities, and with heatwaves becoming more frequent, the problem is receiving more attention than ever before.",
@@ -13,16 +9,45 @@
     "Many planners, however, believe that the most effective approach is to bring nature back into the city. Trees provide shade and cool the air through evaporation, and a single large tree can have a cooling effect similar to several air conditioners. Singapore, one of the most densely populated cities in the world, has made green space a central part of its planning, with gardens on roofs and plants growing up the walls of buildings. Parks, rivers and lakes can also create areas of cooler air that spread into the surrounding streets.",
     "These solutions are not without difficulties. Trees take years to grow and need water, which may be in short supply in hot, dry regions. Reflective surfaces can create glare and, if they are poorly placed, may simply send heat towards nearby buildings. For this reason, experts recommend combining different methods and planning them carefully for local conditions. As cities continue to grow, the way they are designed may decide how comfortable, and how safe, life will be for billions of people."
   ],
-  "tasks": [
+  "questionGroups": [
     {
       "type": "tfng",
       "instructions": "Do the following statements agree with the information in the passage? Choose TRUE, FALSE or NOT GIVEN.",
-      "items": [
-        { "id": "q1", "statement": "Luke Howard was a professional scientist working in London.", "answer": "FALSE", "explanation": "Paragraph A describes him as an amateur scientist." },
-        { "id": "q2", "statement": "The temperature difference between cities and the countryside is often largest in the evening.", "answer": "TRUE", "explanation": "Paragraph B: the difference is often greatest after sunset." },
-        { "id": "q3", "statement": "Heat islands make air pollution worse in every city.", "answer": "FALSE", "explanation": "Paragraph C only says some studies suggest it can make air pollution worse." },
-        { "id": "q4", "statement": "The coating used in Los Angeles was developed by a local university.", "answer": "NOT GIVEN", "explanation": "The passage does not say who developed the coating." },
-        { "id": "q5", "statement": "Trees can be difficult to use in places where water is limited.", "answer": "TRUE", "explanation": "Paragraph F: trees need water, which may be in short supply in hot, dry regions." }
+      "questions": [
+        {
+          "number": 1,
+          "evidence": "A",
+          "explanation": "Paragraph A describes him as an amateur scientist.",
+          "statement": "Luke Howard was a professional scientist working in London.",
+          "answer": "FALSE"
+        },
+        {
+          "number": 2,
+          "evidence": "B",
+          "explanation": "Paragraph B: the difference is often greatest after sunset.",
+          "statement": "The temperature difference between cities and the countryside is often largest in the evening.",
+          "answer": "TRUE"
+        },
+        {
+          "number": 3,
+          "evidence": "C",
+          "explanation": "Paragraph C only says some studies suggest it can make air pollution worse.",
+          "statement": "Heat islands make air pollution worse in every city.",
+          "answer": "FALSE"
+        },
+        {
+          "number": 4,
+          "explanation": "The passage does not say who developed the coating.",
+          "statement": "The coating used in Los Angeles was developed by a local university.",
+          "answer": "NOT GIVEN"
+        },
+        {
+          "number": 5,
+          "evidence": "F",
+          "explanation": "Paragraph F: trees need water, which may be in short supply in hot, dry regions.",
+          "statement": "Trees can be difficult to use in places where water is limited.",
+          "answer": "TRUE"
+        }
       ]
     },
     {
@@ -37,33 +62,79 @@
         "A greener kind of planning",
         "The history of air conditioning"
       ],
-      "items": [
-        { "id": "q6", "paragraph": 1, "answer": 0, "explanation": "Paragraph B lists the factors responsible for the extra heat." },
-        { "id": "q7", "paragraph": 2, "answer": 2, "explanation": "Paragraph C explains that the consequences are not just a matter of comfort." },
-        { "id": "q8", "paragraph": 3, "answer": 3, "explanation": "Paragraph D is about light-coloured surfaces and cool roofs." },
-        { "id": "q9", "paragraph": 4, "answer": 5, "explanation": "Paragraph E is about trees, parks and green planning." }
+      "questions": [
+        {
+          "number": 6,
+          "evidence": "B",
+          "explanation": "Paragraph B lists the factors responsible for the extra heat.",
+          "paragraph": "B",
+          "answer": "i"
+        },
+        {
+          "number": 7,
+          "evidence": "C",
+          "explanation": "Paragraph C explains that the consequences are not just a matter of comfort.",
+          "paragraph": "C",
+          "answer": "iii"
+        },
+        {
+          "number": 8,
+          "evidence": "D",
+          "explanation": "Paragraph D is about light-coloured surfaces and cool roofs.",
+          "paragraph": "D",
+          "answer": "iv"
+        },
+        {
+          "number": 9,
+          "evidence": "E",
+          "explanation": "Paragraph E is about trees, parks and green planning.",
+          "paragraph": "E",
+          "answer": "vi"
+        }
       ]
     },
     {
       "type": "completion",
       "instructions": "Complete the sentences below. Choose NO MORE THAN TWO WORDS from the passage for each answer.",
       "maxWords": 2,
-      "items": [
-        { "id": "q10", "before": "Plants cool the air through a natural process called", "after": ".", "answers": ["evaporation"], "explanation": "Paragraph B: evaporation, a natural process that cools the air." },
-        { "id": "q11", "before": "Hot nights are especially dangerous for", "after": "during heatwaves.", "answers": ["elderly people"], "explanation": "Paragraph C: particularly among elderly people." },
-        { "id": "q12", "before": "Roofs painted white or covered in reflective material are known as", "after": ".", "answers": ["cool roofs"], "explanation": "Paragraph D: “Cool roofs, painted white or covered with reflective materials”." },
-        { "id": "q13", "before": "Badly placed reflective surfaces can cause", "after": "and send heat to other buildings.", "answers": ["glare"], "explanation": "Paragraph F: reflective surfaces can create glare." }
+      "questions": [
+        {
+          "number": 10,
+          "evidence": "B",
+          "explanation": "Paragraph B: evaporation, a natural process that cools the air.",
+          "text": "Plants cool the air through a natural process called ___ .",
+          "answers": [
+            "evaporation"
+          ]
+        },
+        {
+          "number": 11,
+          "evidence": "C",
+          "explanation": "Paragraph C: particularly among elderly people.",
+          "text": "Hot nights are especially dangerous for ___ during heatwaves.",
+          "answers": [
+            "elderly people"
+          ]
+        },
+        {
+          "number": 12,
+          "evidence": "D",
+          "explanation": "Paragraph D: “Cool roofs, painted white or covered with reflective materials”.",
+          "text": "Roofs painted white or covered in reflective material are known as ___ .",
+          "answers": [
+            "cool roofs"
+          ]
+        },
+        {
+          "number": 13,
+          "evidence": "F",
+          "explanation": "Paragraph F: reflective surfaces can create glare.",
+          "text": "Badly placed reflective surfaces can cause ___ and send heat to other buildings.",
+          "answers": [
+            "glare"
+          ]
+        }
       ]
     }
-  ],
-  "phrases": [
-    { "phrase": "be responsible for", "inText": "responsible for", "meaning": "be the cause of", "uz": "...ga sababchi bo'lmoq" },
-    { "phrase": "in addition", "inText": "In addition", "meaning": "also; as well as this", "uz": "bundan tashqari" },
-    { "phrase": "a matter of", "inText": "a matter of comfort", "meaning": "a question of", "uz": "...masalasi" },
-    { "phrase": "be associated with", "inText": "associated with", "meaning": "be connected with", "uz": "...bilan bog'liq bo'lmoq" },
-    { "phrase": "in turn", "inText": "in turn", "meaning": "as a result of this", "uz": "o'z navbatida" },
-    { "phrase": "have an effect", "inText": "have a cooling effect", "meaning": "cause a change", "uz": "ta'sir ko'rsatmoq" },
-    { "phrase": "be in short supply", "inText": "in short supply", "meaning": "be difficult to get because there is not enough", "uz": "yetishmaslik, taqchil bo'lmoq" },
-    { "phrase": "for this reason", "inText": "For this reason", "meaning": "because of this", "uz": "shu sababli" }
   ]
 }

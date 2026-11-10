@@ -1,9 +1,5 @@
 {
-  "slug": "the-aral-sea",
   "title": "The Aral Sea: Lessons from a Disappearing Lake",
-  "summary": "How one of the world's largest lakes lost most of its water, and what its partial recovery teaches us.",
-  "topics": ["environment", "history", "science"],
-  "level": "B2",
   "timeLimit": 20,
   "paragraphs": [
     "Until the 1960s, the Aral Sea, which lies on the border between Kazakhstan and Uzbekistan, was the fourth largest lake in the world. It covered an area of about 68,000 square kilometres and supported a large fishing industry. The towns of Aral and Muynak were busy ports, and the fish caught in the lake were sent to markets across the Soviet Union. The lake was fed by two great rivers, the Amu Darya in the south and the Syr Darya in the north, which carried water from the mountains of Central Asia.",
@@ -13,16 +9,44 @@
     "Not all of the news is bad, however. In 2005, with support from the World Bank, Kazakhstan completed the Kokaral Dam, which separates the smaller northern part of the sea from the southern part. The dam keeps the water of the Syr Darya in the north, and the results have been better than many experts expected. The water level of the North Aral Sea has risen by several metres, the salt content has fallen, and fish have returned. Local fishermen are working again, and some families who had left the area have come back.",
     "The southern sea, by contrast, is unlikely to recover in the near future, because the Amu Darya is still used heavily for agriculture. Instead, Uzbekistan has focused on reducing the harm caused by the dry seabed. Since 2018, millions of salt-tolerant plants, such as saxaul shrubs, have been planted across the former lake floor to hold the soil and reduce dust storms. The story of the Aral Sea is often described as one of the worst environmental disasters of the twentieth century, but it also shows that careful management can repair at least part of the damage."
   ],
-  "tasks": [
+  "questionGroups": [
     {
       "type": "tfng",
       "instructions": "Do the following statements agree with the information in the passage? Choose TRUE if the statement agrees with the information, FALSE if the statement contradicts the information, or NOT GIVEN if there is no information on this.",
-      "items": [
-        { "id": "q1", "statement": "Before the 1960s, the Aral Sea was the largest lake in Central Asia.", "answer": "NOT GIVEN", "explanation": "The passage says it was the fourth largest lake in the world, but does not compare it with other lakes in Central Asia." },
-        { "id": "q2", "statement": "The canals built by Soviet planners lost a lot of water before it reached the fields.", "answer": "TRUE", "explanation": "Paragraph B: a large proportion of the water was lost through evaporation and leaks." },
-        { "id": "q3", "statement": "By 2014, the whole of the southern sea had disappeared.", "answer": "FALSE", "explanation": "Paragraph C: only the eastern part of the southern sea had dried up completely." },
-        { "id": "q4", "statement": "Dust from the dry seabed contains chemicals from farming.", "answer": "TRUE", "explanation": "Paragraph D: the seabed is covered with salt and chemicals from fertilisers." },
-        { "id": "q5", "statement": "The Kokaral Dam cost more than the World Bank had planned.", "answer": "NOT GIVEN", "explanation": "The passage mentions World Bank support but says nothing about the cost." }
+      "questions": [
+        {
+          "number": 1,
+          "explanation": "The passage says it was the fourth largest lake in the world, but does not compare it with other lakes in Central Asia.",
+          "statement": "Before the 1960s, the Aral Sea was the largest lake in Central Asia.",
+          "answer": "NOT GIVEN"
+        },
+        {
+          "number": 2,
+          "evidence": "B",
+          "explanation": "Paragraph B: a large proportion of the water was lost through evaporation and leaks.",
+          "statement": "The canals built by Soviet planners lost a lot of water before it reached the fields.",
+          "answer": "TRUE"
+        },
+        {
+          "number": 3,
+          "evidence": "C",
+          "explanation": "Paragraph C: only the eastern part of the southern sea had dried up completely.",
+          "statement": "By 2014, the whole of the southern sea had disappeared.",
+          "answer": "FALSE"
+        },
+        {
+          "number": 4,
+          "evidence": "D",
+          "explanation": "Paragraph D: the seabed is covered with salt and chemicals from fertilisers.",
+          "statement": "Dust from the dry seabed contains chemicals from farming.",
+          "answer": "TRUE"
+        },
+        {
+          "number": 5,
+          "explanation": "The passage mentions World Bank support but says nothing about the cost.",
+          "statement": "The Kokaral Dam cost more than the World Bank had planned.",
+          "answer": "NOT GIVEN"
+        }
       ]
     },
     {
@@ -37,33 +61,82 @@
         "New cities built on the seabed",
         "A future based on tourism"
       ],
-      "items": [
-        { "id": "q6", "paragraph": 1, "answer": 1, "explanation": "Paragraph B explains the cotton plan and the canals that took water from the rivers." },
-        { "id": "q7", "paragraph": 2, "answer": 4, "explanation": "Paragraph C describes how the fishing industry collapsed." },
-        { "id": "q8", "paragraph": 3, "answer": 3, "explanation": "Paragraph D covers respiratory illnesses and changes in the local climate." },
-        { "id": "q9", "paragraph": 4, "answer": 0, "explanation": "Paragraph E describes how the Kokaral Dam brought back water and fish to the North Aral Sea." }
+      "questions": [
+        {
+          "number": 6,
+          "evidence": "B",
+          "explanation": "Paragraph B explains the cotton plan and the canals that took water from the rivers.",
+          "paragraph": "B",
+          "answer": "ii"
+        },
+        {
+          "number": 7,
+          "evidence": "C",
+          "explanation": "Paragraph C describes how the fishing industry collapsed.",
+          "paragraph": "C",
+          "answer": "v"
+        },
+        {
+          "number": 8,
+          "evidence": "D",
+          "explanation": "Paragraph D covers respiratory illnesses and changes in the local climate.",
+          "paragraph": "D",
+          "answer": "iv"
+        },
+        {
+          "number": 9,
+          "evidence": "E",
+          "explanation": "Paragraph E describes how the Kokaral Dam brought back water and fish to the North Aral Sea.",
+          "paragraph": "E",
+          "answer": "i"
+        }
       ]
     },
     {
       "type": "completion",
       "instructions": "Complete the sentences below. Choose NO MORE THAN TWO WORDS from the passage for each answer.",
       "maxWords": 2,
-      "items": [
-        { "id": "q10", "before": "Soviet planners wanted Central Asia to become a centre of", "after": "production.", "answers": ["cotton"], "explanation": "Paragraph B: “a major centre of cotton production”." },
-        { "id": "q11", "before": "The area where the lake used to be is now known as the", "after": ".", "answers": ["aralkum desert", "aralkum"], "explanation": "Paragraph C: “what is now called the Aralkum Desert”." },
-        { "id": "q12", "before": "Without the lake, the local", "after": "has become more extreme.", "answers": ["climate"], "explanation": "Paragraph D: the loss of the lake has changed the local climate." },
-        { "id": "q13", "before": "To reduce dust storms, Uzbekistan has planted", "after": "such as saxaul on the former lake floor.", "answers": ["salt-tolerant plants", "plants", "shrubs"], "explanation": "Paragraph F: “millions of salt-tolerant plants, such as saxaul shrubs”." }
+      "questions": [
+        {
+          "number": 10,
+          "evidence": "B",
+          "explanation": "Paragraph B: “a major centre of cotton production”.",
+          "text": "Soviet planners wanted Central Asia to become a centre of ___ production.",
+          "answers": [
+            "cotton"
+          ]
+        },
+        {
+          "number": 11,
+          "evidence": "C",
+          "explanation": "Paragraph C: “what is now called the Aralkum Desert”.",
+          "text": "The area where the lake used to be is now known as the ___ .",
+          "answers": [
+            "aralkum desert",
+            "aralkum"
+          ]
+        },
+        {
+          "number": 12,
+          "evidence": "D",
+          "explanation": "Paragraph D: the loss of the lake has changed the local climate.",
+          "text": "Without the lake, the local ___ has become more extreme.",
+          "answers": [
+            "climate"
+          ]
+        },
+        {
+          "number": 13,
+          "evidence": "F",
+          "explanation": "Paragraph F: “millions of salt-tolerant plants, such as saxaul shrubs”.",
+          "text": "To reduce dust storms, Uzbekistan has planted ___ such as saxaul on the former lake floor.",
+          "answers": [
+            "salt-tolerant plants",
+            "plants",
+            "shrubs"
+          ]
+        }
       ]
     }
-  ],
-  "phrases": [
-    { "phrase": "in terms of", "inText": "in terms of", "meaning": "when you consider a particular thing", "uz": "...nuqtai nazaridan" },
-    { "phrase": "a large proportion of", "inText": "a large proportion of", "meaning": "a big part of", "uz": "katta qismi" },
-    { "phrase": "lose your job", "inText": "lost their jobs", "meaning": "stop having work", "uz": "ishidan ayrilmoq" },
-    { "phrase": "be linked to", "inText": "linked the dust to", "meaning": "be connected with", "uz": "...bilan bog'liq bo'lmoq" },
-    { "phrase": "an increase in", "inText": "an increase in", "meaning": "a rise in the amount of", "uz": "...ning oshishi" },
-    { "phrase": "by contrast", "inText": "by contrast", "meaning": "showing a difference from what was said before", "uz": "aksincha, bundan farqli o'laroq" },
-    { "phrase": "in the near future", "inText": "in the near future", "meaning": "soon", "uz": "yaqin kelajakda" },
-    { "phrase": "focus on", "inText": "focused on", "meaning": "give most attention to", "uz": "...ga e'tibor qaratmoq" }
   ]
 }

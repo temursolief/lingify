@@ -1,9 +1,5 @@
 {
-  "slug": "plastic-in-the-ocean",
   "title": "Plastic in the Ocean: Beyond Recycling",
-  "summary": "Why recycling alone cannot solve the problem of plastic pollution, and what else is being tried.",
-  "topics": ["environment", "technology", "science"],
-  "level": "B2",
   "timeLimit": 20,
   "paragraphs": [
     "Since the 1950s, the world has produced more than eight billion tonnes of plastic. The material is cheap, light and strong, which makes it ideal for everything from food packaging to medical equipment. But the same qualities that make plastic useful also make it a serious environmental problem. Most plastics do not break down naturally; instead, they slowly fragment into smaller and smaller pieces that can remain in the environment for hundreds of years.",
@@ -13,16 +9,45 @@
     "As a result, governments and companies are increasingly focusing on reducing the amount of plastic used in the first place. Since 2015, more than eighty countries have introduced bans or taxes on plastic bags, and the European Union has banned several single-use items, such as plastic straws and cutlery. Some companies are redesigning packaging so that it can be refilled or reused. Scientists are also developing new materials made from plants, seaweed and even mushrooms, although these are not yet cheap enough to replace plastic on a large scale.",
     "Cleaning up the plastic already in the ocean is a far greater challenge. Projects such as The Ocean Cleanup, founded by a Dutch teenager in 2013, use long floating barriers to collect waste from the surface. Critics point out, however, that most ocean plastic is not on the surface but has sunk to the seabed or broken into microplastics, which cannot be collected in this way. Most experts agree that the most effective strategy is to stop plastic reaching the sea, by improving waste collection, especially in fast-growing cities, and by producing much less of it."
   ],
-  "tasks": [
+  "questionGroups": [
     {
       "type": "tfng",
       "instructions": "Do the following statements agree with the information in the passage? Choose TRUE, FALSE or NOT GIVEN.",
-      "items": [
-        { "id": "q1", "statement": "Most plastics break down naturally within a few years.", "answer": "FALSE", "explanation": "Paragraph A: most plastics do not break down naturally and can remain for hundreds of years." },
-        { "id": "q2", "statement": "Rivers carry a large share of the plastic that reaches the oceans.", "answer": "TRUE", "explanation": "Paragraph B: much of it comes from rivers." },
-        { "id": "q3", "statement": "Scientists have proved that microplastics cause serious illness in humans.", "answer": "FALSE", "explanation": "Paragraph C: the long-term effects on health are not yet fully understood." },
-        { "id": "q4", "statement": "Recycled plastic is usually cheaper to make than new plastic.", "answer": "FALSE", "explanation": "Paragraph D: it is frequently more expensive to produce." },
-        { "id": "q5", "statement": "The Ocean Cleanup is funded mainly by the Dutch government.", "answer": "NOT GIVEN", "explanation": "The passage does not mention how the project is funded." }
+      "questions": [
+        {
+          "number": 1,
+          "evidence": "A",
+          "explanation": "Paragraph A: most plastics do not break down naturally and can remain for hundreds of years.",
+          "statement": "Most plastics break down naturally within a few years.",
+          "answer": "FALSE"
+        },
+        {
+          "number": 2,
+          "evidence": "B",
+          "explanation": "Paragraph B: much of it comes from rivers.",
+          "statement": "Rivers carry a large share of the plastic that reaches the oceans.",
+          "answer": "TRUE"
+        },
+        {
+          "number": 3,
+          "evidence": "C",
+          "explanation": "Paragraph C: the long-term effects on health are not yet fully understood.",
+          "statement": "Scientists have proved that microplastics cause serious illness in humans.",
+          "answer": "FALSE"
+        },
+        {
+          "number": 4,
+          "evidence": "D",
+          "explanation": "Paragraph D: it is frequently more expensive to produce.",
+          "statement": "Recycled plastic is usually cheaper to make than new plastic.",
+          "answer": "FALSE"
+        },
+        {
+          "number": 5,
+          "explanation": "The passage does not mention how the project is funded.",
+          "statement": "The Ocean Cleanup is funded mainly by the Dutch government.",
+          "answer": "NOT GIVEN"
+        }
       ]
     },
     {
@@ -37,33 +62,79 @@
         "The cost of cleaning beaches",
         "Plastic in space"
       ],
-      "items": [
-        { "id": "q6", "paragraph": 1, "answer": 0, "explanation": "Paragraph B explains that rivers carry plastic to the oceans." },
-        { "id": "q7", "paragraph": 2, "answer": 1, "explanation": "Paragraph C describes effects on marine life and on humans." },
-        { "id": "q8", "paragraph": 3, "answer": 3, "explanation": "Paragraph D gives reasons why only nine per cent has been recycled." },
-        { "id": "q9", "paragraph": 4, "answer": 4, "explanation": "Paragraph E is about bans, taxes and reducing plastic use." }
+      "questions": [
+        {
+          "number": 6,
+          "evidence": "B",
+          "explanation": "Paragraph B explains that rivers carry plastic to the oceans.",
+          "paragraph": "B",
+          "answer": "i"
+        },
+        {
+          "number": 7,
+          "evidence": "C",
+          "explanation": "Paragraph C describes effects on marine life and on humans.",
+          "paragraph": "C",
+          "answer": "ii"
+        },
+        {
+          "number": 8,
+          "evidence": "D",
+          "explanation": "Paragraph D gives reasons why only nine per cent has been recycled.",
+          "paragraph": "D",
+          "answer": "iv"
+        },
+        {
+          "number": 9,
+          "evidence": "E",
+          "explanation": "Paragraph E is about bans, taxes and reducing plastic use.",
+          "paragraph": "E",
+          "answer": "v"
+        }
       ]
     },
     {
       "type": "completion",
       "instructions": "Complete the sentences below. Choose NO MORE THAN TWO WORDS from the passage for each answer.",
       "maxWords": 2,
-      "items": [
-        { "id": "q10", "before": "Sea turtles sometimes eat plastic bags because they look like", "after": ".", "answers": ["jellyfish"], "explanation": "Paragraph C: sea turtles mistake plastic bags for jellyfish." },
-        { "id": "q11", "before": "Tiny pieces of plastic eaten by fish are called", "after": ".", "answers": ["microplastics"], "explanation": "Paragraph C: smaller pieces, known as microplastics." },
-        { "id": "q12", "before": "The European Union has banned some", "after": "items such as plastic straws.", "answers": ["single-use"], "explanation": "Paragraph E: several single-use items." },
-        { "id": "q13", "before": "The Ocean Cleanup uses long floating", "after": "to collect waste.", "answers": ["barriers"], "explanation": "Paragraph F: long floating barriers." }
+      "questions": [
+        {
+          "number": 10,
+          "evidence": "C",
+          "explanation": "Paragraph C: sea turtles mistake plastic bags for jellyfish.",
+          "text": "Sea turtles sometimes eat plastic bags because they look like ___ .",
+          "answers": [
+            "jellyfish"
+          ]
+        },
+        {
+          "number": 11,
+          "evidence": "C",
+          "explanation": "Paragraph C: smaller pieces, known as microplastics.",
+          "text": "Tiny pieces of plastic eaten by fish are called ___ .",
+          "answers": [
+            "microplastics"
+          ]
+        },
+        {
+          "number": 12,
+          "evidence": "E",
+          "explanation": "Paragraph E: several single-use items.",
+          "text": "The European Union has banned some ___ items such as plastic straws.",
+          "answers": [
+            "single-use"
+          ]
+        },
+        {
+          "number": 13,
+          "evidence": "F",
+          "explanation": "Paragraph F: long floating barriers.",
+          "text": "The Ocean Cleanup uses long floating ___ to collect waste.",
+          "answers": [
+            "barriers"
+          ]
+        }
       ]
     }
-  ],
-  "phrases": [
-    { "phrase": "break down", "inText": "break down", "meaning": "decay into smaller natural parts", "uz": "parchalanmoq" },
-    { "phrase": "the majority of", "inText": "the majority of", "meaning": "most of", "uz": "...ning ko'pchiligi" },
-    { "phrase": "well documented", "inText": "well documented", "meaning": "described in many reliable sources", "uz": "yaxshi hujjatlashtirilgan" },
-    { "phrase": "in reality", "inText": "In reality", "meaning": "what is actually true", "uz": "aslida, haqiqatda" },
-    { "phrase": "as a result", "inText": "As a result", "meaning": "because of this", "uz": "natijada" },
-    { "phrase": "in the first place", "inText": "in the first place", "meaning": "from the beginning", "uz": "dastavval, boshidanoq" },
-    { "phrase": "on a large scale", "inText": "on a large scale", "meaning": "in large amounts or over a big area", "uz": "keng miqyosda" },
-    { "phrase": "point out", "inText": "point out", "meaning": "tell people something important", "uz": "ta'kidlamoq" }
   ]
 }

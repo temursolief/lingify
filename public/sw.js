@@ -1,10 +1,10 @@
 /*
  * Lingify service worker.
- * - App files (/_next/static, icons) come from the cache first: they never change once built, so the app opens fast.
+ * - App files (/_next/static, icons, deck media) come from the cache first: they never change, so the app opens fast.
  * - Pages always come from the network (they are personal and change often). If the network is down,
- *   the offline app at /offline is shown instead, which reads texts and review words saved on the laptop.
+ *   the offline app at /offline is shown instead, with the flashcards and passages saved on the laptop.
  */
-const VERSION = "v1";
+const VERSION = "v2";
 const STATIC_CACHE = `lingify-static-${VERSION}`;
 const OFFLINE_CACHE = `lingify-offline-${VERSION}`;
 const OFFLINE_URL = "/offline";
@@ -60,7 +60,8 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  if (url.pathname.startsWith("/_next/static/") || STATIC_FILES.includes(url.pathname)) {
+  // Deck images and sounds never change once imported.
+  if (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/api/media/") || STATIC_FILES.includes(url.pathname)) {
     event.respondWith(cacheFirst(request));
   } else if (request.mode === "navigate") {
     event.respondWith(page(request, url));

@@ -47,7 +47,7 @@ export async function enqueue(update: (q: OfflineQueue) => void) {
   await saveQueue(q);
 }
 
-export const queueSize = (q: OfflineQueue) => q.reviews.length + q.lookups.length + q.finished.length;
+export const queueSize = (q: OfflineQueue) => q.reviews.length;
 
 /** On log out: nothing from this student stays on a shared laptop. */
 export function clearOfflineData() {

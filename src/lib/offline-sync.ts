@@ -23,11 +23,7 @@ async function doSync(): Promise<SyncResult> {
       if (!res.ok) throw new Error(`sync ${res.status}`);
       // Anything added while the request was in flight stays for next time.
       const now = await loadQueue();
-      await saveQueue({
-        reviews: now.reviews.slice(sent.reviews.length),
-        lookups: now.lookups.slice(sent.lookups.length),
-        finished: now.finished.slice(sent.finished.length),
-      });
+      await saveQueue({ reviews: now.reviews.slice(sent.reviews.length) });
     }
     const etag = await loadEtag();
     const res = await fetch("/api/offline/pack", { headers: etag ? { "If-None-Match": etag } : {} });
@@ -35,6 +31,6 @@ async function doSync(): Promise<SyncResult> {
     else if (res.status !== 304) throw new Error(`pack ${res.status}`);
     return { ok: true, pack: await loadPack(), waiting: queueSize(await loadQueue()) };
   } catch {
-    return { ok: false, pack: await loadPack().catch(() => undefined), waiting: queueSize(await loadQueue().catch(() => ({ reviews: [], lookups: [], finished: [] }))) };
+    return { ok: false, pack: await loadPack().catch(() => undefined), waiting: queueSize(await loadQueue().catch(() => ({ reviews: [] }))) };
   }
 }

@@ -2,30 +2,14 @@
 
 import { useEffect, useRef } from "react";
 
-type Activity = "READING" | "QUIZ" | "VOCAB" | "GRAMMAR" | "REVIEW" | "FLUENCY" | "IELTS" | "PLACEMENT";
+type Activity = "IELTS" | "REVIEW";
 
 const FLUSH_EVERY_MS = 15_000;
-/** Reading a long paragraph can take a while without touching anything, so reading tolerates longer pauses. */
-const IDLE_AFTER_MS: Record<Activity, number> = {
-  READING: 120_000,
-  QUIZ: 60_000,
-  VOCAB: 60_000,
-  GRAMMAR: 60_000,
-  REVIEW: 60_000,
-  FLUENCY: 60_000,
-  IELTS: 120_000,
-  PLACEMENT: 60_000,
-};
-
-const flushers = new Set<() => Promise<void>>();
-
-/** Sends any active time not yet reported, e.g. before finishing a text so its reading speed uses all of it. */
-export async function flushActivity() {
-  await Promise.all([...flushers].map((f) => f()));
-}
+/** Reading a long paragraph can take a while without touching anything, so passages tolerate longer pauses. */
+const IDLE_AFTER_MS: Record<Activity, number> = { IELTS: 120_000, REVIEW: 60_000 };
 
 /** Counts seconds only while the tab is visible and the learner has interacted recently, and reports them to the server. */
-export function ActivityTracker({ activity, sessionId }: { activity: Activity; sessionId?: string }) {
+export function ActivityTracker({ activity }: { activity: Activity }) {
   const pending = useRef(0);
   const lastInteraction = useRef(0);
 
@@ -35,7 +19,7 @@ export function ActivityTracker({ activity, sessionId }: { activity: Activity; s
       const seconds = Math.min(60, pending.current);
       if (seconds <= 0) return;
       pending.current -= seconds;
-      const body = JSON.stringify({ activity, seconds, sessionId });
+      const body = JSON.stringify({ activity, seconds });
       if (useBeacon && navigator.sendBeacon) {
         navigator.sendBeacon("/api/heartbeat", new Blob([body], { type: "application/json" }));
       } else {
@@ -45,19 +29,6 @@ export function ActivityTracker({ activity, sessionId }: { activity: Activity; s
       }
     };
 
-    const flushNow = async () => {
-      const seconds = Math.min(60, pending.current);
-      if (seconds <= 0) return;
-      pending.current -= seconds;
-      await fetch("/api/heartbeat", {
-        method: "POST",
-        body: JSON.stringify({ activity, seconds, sessionId }),
-        headers: { "Content-Type": "application/json" },
-      }).catch(() => {
-        pending.current += seconds;
-      });
-    };
-    flushers.add(flushNow);
 
     const touch = () => {
       lastInteraction.current = Date.now();
@@ -84,10 +55,9 @@ export function ActivityTracker({ activity, sessionId }: { activity: Activity; s
       clearInterval(flush);
       document.removeEventListener("visibilitychange", onHide);
       window.removeEventListener("pagehide", onPageHide);
-      flushers.delete(flushNow);
       send(true);
     };
-  }, [activity, sessionId]);
+  }, [activity]);
 
   return null;
 }

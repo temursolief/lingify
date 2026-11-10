@@ -48,7 +48,7 @@ export async function handleUpdate(update: Update) {
     chatId,
     user.role === "TEACHER"
       ? `Connected, ${escapeHtml(user.name)}! You will get a weekly summary of your classes here.`
-      : `Connected, ${escapeHtml(user.name)}! I will remind you here when today's reading plan is not finished yet.`,
+      : `Connected, ${escapeHtml(user.name)}! I will remind you here when flashcards are due or a passage from your teacher is waiting.`,
   );
 }
 
@@ -56,11 +56,10 @@ export function escapeHtml(s: string) {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-export function studentReminder(name: string, tasks: { label: string; done: boolean }[], overdue: string[]) {
-  const left = tasks.filter((t) => !t.done);
+export function studentReminder(name: string, tasks: string[], overdue: string[]) {
   const lines = [
-    `Hi ${escapeHtml(name.split(" ")[0])}! Today's plan is not finished yet:`,
-    ...left.map((t) => `• ${escapeHtml(t.label)}`),
+    `Hi ${escapeHtml(name.split(" ")[0])}! Still to do today:`,
+    ...tasks.map((t) => `• ${escapeHtml(t)}`),
     ...(overdue.length ? ["", `⚠ Overdue: ${overdue.map(escapeHtml).join(", ")}`] : []),
     "",
     `Open Lingify: ${appUrl("/student")}`,
@@ -70,13 +69,13 @@ export function studentReminder(name: string, tasks: { label: string; done: bool
 
 export function teacherSummary(
   className: string,
-  rows: { name: string; completeDays: number; days: number; minutes: number; flags: string[] }[],
+  rows: { name: string; passages: number; cards: number; band: number | null; stuck: number }[],
 ) {
   const lines = [
     `<b>${escapeHtml(className)}</b>: last 7 days`,
     ...rows
-      .sort((a, b) => a.completeDays - b.completeDays)
-      .map((r) => `${r.completeDays === r.days ? "✅" : r.completeDays === 0 ? "❌" : "◐"} ${escapeHtml(r.name)}: ${r.completeDays}/${r.days} days, ${r.minutes} min${r.flags.length ? ` (${r.flags.map(escapeHtml).join(", ")})` : ""}`),
+      .sort((a, b) => b.stuck - a.stuck || a.passages - b.passages)
+      .map((r) => `${r.stuck ? "⚠" : r.passages ? "✅" : "❌"} ${escapeHtml(r.name)}: ${r.passages} passage${r.passages === 1 ? "" : "s"}, ${r.cards} flashcards${r.band ? `, band ${r.band}` : ""}${r.stuck ? `, stuck on ${r.stuck} question${r.stuck === 1 ? "" : "s"}` : ""}`),
     "",
     `Details: ${appUrl("/teacher")}`,
   ];

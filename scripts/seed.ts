@@ -1,231 +1,180 @@
 /**
- * Loads the graded library from content/texts and creates demo accounts.
- * Usage: npm run db:seed            (library + demo data)
- *        npm run db:seed -- --texts (library only)
+ * Loads the built-in IELTS passages and the demo Anki deck, and creates demo accounts with some history.
+ * Usage: npm run db:seed              (passages + demo data)
+ *        npm run db:seed -- --content (passages and demo deck only)
  */
 import "dotenv/config";
+import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import bcrypt from "bcryptjs";
+import { readApkg } from "../src/lib/apkg";
 import { db } from "../src/lib/db";
-import { lemmaRanks } from "../src/lib/frequency";
-import { firstDue } from "../src/lib/srs";
-import type { Question } from "../src/lib/texts";
-import { loadIelts, loadLibrary } from "./library";
-import { estimateBand } from "../src/lib/ielts";
-import { addDays, dayOf } from "../src/lib/time";
+import { answerCard } from "../src/lib/decks";
+import { saveImportedDeck } from "../src/lib/deck-import";
+import { answerKey, passageSchema, type QuestionGroup } from "../src/lib/passage-format";
+import { retryQuestion, submitFirst, tagQuestion, type Evidence } from "../src/lib/passages";
+import { buildApkg, type DemoNote } from "./apkg-builder";
 
 export const DEMO_PASSWORD = "lingify-demo";
+const DEMO_DECK = "IELTS Academic Vocabulary (demo)";
 
-async function seedTexts() {
-  const { rows, seriesTitles, missingGlossary } = loadLibrary();
-  for (const { slug, ...data } of rows) {
-    await db.text.upsert({ where: { slug }, create: { slug, ...data }, update: data });
+async function seedPassages() {
+  const files = readdirSync("content/ielts").filter((f) => f.endsWith(".json"));
+  for (const f of files) {
+    const data = passageSchema.parse(JSON.parse(readFileSync(`content/ielts/${f}`, "utf8")));
+    const slug = f.replace(/\.json$/, "");
+    const fields = { title: data.title, timeLimit: data.timeLimit, paragraphs: data.paragraphs, groups: data.questionGroups, ownerId: null };
+    await db.passage.upsert({ where: { slug }, create: { slug, ...fields }, update: fields });
   }
-  console.log(`library: ${rows.length} texts, ${seriesTitles.size} series`);
-  const ielts = loadIelts();
-  for (const { slug, ...data } of ielts) {
-    await db.text.upsert({ where: { slug }, create: { slug, ...data }, update: data });
-  }
-  console.log(`ielts: ${ielts.length} passages`);
-  if (missingGlossary.length) console.log(`no B1 definition yet (dictionary fallback): ${missingGlossary.join(", ")}`);
+  console.log(`passages: ${files.length}`);
 }
 
-type DemoStudent = {
-  email: string;
-  name: string;
-  vocab: number;
-  topics: string[];
-  /** days ago the student was active, with completed texts on some of them */
-  activeDaysAgo: number[];
-  quizAccuracy: number;
-  readingWpm: number;
-  weakSkills: string[];
-};
-
-function hashOf(str: string) {
-  let h = 2166136261;
-  for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619);
-  return h >>> 0;
+/** A small deck built as a real .apkg and imported through the same code as an admin upload. */
+async function seedDeck() {
+  const glossary = JSON.parse(readFileSync("content/glossary.json", "utf8")) as Record<string, [string, string, string?]>;
+  const notes: DemoNote[] = Object.entries(glossary)
+    .slice(0, 40)
+    .map(([word, [pos, definition, uz]]) => ({ basic: { front: word, back: `<i>${pos}</i><br>${definition}${uz ? `<br><span style="color:#6b7378">${uz}</span>` : ""}` } }));
+  notes.push(
+    { cloze: "Early studies suggested that bilingual children were {{c1::confused}} and performed worse at school." },
+    { cloze: "The observatory was {{c1::equipped}} with a huge sextant cut into a hill." },
+    { cloze: "Researchers {{c1::pointed out}} that these early studies had serious {{c2::weaknesses}}." },
+  );
+  const file = buildApkg(DEMO_DECK, notes);
+  writeFileSync("public/samples/demo-deck.apkg", file);
+  await db.deck.deleteMany({ where: { ownerId: null, name: DEMO_DECK } });
+  const deck = await saveImportedDeck(readApkg(file, DEMO_DECK));
+  console.log(`demo deck: ${notes.length} notes (public/samples/demo-deck.apkg)`);
+  return deck;
 }
 
-const DEMO_STUDENTS: DemoStudent[] = [
-  { email: "student@lingify.test", name: "Aisha Karimova", vocab: 2600, topics: ["science", "animals", "history"], activeDaysAgo: [1, 2, 3, 4, 6, 7, 9, 10, 12], quizAccuracy: 0.82, readingWpm: 118, weakSkills: ["vocabulary", "attitude"] },
-  { email: "jasur@lingify.test", name: "Jasur Aliev", vocab: 2900, topics: ["sports", "technology", "money"], activeDaysAgo: [0, 1, 2, 3, 4, 5, 6, 8, 11, 13], quizAccuracy: 0.9, readingWpm: 135, weakSkills: ["organisation"] },
-  { email: "malika@lingify.test", name: "Malika Tursunova", vocab: 2200, topics: ["family", "music", "art"], activeDaysAgo: [9, 11, 12, 15], quizAccuracy: 0.5, readingWpm: 85, weakSkills: ["inference", "reference"] },
-];
+/** The exam answer for a question, read from the passage file (demo data only). */
+function answerOf(groups: QuestionGroup[], number: number) {
+  for (const g of groups) {
+    const q = g.questions.find((x) => x.number === number) as { answer?: string; answers?: string[] } | undefined;
+    if (q) return q.answer ?? q.answers![0];
+  }
+  return "";
+}
 
-async function seedDemo() {
+/** A plausible wrong answer of the right shape. */
+function wrongOf(groups: QuestionGroup[], number: number) {
+  const g = groups.find((x) => x.questions.some((q) => q.number === number))!;
+  const right = answerOf(groups, number);
+  const pools: Record<string, string[]> = {
+    tfng: ["TRUE", "FALSE", "NOT GIVEN"],
+    ynng: ["YES", "NO", "NOT GIVEN"],
+    headings: ["i", "ii", "iii", "iv", "v", "vi", "vii"],
+    mcq: ["A", "B", "C", "D"],
+    matching: ["A", "B", "C", "D", "E"],
+  };
+  return (pools[g.type] ?? ["something else"]).find((v) => v.toUpperCase() !== right.toUpperCase())!;
+}
+
+function evidenceFor(paragraphs: string[], groups: QuestionGroup[], number: number, wrongPlace = false): Evidence {
+  const q = groups.flatMap((g) => g.questions as { number: number; evidence?: string }[]).find((x) => x.number === number)!;
+  let p = q.evidence ? q.evidence.charCodeAt(0) - 65 : 0;
+  if (wrongPlace) p = (p + 1) % paragraphs.length;
+  const text = paragraphs[p];
+  const end = Math.min(text.length, (text.indexOf(". ") + 1 || 120));
+  return { paragraph: p, start: 0, end, text: text.slice(0, end) };
+}
+
+async function demoAttempt(
+  userId: string,
+  slug: string,
+  plan: { wrong: number[]; fixed?: { n: number; tag: "VOCAB" | "DISTRACTOR" | "LOGIC" | "CARELESS"; wrongPlace?: boolean }[]; stuck?: number[] },
+) {
+  const passage = await db.passage.findUniqueOrThrow({ where: { slug } });
+  const groups = passage.groups as QuestionGroup[];
+  const keys = answerKey(groups);
+  const attempt = await db.passageAttempt.create({ data: { userId, passageId: passage.id, total: keys.length, startedAt: new Date(Date.now() - 3 * 86_400_000) } });
+  const answers = Object.fromEntries(keys.map((k) => [k.number, plan.wrong.includes(k.number) ? wrongOf(groups, k.number) : answerOf(groups, k.number)]));
+  await submitFirst(userId, attempt.id, answers, {}, 17 * 60);
+  for (const f of plan.fixed ?? []) {
+    await retryQuestion(userId, attempt.id, f.n, answerOf(groups, f.n), evidenceFor(passage.paragraphs, groups, f.n, f.wrongPlace));
+    await tagQuestion(userId, attempt.id, f.n, f.tag);
+  }
+  for (const n of plan.stuck ?? []) {
+    // Three wrong tries in different places: the teacher sees this student as stuck.
+    const g = groups.find((x) => x.questions.some((q) => q.number === n))!;
+    const options = g.type === "headings" ? ["i", "ii", "iii", "iv", "v", "vi", "vii"] : ["TRUE", "FALSE", "NOT GIVEN"];
+    const right = answerOf(groups, n).toUpperCase();
+    for (const o of options.filter((v) => v.toUpperCase() !== right && v !== answers[n]).slice(0, 2)) {
+      await retryQuestion(userId, attempt.id, n, o, evidenceFor(passage.paragraphs, groups, n, true));
+    }
+  }
+}
+
+async function seedDemo(deckId: string) {
   const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
-  const texts = await db.text.findMany({ where: { track: "graded" }, orderBy: { slug: "asc" } });
-
   await db.user.deleteMany({ where: { email: { endsWith: "@lingify.test" } } });
 
-  const teacher = await db.user.create({
-    data: { email: "teacher@lingify.test", name: "Ms Rahimova", passwordHash, role: "TEACHER", placementDone: true },
-  });
-  const cls = await db.class.create({ data: { name: "B1 Morning Group", joinCode: "DEMO01", teacherId: teacher.id } });
-
+  const teacher = await db.user.create({ data: { email: "teacher@lingify.test", name: "Ms Rahimova", passwordHash, role: "TEACHER" } });
+  const cls = await db.class.create({ data: { name: "IELTS Morning Group", joinCode: "DEMO01", teacherId: teacher.id } });
   const now = new Date();
-  const today = dayOf(now);
 
-  for (const [index, s] of DEMO_STUDENTS.entries()) {
-    const startDay = addDays(today, -21);
-    const user = await db.user.create({
+  const students = await Promise.all(
+    [
+      { email: "student@lingify.test", name: "Aisha Karimova", lastActiveAt: new Date(now.getTime() - 86_400_000) },
+      { email: "jasur@lingify.test", name: "Jasur Aliev", lastActiveAt: now },
+      { email: "malika@lingify.test", name: "Malika Tursunova", lastActiveAt: new Date(now.getTime() - 9 * 86_400_000) },
+    ].map((s) => db.user.create({ data: { ...s, passwordHash, role: "STUDENT", createdAt: new Date(now.getTime() - 21 * 86_400_000) } })),
+  );
+  const [aisha, jasur, malika] = students;
+  await db.enrollment.createMany({ data: students.map((s) => ({ userId: s.id, classId: cls.id })) });
+
+  const brains = await db.passage.findUniqueOrThrow({ where: { slug: "bilingual-brains" } });
+  const aral = await db.passage.findUniqueOrThrow({ where: { slug: "the-aral-sea" } });
+  for (const [passage, days, note] of [
+    [brains, -2, "Read the questions first"],
+    [aral, 3, null],
+  ] as const) {
+    await db.assignment.create({
       data: {
-        email: s.email,
-        name: s.name,
-        passwordHash,
-        role: "STUDENT",
-        topicPrefs: s.topics,
-        placementDone: true,
-        estimatedVocab: s.vocab,
-        createdAt: startDay,
-        lastActiveAt: addDays(now, -Math.min(...s.activeDaysAgo)),
-      },
-    });
-    await db.enrollment.create({ data: { userId: user.id, classId: cls.id } });
-
-    await db.lemmaState.createMany({
-      data: lemmaRanks.slice(0, s.vocab).map(([lemma]) => ({
-        userId: user.id, lemma, status: "KNOWN" as const, source: "PLACEMENT" as const, knownAt: startDay,
-      })),
-    });
-
-    const easy = texts.filter((t) => Object.keys(t.lemmaCounts as object).length > 0);
-    const daysCompleted = [...s.activeDaysAgo].sort((a, b) => b - a);
-    let textCursor = index * 3;
-    let learnedSoFar = 0;
-
-    for (const daysAgo of daysCompleted) {
-      const day = addDays(today, -daysAgo);
-      const at = new Date(day.getTime() + 15 * 3_600_000);
-      const text = easy[textCursor++ % easy.length];
-      const readingSeconds = Math.round((text.wordCount / s.readingWpm) * 60);
-      const quizScore = Math.max(0, Math.min(1, s.quizAccuracy + (daysAgo % 3 === 0 ? -0.2 : 0.1) * (s.quizAccuracy < 0.6 ? 1 : 0.3)));
-      await db.readingSession.create({
-        data: {
-          userId: user.id, textId: text.id, startedAt: at, completedAt: new Date(at.getTime() + readingSeconds * 1000),
-          activeSeconds: readingSeconds, wpm: s.readingWpm + ((daysAgo * 7) % 15) - 7, coverage: 0.96, lookupCount: 3, quizScore,
-        },
-      });
-      const questions = text.questions as Question[];
-      const grammarPoints = text.grammar as { key: string }[];
-      const roll = (key: string, chance: number) => (hashOf(key + s.email) % 100) / 100 < chance;
-      await db.exerciseAttempt.createMany({
-        data: [
-          ...(questions as (Question & { skill: string })[]).map((q, i) => ({
-            userId: user.id, textId: text.id, kind: "COMPREHENSION" as const, itemKey: `${text.id}:COMPREHENSION:${i}`,
-            skill: q.skill, correct: roll(`${text.id}${i}`, s.quizAccuracy - (s.weakSkills.includes(q.skill) ? 0.35 : 0)), answeredAt: at,
-          })),
-          { userId: user.id, textId: text.id, kind: "GIST" as const, itemKey: `${text.id}:GIST`, skill: "gist", correct: roll(`${text.id}g`, s.quizAccuracy + 0.1), answeredAt: at },
-          ...grammarPoints.map((g, i) => ({
-            userId: user.id, textId: text.id, kind: "GRAMMAR" as const, itemKey: `${text.id}:GRAMMAR:${i}`,
-            skill: g.key, correct: roll(`${text.id}gr${i}`, s.quizAccuracy), answeredAt: at,
-          })),
-        ],
-      });
-      await db.textRating.create({
-        data: {
-          userId: user.id, textId: text.id, enjoyment: 1 + (hashOf(text.slug + s.email) % 3),
-          difficulty: s.vocab < 2400 ? 1 : 0, recommend: hashOf(text.slug + s.name) % 2 === 0,
-        },
-      });
-      const activities = [
-        ["READING", readingSeconds],
-        ["QUIZ", 150],
-        ["VOCAB", 120],
-        ["GRAMMAR", 90],
-        ["REVIEW", daysAgo % 2 ? 300 : 180],
-      ] as const;
-      for (const [activity, seconds] of activities) {
-        await db.activityTime.create({ data: { userId: user.id, day, activity, seconds } });
-      }
-
-      // A few words looked up in this text become learning words; older ones graduate to known.
-      const lemmas = Object.keys(text.lemmaCounts as object).filter(
-        (l) => !lemmaRanks.slice(0, s.vocab).some(([k]) => k === l),
-      );
-      for (const lemma of lemmas.slice(0, 3)) {
-        const graduated = daysAgo > 7 && s.quizAccuracy > 0.6;
-        const sentenceIndex = (text.paragraphs as { l: string | null; i: number; v: string }[][]).flat().find((tok) => tok.l === lemma);
-        await db.lemmaState.upsert({
-          where: { userId_lemma: { userId: user.id, lemma } },
-          create: {
-            userId: user.id, lemma, source: "LOOKUP", lookups: 1, exposures: 1,
-            status: graduated ? "KNOWN" : "LEARNING",
-            knownAt: graduated ? addDays(at, 6) : null,
-            srsStreak: graduated ? 5 : 1, srsReviews: graduated ? 5 : 1, srsInterval: graduated ? 0 : 1,
-            srsDue: graduated ? null : daysAgo < 3 ? firstDue(at) : addDays(now, -1),
-            contextSentence: sentenceIndex ? text.sentences[sentenceIndex.i] : null,
-            contextWord: sentenceIndex?.v, contextTextId: text.id, createdAt: at,
-          },
-          update: {},
-        });
-        if (graduated) learnedSoFar++;
-      }
-      await db.vocabSnapshot.upsert({
-        where: { userId_day: { userId: user.id, day } },
-        create: { userId: user.id, day, knownCount: s.vocab + learnedSoFar, learningCount: 3 },
-        update: {},
-      });
-    }
-    await db.vocabSnapshot.upsert({
-      where: { userId_day: { userId: user.id, day: startDay } },
-      create: { userId: user.id, day: startDay, knownCount: s.vocab, learningCount: 0 },
-      update: {},
-    });
-  }
-
-  const fluencyTexts = texts.slice(0, 3);
-  for (const s of DEMO_STUDENTS.slice(0, 2)) {
-    const user = await db.user.findUniqueOrThrow({ where: { email: s.email } });
-    for (const [i, text] of fluencyTexts.entries()) {
-      const wpm = s.readingWpm + 15 + i * 12;
-      await db.fluencyRun.create({
-        data: { userId: user.id, textId: text.id, wpm, seconds: Math.round((text.wordCount / wpm) * 60), gistCorrect: true, createdAt: addDays(now, -(6 - i * 2)) },
-      });
-    }
-  }
-
-  const enrolled = await db.enrollment.findMany({ where: { classId: cls.id } });
-  const assignedText = await db.text.findUniqueOrThrow({ where: { slug: "the-new-neighbour" } });
-  await db.assignment.create({
-    data: {
-      classId: cls.id, kind: "TEXT", textId: assignedText.id, note: "Read it before Monday's lesson.", dueAt: addDays(now, -1),
-      recipients: { create: enrolled.map((e) => ({ studentId: e.userId })) },
-    },
-  });
-
-  const jasur = await db.user.findUniqueOrThrow({ where: { email: "jasur@lingify.test" } });
-  for (const [i, slug] of ["the-aral-sea", "how-habits-form"].entries()) {
-    const text = await db.text.findUniqueOrThrow({ where: { slug } });
-    const correct = 8 + i;
-    await db.ieltsAttempt.create({
-      data: {
-        userId: jasur.id, textId: text.id, answers: {}, correct, total: 13, seconds: 1080 + i * 60, band: estimateBand(correct, 13),
-        byType: { tfng: { correct: 3, total: 5 }, headings: { correct: 3, total: 4 }, completion: { correct: correct - 6, total: 4 } },
-        createdAt: addDays(now, -(4 - i * 2)),
+        classId: cls.id,
+        passageId: passage.id,
+        note,
+        dueAt: new Date(now.getTime() + days * 86_400_000),
+        createdAt: new Date(now.getTime() - 5 * 86_400_000),
+        recipients: { create: students.map((s) => ({ studentId: s.id })) },
       },
     });
   }
 
-  await db.assignment.create({
-    data: {
-      classId: cls.id, kind: "GOAL", goalType: "WORDS_WEEK", target: 2000, note: "Read at least 2,000 words this week.",
-      recipients: { create: enrolled.map((e) => ({ studentId: e.userId })) },
-    },
+  // Aisha: made mistakes on headings and NG-vs-False, corrected them all.
+  await demoAttempt(aisha.id, "bilingual-brains", {
+    wrong: [3, 7, 8, 11],
+    fixed: [
+      { n: 3, tag: "LOGIC" },
+      { n: 7, tag: "DISTRACTOR", wrongPlace: true },
+      { n: 8, tag: "DISTRACTOR" },
+      { n: 11, tag: "VOCAB" },
+    ],
   });
+  await demoAttempt(aisha.id, "ulugh-beg-observatory", { wrong: [2, 6, 9], fixed: [{ n: 2, tag: "LOGIC" }, { n: 6, tag: "DISTRACTOR" }] });
+  // Jasur: one question still red after three tries.
+  await demoAttempt(jasur.id, "bilingual-brains", { wrong: [4, 7], fixed: [{ n: 4, tag: "CARELESS" }], stuck: [7] });
+  void malika;
 
-  console.log(`demo: teacher@lingify.test + ${DEMO_STUDENTS.length} students in class DEMO01 (password: ${DEMO_PASSWORD})`);
+  // Some flashcard history for Aisha, so the deck list has learning and due cards.
+  const cards = await db.card.findMany({ where: { deckId }, orderBy: { position: "asc" }, take: 12 });
+  for (const [i, c] of cards.entries()) {
+    const at = new Date(now.getTime() - (6 - (i % 5)) * 86_400_000);
+    await answerCard(aisha.id, c.id, 3, at);
+    if (i % 3 === 0) await answerCard(aisha.id, c.id, 3, new Date(at.getTime() + 600_000));
+  }
+  console.log("demo: teacher@lingify.test, student@lingify.test, jasur@lingify.test, malika@lingify.test");
 }
 
 async function main() {
-  await seedTexts();
-  if (!process.argv.includes("--texts")) await seedDemo();
+  await seedPassages();
+  const deck = await seedDeck();
+  if (!process.argv.includes("--content")) await seedDemo(deck.id);
 }
 
 main()
-  .catch((err) => {
-    console.error(err);
+  .catch((e) => {
+    console.error(e);
     process.exit(1);
   })
   .finally(() => db.$disconnect());

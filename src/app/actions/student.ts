@@ -19,11 +19,6 @@ export async function joinClass(_: FormState, formData: FormData): Promise<FormS
     create: { userId: user.id, classId: cls.id },
     update: {},
   });
-  const goalAssignments = await db.assignment.findMany({ where: { classId: cls.id, kind: "GOAL" }, select: { id: true } });
-  await db.assignmentRecipient.createMany({
-    data: goalAssignments.map((a) => ({ assignmentId: a.id, studentId: user.id })),
-    skipDuplicates: true,
-  });
   refresh();
   return { ok: `You joined ${cls.name}.` };
 }

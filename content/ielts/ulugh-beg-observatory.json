@@ -1,9 +1,5 @@
 {
-  "slug": "ulugh-beg-observatory",
   "title": "Ulugh Beg and the Stars of Samarkand",
-  "summary": "How a fifteenth-century ruler built one of the greatest observatories of the medieval world.",
-  "topics": ["history", "science", "culture"],
-  "level": "B2",
   "timeLimit": 20,
   "paragraphs": [
     "In the early fifteenth century, Samarkand was one of the richest cities in the world. It was the capital of the empire founded by Amir Temur, and its markets, mosques and schools attracted scholars and artists from across Asia. In 1409, Temur's grandson, Mirzo Ulugh Beg, became governor of the city at the age of only fifteen. Unlike most rulers of his time, Ulugh Beg was more interested in science than in war, and he would use his position to turn Samarkand into a leading centre of learning.",
@@ -13,16 +9,45 @@
     "Ulugh Beg's interest in science did not protect him from the politics of his time. After the death of his father, Shah Rukh, in 1447, he became ruler of the whole empire, but his position was weak. Two years later, he was defeated by his own son, Abdullatif, and killed. Without his support, the scientists left Samarkand, and the observatory was gradually destroyed. Its stones were taken for other buildings, and within a few generations its exact location had been forgotten.",
     "The observatory was rediscovered in 1908 by the Russian archaeologist Vasily Vyatkin, who found a document that described its position. Excavations revealed the lower part of the great meridian arc, which had been cut into the rock of the hill and had therefore survived. Today, the site is a museum and one of the most visited places in Samarkand. Ulugh Beg's name is remembered not only in Uzbekistan but also in space: a crater on the moon and a minor planet have been named after him."
   ],
-  "tasks": [
+  "questionGroups": [
     {
       "type": "tfng",
       "instructions": "Do the following statements agree with the information in the passage? Choose TRUE, FALSE or NOT GIVEN.",
-      "items": [
-        { "id": "q1", "statement": "Ulugh Beg became governor of Samarkand when he was a teenager.", "answer": "TRUE", "explanation": "Paragraph A: he became governor at the age of only fifteen." },
-        { "id": "q2", "statement": "Only religious subjects were taught at Ulugh Beg's madrasa.", "answer": "FALSE", "explanation": "Paragraph B: mathematics and astronomy were taught alongside religion and philosophy." },
-        { "id": "q3", "statement": "The astronomers at the observatory used early telescopes.", "answer": "FALSE", "explanation": "Paragraph C: the telescope would not be invented for almost two centuries." },
-        { "id": "q4", "statement": "The Zij-i-Sultani was more accurate than Ptolemy's catalogue.", "answer": "TRUE", "explanation": "Paragraph D: positions were more accurate than any previous catalogue, including Ptolemy's." },
-        { "id": "q5", "statement": "Vyatkin spent more than ten years searching for the observatory.", "answer": "NOT GIVEN", "explanation": "The passage says he found a document, but not how long he searched." }
+      "questions": [
+        {
+          "number": 1,
+          "evidence": "A",
+          "explanation": "Paragraph A: he became governor at the age of only fifteen.",
+          "statement": "Ulugh Beg became governor of Samarkand when he was a teenager.",
+          "answer": "TRUE"
+        },
+        {
+          "number": 2,
+          "evidence": "B",
+          "explanation": "Paragraph B: mathematics and astronomy were taught alongside religion and philosophy.",
+          "statement": "Only religious subjects were taught at Ulugh Beg's madrasa.",
+          "answer": "FALSE"
+        },
+        {
+          "number": 3,
+          "evidence": "C",
+          "explanation": "Paragraph C: the telescope would not be invented for almost two centuries.",
+          "statement": "The astronomers at the observatory used early telescopes.",
+          "answer": "FALSE"
+        },
+        {
+          "number": 4,
+          "evidence": "D",
+          "explanation": "Paragraph D: positions were more accurate than any previous catalogue, including Ptolemy's.",
+          "statement": "The Zij-i-Sultani was more accurate than Ptolemy's catalogue.",
+          "answer": "TRUE"
+        },
+        {
+          "number": 5,
+          "explanation": "The passage says he found a document, but not how long he searched.",
+          "statement": "Vyatkin spent more than ten years searching for the observatory.",
+          "answer": "NOT GIVEN"
+        }
       ]
     },
     {
@@ -37,33 +62,80 @@
         "Ulugh Beg as a poet",
         "Teaching astronomy in Europe"
       ],
-      "items": [
-        { "id": "q6", "paragraph": 1, "answer": 0, "explanation": "Paragraph B describes the madrasa and the scientists Ulugh Beg invited." },
-        { "id": "q7", "paragraph": 2, "answer": 1, "explanation": "Paragraph C describes the meridian arc, the largest instrument of its kind." },
-        { "id": "q8", "paragraph": 3, "answer": 3, "explanation": "Paragraph D is about the star catalogue and its accuracy." },
-        { "id": "q9", "paragraph": 4, "answer": 4, "explanation": "Paragraph E describes Ulugh Beg's death and the destruction of the observatory." }
+      "questions": [
+        {
+          "number": 6,
+          "evidence": "B",
+          "explanation": "Paragraph B describes the madrasa and the scientists Ulugh Beg invited.",
+          "paragraph": "B",
+          "answer": "i"
+        },
+        {
+          "number": 7,
+          "evidence": "C",
+          "explanation": "Paragraph C describes the meridian arc, the largest instrument of its kind.",
+          "paragraph": "C",
+          "answer": "ii"
+        },
+        {
+          "number": 8,
+          "evidence": "D",
+          "explanation": "Paragraph D is about the star catalogue and its accuracy.",
+          "paragraph": "D",
+          "answer": "iv"
+        },
+        {
+          "number": 9,
+          "evidence": "E",
+          "explanation": "Paragraph E describes Ulugh Beg's death and the destruction of the observatory.",
+          "paragraph": "E",
+          "answer": "v"
+        }
       ]
     },
     {
       "type": "completion",
       "instructions": "Complete the sentences below. Choose NO MORE THAN TWO WORDS from the passage for each answer.",
       "maxWords": 2,
-      "items": [
-        { "id": "q10", "before": "The main instrument of the observatory was a curved structure called a", "after": ".", "answers": ["meridian arc"], "explanation": "Paragraph C: “known as a meridian arc”." },
-        { "id": "q11", "before": "The star catalogue was later translated into", "after": "for European scientists.", "answers": ["latin"], "explanation": "Paragraph D: the catalogue was later translated into Latin." },
-        { "id": "q12", "before": "Ulugh Beg was defeated and killed by his", "after": ", Abdullatif.", "answers": ["own son", "son"], "explanation": "Paragraph E: he was defeated by his own son, Abdullatif." },
-        { "id": "q13", "before": "Part of the arc survived because it had been cut into the", "after": "of the hill.", "answers": ["rock"], "explanation": "Paragraph F: it had been cut into the rock of the hill." }
+      "questions": [
+        {
+          "number": 10,
+          "evidence": "C",
+          "explanation": "Paragraph C: “known as a meridian arc”.",
+          "text": "The main instrument of the observatory was a curved structure called a ___ .",
+          "answers": [
+            "meridian arc"
+          ]
+        },
+        {
+          "number": 11,
+          "evidence": "D",
+          "explanation": "Paragraph D: the catalogue was later translated into Latin.",
+          "text": "The star catalogue was later translated into ___ for European scientists.",
+          "answers": [
+            "latin"
+          ]
+        },
+        {
+          "number": 12,
+          "evidence": "E",
+          "explanation": "Paragraph E: he was defeated by his own son, Abdullatif.",
+          "text": "Ulugh Beg was defeated and killed by his ___ , Abdullatif.",
+          "answers": [
+            "own son",
+            "son"
+          ]
+        },
+        {
+          "number": 13,
+          "evidence": "F",
+          "explanation": "Paragraph F: it had been cut into the rock of the hill.",
+          "text": "Part of the arc survived because it had been cut into the ___ of the hill.",
+          "answers": [
+            "rock"
+          ]
+        }
       ]
     }
-  ],
-  "phrases": [
-    { "phrase": "be interested in", "inText": "interested in", "meaning": "want to know or learn about", "uz": "...ga qiziqmoq" },
-    { "phrase": "a centre of learning", "inText": "centre of learning", "meaning": "a place where people study and do research", "uz": "ilm markazi" },
-    { "phrase": "take part in", "inText": "took part in", "meaning": "join an activity", "uz": "...da ishtirok etmoq" },
-    { "phrase": "with remarkable accuracy", "inText": "with remarkable accuracy", "meaning": "very exactly", "uz": "hayratlanarli aniqlik bilan" },
-    { "phrase": "differ from", "inText": "differs from", "meaning": "be different from", "uz": "...dan farq qilmoq" },
-    { "phrase": "within a few generations", "inText": "within a few generations", "meaning": "in less than the time of a few lifetimes", "uz": "bir necha avlod ichida" },
-    { "phrase": "be named after", "inText": "named after", "meaning": "get the name of a person to honour them", "uz": "...ning nomi bilan atalmoq" },
-    { "phrase": "at the age of", "inText": "at the age of", "meaning": "when someone was a certain age", "uz": "... yoshida" }
   ]
 }

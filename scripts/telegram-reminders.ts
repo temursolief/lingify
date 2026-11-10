@@ -1,24 +1,35 @@
 /**
  * Sends Telegram reminders. Run it from a scheduler (cron) in the evening:
- *   npm run telegram:remind            students whose daily plan is not finished yet
+ *   npm run telegram:remind            students with flashcards due or an unfinished passage from their teacher
  *   npm run telegram:remind -- --weekly  also a 7-day summary to every teacher
  *   npm run telegram:remind -- --dry-run print every student's reminder instead of sending
  */
 import "dotenv/config";
-import { dailyPlan, planHistory } from "../src/lib/daily-plan";
 import { db } from "../src/lib/db";
-import { flagsFor } from "../src/lib/flags";
+import { dueToday } from "../src/lib/decks";
+import { STUCK_TRIES } from "../src/lib/insights";
 import { sendMessage, studentReminder, teacherSummary, telegramConfigured } from "../src/lib/telegram";
-import { addDays, dayOf } from "../src/lib/time";
+
+async function reminderFor(userId: string) {
+  const [due, open] = await Promise.all([
+    dueToday(userId),
+    db.assignmentRecipient.findMany({ where: { studentId: userId, completedAt: null }, include: { assignment: { include: { passage: { select: { title: true } } } } } }),
+  ]);
+  const now = new Date();
+  const tasks = [
+    ...(due ? [`Review ${due} flashcard${due === 1 ? "" : "s"}`] : []),
+    ...open.filter((a) => !a.assignment.dueAt || a.assignment.dueAt >= now).map((a) => `Passage: ${a.assignment.passage.title}`),
+  ];
+  const overdue = open.filter((a) => a.assignment.dueAt && a.assignment.dueAt < now).map((a) => a.assignment.passage.title);
+  return { tasks, overdue, needed: tasks.length + overdue.length > 0 };
+}
 
 async function remindStudents() {
-  const students = await db.user.findMany({ where: { role: "STUDENT", telegramChatId: { not: null }, placementDone: true } });
+  const students = await db.user.findMany({ where: { role: "STUDENT", telegramChatId: { not: null } } });
   let sent = 0;
   for (const s of students) {
-    const plan = await dailyPlan(s.id);
-    if (plan.complete) continue;
-    const overdue = plan.assignments.filter((a) => a.overdue).map((a) => a.title);
-    if (await sendMessage(s.telegramChatId!, studentReminder(s.name, plan.tasks, overdue))) sent++;
+    const r = await reminderFor(s.id);
+    if (r.needed && (await sendMessage(s.telegramChatId!, studentReminder(s.name, r.tasks, r.overdue)))) sent++;
   }
   console.log(`student reminders sent: ${sent} of ${students.length} connected`);
 }
@@ -28,21 +39,20 @@ async function summariseForTeachers() {
     where: { role: "TEACHER", telegramChatId: { not: null } },
     include: { classesTaught: { include: { enrollments: { include: { user: { select: { id: true, name: true } } } } } } },
   });
-  const since = addDays(dayOf(new Date()), -6);
+  const since = new Date(Date.now() - 7 * 86_400_000);
   for (const t of teachers) {
     for (const cls of t.classesTaught) {
-      const ids = cls.enrollments.map((e) => e.user.id);
-      if (!ids.length) continue;
-      const history = await planHistory(ids, cls.dailyMinutes, 7);
-      const minutes = await db.activityTime.groupBy({ by: ["userId"], where: { userId: { in: ids }, day: { gte: since } }, _sum: { seconds: true } });
+      if (!cls.enrollments.length) continue;
       const rows = await Promise.all(
-        cls.enrollments.map(async ({ user }) => ({
-          name: user.name,
-          completeDays: (history.byUser.get(user.id) ?? []).filter((d) => d === "complete").length,
-          days: 7,
-          minutes: Math.round((minutes.find((m) => m.userId === user.id)?._sum.seconds ?? 0) / 60),
-          flags: (await flagsFor(user.id)).map((f) => f.label),
-        })),
+        cls.enrollments.map(async ({ user }) => {
+          const [attempts, cards, stuck] = await Promise.all([
+            db.passageAttempt.findMany({ where: { userId: user.id, firstSubmittedAt: { gte: since } }, select: { band: true } }),
+            db.reviewLog.count({ where: { userId: user.id, at: { gte: since } } }),
+            db.questionAnswer.count({ where: { correct: false, tries: { gte: STUCK_TRIES }, attempt: { userId: user.id, completedAt: null } } }),
+          ]);
+          const bands = attempts.map((a) => a.band!).filter((b) => b !== null);
+          return { name: user.name, passages: attempts.length, cards, stuck, band: bands.length ? Math.round((bands.reduce((a, b) => a + b, 0) / bands.length) * 2) / 2 : null };
+        }),
       );
       await sendMessage(t.telegramChatId!, teacherSummary(cls.name, rows));
     }
@@ -51,12 +61,10 @@ async function summariseForTeachers() {
 }
 
 async function dryRun() {
-  const students = await db.user.findMany({ where: { role: "STUDENT", placementDone: true } });
-  for (const s of students) {
-    const plan = await dailyPlan(s.id);
-    const overdue = plan.assignments.filter((a) => a.overdue).map((a) => a.title);
-    console.log(`--- ${s.email}${plan.complete ? " (plan complete, no reminder)" : ""}`);
-    if (!plan.complete) console.log(studentReminder(s.name, plan.tasks, overdue));
+  for (const s of await db.user.findMany({ where: { role: "STUDENT" } })) {
+    const r = await reminderFor(s.id);
+    console.log(`--- ${s.email}${r.needed ? "" : " (nothing to do, no reminder)"}`);
+    if (r.needed) console.log(studentReminder(s.name, r.tasks, r.overdue));
   }
 }
 

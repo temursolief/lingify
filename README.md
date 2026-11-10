@@ -1,48 +1,19 @@
 # Lingify
 
-A reading platform for early-intermediate (low B1) English learners in Uzbekistan and their teachers, building towards
-IELTS Academic. Students read texts matched to the vocabulary they already know, learn words and lexical chunks in
-context (with optional Uzbek translations), review them with spaced repetition, follow a daily plan set by their teacher,
-and practise IELTS reading under timed conditions. Teachers see time spent, daily-plan completion, reading volume,
-vocabulary growth, comprehension and an estimated IELTS band for every student, and can add their own texts.
+IELTS Academic Reading practice for Uzbek students and their teachers. Students work through timed passages, then
+correct their own mistakes. To check a corrected answer they must highlight the sentence in the passage that proves
+it. They also study Anki flashcards, including cards they make in one click from phrases they highlight in a passage.
+Teachers upload their own passages as JSON and assign them. They see which questions the class got wrong on the first
+try, where each student looked, why they say they missed each answer, and who is stuck.
 
-See [TASK.md](TASK.md) for the full specification.
-
-## Interface
-
-Laid out like Telegram Desktop: a list column on the left and the open section on the right, each scrolling on its own.
-Students see six rows, each with one line of status, like the last message in a chat: **Today** (the plan and one
-suggested text), **Read**, **Review** (with a due-count badge), **IELTS**, **Speed reading** and **Progress** (Overview
-and My words). Their name at the bottom opens Settings, where Log out lives. Teachers see one row per class, plus New
-class and My texts; signing in opens their newest class. Interface text uses the system font, so nothing is downloaded
-before the first page shows. Passages use serif fonts already installed on Windows and macOS. Students no longer set
-their own goals; weekly goals come from the teacher.
-
-## Installable app and offline use
-
-Lingify is a progressive web app: Chrome and Edge offer **Install**, which opens it in its own window like a desktop app.
-
-- **Fast start.** A service worker (`public/sw.js`) keeps the built app files, so the app opens without downloading
-  them again. Pages always come from the server, since they are personal.
-- **Offline copy.** While the student is online, the sidebar keeps a copy of their next six texts (teacher assignments
-  first) and the review words due within a day in IndexedDB (`/api/offline/pack`). An ETag means nothing is downloaded
-  when the copy has not changed. The line at the bottom of the sidebar says what is saved.
-- **No connection.** Any page opened without a connection shows `/offline`: Review, plus the saved texts with word
-  meanings and Uzbek translations. Answers, lookups and finished texts are queued and sent to `/api/offline/sync` once
-  the server can be reached again, with a retry every 30 seconds. Graded offline, a review gives the same result as
-  online: both use `src/lib/review-grade.ts`.
-- **Slow connection.** `experimental.useOffline` shows a banner when requests fail and retries them when the connection
-  returns.
-- **Shared laptops.** Log out deletes the offline copy, and a different student signing in replaces the previous
-  student's copy.
-
-The service worker is registered only in production builds (`npm run build && npm start`); in development it is
-removed, so cached files never hide code changes.
+See [TASK.md](TASK.md) for the original specification. The graded-reading library it describes has since been removed
+in favour of IELTS passages only.
 
 ## Stack
 
-Next.js 16 (App Router, Cache Components), React 19, TypeScript, Tailwind CSS 4, Prisma 7 with PostgreSQL, wink-nlp for
-lemmatization, Vitest.
+Next.js 16 (App Router, Cache Components), React 19, TypeScript, Tailwind CSS 4, Prisma 7 with PostgreSQL, Vitest.
+Anki packages are read with Node's built-in `node:sqlite` and `zlib` (zstd) plus `fflate` for the zip. Card meanings
+come from Claude (`@anthropic-ai/sdk`), with a dictionary fallback.
 
 ## Getting started
 
@@ -50,9 +21,9 @@ Requirements: Node 24, PostgreSQL 17.
 
 ```bash
 npm install
-cp .env.example .env        # then set DATABASE_URL and SESSION_SECRET (openssl rand -hex 32)
+cp .env.example .env        # set DATABASE_URL, SESSION_SECRET (openssl rand -hex 32) and ADMIN_EMAILS
 npm run db:migrate          # creates the tables
-npm run db:seed             # loads the 20 graded texts, 6 IELTS passages and demo accounts
+npm run db:seed             # 6 built-in passages, a demo Anki deck and demo accounts
 npm run dev                 # http://localhost:3000
 ```
 
@@ -60,105 +31,144 @@ Demo accounts (local only, password `lingify-demo`):
 
 | Email | Role |
 |---|---|
-| `teacher@lingify.test` | Teacher of class **B1 Morning Group** (join code `DEMO01`) |
-| `student@lingify.test` | Student, ~2,600 known words |
-| `jasur@lingify.test` | Student, ~2,900 known words, very active |
-| `malika@lingify.test` | Student, ~2,200 known words, struggling (triggers teacher alerts) |
+| `teacher@lingify.test` | Teacher of **IELTS Morning Group** (join code `DEMO01`). Admin if listed in `ADMIN_EMAILS` |
+| `student@lingify.test` | Student with two finished passages, all corrected, and some flashcard history |
+| `jasur@lingify.test` | Student stuck on one question after three tries |
+| `malika@lingify.test` | Student who has not started |
 
-`npm run db:seed` deletes and recreates every `@lingify.test` account. Use `npm run db:seed -- --texts` to reload only the library.
+`npm run db:seed` deletes and recreates every `@lingify.test` account. `npm run db:seed -- --content` reloads only the
+passages and the demo deck. The seed also writes `public/samples/demo-deck.apkg`, which you can upload as an admin to try
+the importer.
+
+### Environment
+
+| Variable | Purpose |
+|---|---|
+| `ADMIN_EMAILS` | Comma-separated teacher emails that may upload Anki decks for every student |
+| `ANTHROPIC_API_KEY` | Optional. Claude (`claude-opus-5-5`) writes the meaning and Uzbek translation on highlight-made cards. Without it, the glossary or dictionary is used, which often finds nothing for multi-word chunks |
+| `TELEGRAM_*`, `APP_URL` | Optional Telegram reminders (below) |
+
+## How it works
+
+### Interface
+
+The layout follows Telegram Desktop: a list column on the left and the open section on the right.
+
+- **Students** have three rows: **Passages** (badge: passages from the teacher still to do), **Flashcards** (badge:
+  cards due today) and **Progress**.
+- **Teachers** have one row per class (badge: stuck students), then **My passages**, **Anki decks** (admins only) and
+  **New class**.
+
+System fonts only, so nothing is downloaded before the first page shows.
+
+### Passages: first try, then corrections
+
+- **First try.** It is timed (20 minutes by default, set per passage) and submitted automatically when time runs out.
+  This try alone gives the score and estimated band. The passage and questions sit side by side, with the question
+  numbers in a bar along the bottom.
+- **After submitting.** The passage stays open. Each answer field and its number in the bottom bar turn green (correct)
+  or red (wrong). The correct answer is never shown for a red question, and explanations appear only once the student
+  finds the answer themselves.
+- **Prove it.** To check a red question again, the student chooses a new answer and highlights the sentence in the
+  passage that proves it. Answers already tried are crossed out and cannot be tried again. The highlight stays on the
+  passage, labelled with the question number. A proof can also be added on the first try, but it is optional there.
+- **Root-cause tag.** When a red question turns green on a later try, the student picks why they missed it before it
+  locks:
+  - Vocab / Synonym
+  - Trap / Distractor
+  - Logic / NG vs False
+  - Speed / Careless
+
+  The passage is complete when every question is green and tagged.
+- **Location or comprehension error.** If the passage gives an `evidence` paragraph for a question, Lingify compares the
+  student's proof with it. A proof in another paragraph is a *location error*; a proof in the right paragraph with a
+  wrong answer is a *comprehension error*.
+
+The rules live in `src/lib/passages.ts`. Answers are checked on the server and never sent to the browser
+(`publicGroups` in `src/lib/passage-format.ts`).
+
+### Passage JSON format
+
+Teachers upload one JSON file per passage on **My passages**. The **Format guide** page explains every field and shows a
+complete example, also at `public/samples/passage-example.json`. In short:
+
+```json
+{
+  "title": "The History of Glass",
+  "timeLimit": 20,
+  "paragraphs": ["Paragraph A…", "Paragraph B…"],
+  "questionGroups": [
+    { "type": "tfng", "instructions": "…", "questions": [{ "number": 1, "statement": "…", "answer": "TRUE", "evidence": "A" }] }
+  ]
+}
+```
+
+Question types: `tfng`, `ynng`, `mcq`, `headings`, `matching`, `completion` (gap written as `___`) and `summary` (gaps
+written as `{{number}}`). Uploads are validated by the schema in `src/lib/passage-format.ts`. Errors come back as a
+list, e.g. `questionGroups → 1 → questions → 0 → answer: Answer F is not one of the options`. The six built-in passages
+in `content/ielts/` use the same format.
+
+### Anki flashcards
+
+- **Shared decks.** An admin teacher uploads an `.apkg` exported from Anki desktop on **Anki decks**, and every student
+  gets the deck. Both the old format (`collection.anki2` / `.anki21`) and the current zstd-compressed `collection.anki21b`
+  are read (`src/lib/apkg.ts`).
+- **Card rendering.** Note-type templates are rendered as Anki does: fields, `{{FrontSide}}`, conditional sections, and
+  `text:` and `cloze:` filters with cloze deletions (`src/lib/anki-template.ts`). Images and sounds are stored and
+  served from `/api/media`. Cards show in a sandboxed frame with the deck's own CSS, and scripts are removed.
+- **Studying.** It works like AnkiWeb: a deck list with New / Learn / Due counts, then **Show answer** and Again / Hard /
+  Good / Easy with the next interval above each button. Keys: Space, then 1–4.
+- **Scheduler.** Anki's SM-2 with its default options (steps 1m 10m, graduating 1 day, easy 4 days, 250% starting ease,
+  20 new cards a day), with one change: **no interval exceeds 20 days** (`src/lib/anki.ts`).
+- **Cards from passages.** Highlighting up to 8 words in a passage offers **Make flashcard**:
+  - Front: the whole sentence from the passage with the chunk replaced by `[...]`.
+  - Back: the chunk in its sentence, a short learner definition and, if the student keeps Uzbek on, an Uzbek translation.
+
+  Cards go to the student's own deck, **My IELTS chunks**, and can be undone from the notification.
+
+### Progress and teacher views
+
+- **Student Progress.** The biggest bottleneck (e.g. "57% of your mistakes are trap / distractor in Matching
+  headings"), the tag breakdown, mistakes by question type, location vs comprehension errors, and first-try scores.
+- **Class → Students.** One row per student: passages done, band (last 3), flashcards in 7 days, streak and last active.
+  A **Stuck students** box lists anyone with a question still red after 3 or more tries.
+- **Class → Passages.** For each assigned passage, a heatmap with students against questions:
+  - green: right the first time
+  - amber: corrected (the number is how many tries)
+  - red: still wrong
+
+  Each column header shows the percentage of the class that got that question wrong on the first try, so you can see
+  which question to go through in class. Assigning is done here too, to the whole class or to chosen students, with an
+  optional due date and note.
+- **Class → Mistakes.** The same breakdown as a student's Progress page, for the whole class.
+- **Student page.** Every answer given to each question, the sentence highlighted as proof (with a wrong-paragraph
+  warning), and the reason the student chose.
+
+## Installable app and offline use
+
+Lingify is a progressive web app: Chrome and Edge offer **Install**, which opens it in its own window like a desktop app.
+
+- **Fast start.** A service worker (`public/sw.js`) keeps the built app files and deck media, so the app opens without
+  downloading them again. Pages always come from the server.
+- **Offline copy.** While online, the sidebar keeps a copy in IndexedDB (`/api/offline/pack`, skipped with an ETag when
+  nothing changed):
+  - every deck's cards due within a day, plus today's new cards
+  - up to six passages, teacher assignments first
+- **No connection.** Any page opened without a connection shows `/offline`. Flashcards are studied there with the same
+  scheduler as the server, and answers are queued and sent to `/api/offline/sync`, with a retry every 30 seconds.
+  Passages can be read; their questions need a connection.
+- **Shared laptops.** Log out deletes the offline copy.
+
+The service worker is registered only in production builds (`npm run build && npm start`).
 
 ## Scripts
 
 | Command | What it does |
 |---|---|
-| `npm test` | Unit tests for scheduling, placement scoring, coverage and lemmatization |
+| `npm test` | Unit tests: Anki scheduler, passage format and grading, .apkg import, card templates, dates |
 | `npm run lint` | ESLint |
-| `npm run data:report` | Coverage of each library text for simulated learners who know 2,000 / 2,500 / 3,000 words, plus its rarest words |
-| `npm run telegram:remind` | Sends daily Telegram reminders (`-- --weekly` for teacher summaries, `-- --dry-run` to preview) |
+| `npm run telegram:remind` | Telegram reminders (`-- --weekly` for teacher summaries, `-- --dry-run` to preview) |
 | `npm run telegram:bot` | Telegram bot in long-polling mode, for local development |
-| `npm run data:ranks` | Rebuilds `data/lemma-ranks.json` and `data/lemma-forms.json` from `data/word-frequency.json` |
-
-`data/word-frequency.json` was exported from the Python [wordfreq](https://pypi.org/project/wordfreq/) package with
-`scripts/export-frequency.py`; you only need to rerun that to change the source list.
-
-## How the 95% rule works
-
-1. **Word families.** Every text is tokenized and lemmatized once, at seed time (`src/lib/nlp.ts`). Inflected and derived
-   forms map to their most frequent family member (`relaxed` → `relax`, `drank` → `drink`, `secretly` → `secret`).
-   Names, nationalities and numbers are left out of the count.
-2. **Placement.** A yes/no vocabulary test samples 8 content words from each 1,000-word frequency band, mixed with
-   made-up pseudowords. Saying "yes" to pseudowords lowers the score through the standard guessing correction. Harder
-   bands (7–10) are tested only if the learner still knows half of band 6. The result seeds the student's known words.
-3. **Coverage.** A text's coverage is the share of its running words (not distinct words) the student knows. Below 95% a text
-   is locked; from 98% it is a pleasure read with optional exercises. Teachers can only assign a text to students who are
-   at 95% or above; the rest are listed back to the teacher.
-4. **Growth.** Looking up a word moves it to *learning*. After five correct spaced reviews in a row it becomes *known*, which
-   unlocks more texts. Known words come back for a check-up after 30 days, then at growing intervals up to a year; a
-   failed check-up returns the word to *learning*.
-5. **Incidental learning.** Finishing a text records every new word in it as *seen*. A seen word met 10 times across at
-   least 3 different texts becomes *known* without being studied (`recordReading` in `src/lib/vocab.ts`).
-6. **Multiple contexts.** Each word keeps up to 6 sentences from different texts, and review rotates through them so the
-   student does not just memorise one sentence (`src/lib/contexts.ts`).
-
-## Learning principles in the product
-
-| # | Principle | Where |
-|---|---|---|
-| 1 | Easy, comprehensible input | 95% coverage gate (`src/lib/texts.ts`, `src/lib/recommend.ts`) |
-| 2 | Variety of topics and genres | 20 texts across 6 genres and 20 topics; library filters; genre variety in recommendations |
-| 3 | Learners choose | Free choice in the library; recommendations are suggestions |
-| 4 | Read a lot | Words-read stats, teacher-set weekly word/text/minute goals, streaks |
-| 5 | Reading fluency | Words-per-minute per text and trend chart; skimmed sessions are excluded |
-| 6 | Read for meaning | Comprehension questions ask about meaning, not form |
-| 7 | Individual, silent reading | Self-paced reader |
-| 8 | Reading is its own reward | Pleasure reads make exercises optional; reading itself is never graded |
-| 9 | Teacher guides | Class dashboard, alerts, text and goal assignments, CSV export |
-| 10 | Repeated exposure (8–12 encounters) | Exposure count per word; seen words become known after 10 encounters in 3 texts; recommendations favour texts that recycle learning words |
-| 11 | Spaced repetition | `src/lib/srs.ts` (1, 3, then growing intervals) |
-| 12 | Retrieval practice | Review asks for the missing word, never shows it first |
-| 13 | Learning in context | Review cards rotate through up to 6 sentences where the student met the word |
-| 14 | Immediate feedback | Every answer is checked on the server and explained at once |
-| 15 | Incidental grammar | Grammar points quote a sentence from the text, with one recognition exercise |
-| 16 | Balance of activities | Each text moves through reading → understanding → words → grammar; daily review |
-| 17 | Goals and visible progress | Teacher goals, vocabulary growth curve, time-by-activity charts |
-| 18 | Desirable difficulty | Review switches from multiple choice to typed recall once recent accuracy is above 90% |
-
-## ELT methodology in the lesson flow
-
-Each text is a staged reading lesson, written by hand in `content/lessons/<slug>.json` and merged with the story at seed
-time (`scripts/library.ts` validates that every item matches its text).
-
-| Source | Where |
-|---|---|
-| **CELTA receptive-skills staging** | Before reading: lead-in question, prediction, at most 3 pre-taught words with concept-check questions (CCQs). Gist task shown while reading and asked first afterwards, then the prediction is revealed. Detailed questions with a "look back at the text" panel. Personal response at the end. |
-| **CELTA guided discovery** | Grammar starts with highlighted examples (the first from the text) and a "work it out" question, then the rule, then practice. |
-| **Krashen: input hypothesis** | 95% coverage gate; pleasure reads (98%+) make every stage optional. |
-| **Krashen: affective filter** | Wrong answers shown in amber with "Good try" wording, never red; "Stop reading" at any time with no penalty, and the reason tunes recommendations; text ratings. |
-| **Krashen: natural order** | `src/lib/grammar-sequence.ts` orders 25 B1 structures into 5 stages (articles and dependent prepositions included, because Uzbek has neither); structures two or more stages ahead of the student are offered as an optional preview. |
-| **Schmidt: noticing** | On a re-read, "Notice the grammar" highlights the structures in the text. |
-| **Nation: guessing from context** | Tapping a word first asks the student to guess its meaning from the sentence (3 options from the B1 glossary), then shows a learner-friendly definition (`content/glossary.json`). |
-| **Nation: four strands** | Meaning-focused input (reading), language-focused learning (words, phrases, grammar), fluency development (Speed reading: easy texts against a personal target, with a main-idea check so skimming doesn't count). |
-| **Lewis: Lexical Approach** | 12 chunks per text (collocations, dependent prepositions, phrasal verbs, fixed expressions), each with an Uzbek translation. Clicking any word of a chunk opens the whole chunk first ("get used to", not "used"). After reading, up to 6 chunks are practised (chunks the student clicked come first): meaning, then a collocation gap ("_____ used to"), then saved to review. |
-| **Narrow reading** | 6 topic series; the next part is recommended and shown as "Continue your series". |
-| **DELTA reading sub-skills** | Every question is tagged (gist, detail, inference, reference, vocabulary in context, attitude, organisation). Students and teachers see first-try accuracy per skill; the class page shows the class profile and each student's weakest skill. |
-| **CEFR can-do** | Eleven reading can-do statements (nine B1, plus IELTS band 5.5+ and AWL sublists 1–3), judged from the student's answers, reading range, speed and habits. |
-
-To add a text, write `content/texts/<slug>.json` and `content/lessons/<slug>.json`, add B1 definitions for any rare words
-the seed lists, then run `npm run db:seed -- --texts`.
-
-## Uzbek support
-
-- Word definitions and chunks show a short Uzbek translation (`content/glossary.json`, `phrases[].uz` in the lessons).
-  Students can turn this off in Settings or with the UZ button in the reader, and are encouraged to as they get stronger.
-- Grammar points for structures Uzbek handles differently (articles, dependent prepositions, present perfect) carry an
-  Uzbek note on the typical mistake (`uzNote`).
-
-## Daily plan and deadlines
-
-The student's **Today** page shows only the daily plan and the next text. The plan: 20 reviews (or all that are due), finish one text, and practise for the
-class's daily minutes (20 by default; the teacher changes it on the class page). Below it, the teacher's assignments
-with due dates, overdue ones in red. The class page shows a 14-day grid per student (✓ plan complete, ◐ some practice,
-blank nothing) and how many students are late on each assignment.
 
 ## Telegram reminders
 
@@ -170,46 +180,17 @@ Students and teachers link Telegram in Settings: the app gives a one-time link t
    `curl "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook?url=$APP_URL/api/telegram/webhook&secret_token=$TELEGRAM_WEBHOOK_SECRET"`.
    Local development: run `npm run telegram:bot` (long polling) instead.
 3. Schedule the reminders with cron:
-   - `npm run telegram:remind` every evening: students whose plan is not finished, with what is left and overdue work.
-   - `npm run telegram:remind -- --weekly` once a week: each teacher gets a summary of their classes.
-   - Add `-- --dry-run` to print the messages without sending.
+   - `npm run telegram:remind` every evening: students with flashcards due or an unfinished passage from their teacher.
+   - `npm run telegram:remind -- --weekly` once a week: each teacher gets a summary per class (passages, flashcards,
+     band and stuck students).
 
 The scripts run with `tsx --conditions=react-server` so the app's `server-only` modules load outside Next.js.
 
-## IELTS track
-
-`content/ielts/<slug>.json` holds six Academic Reading passages (about 500 words, shorter than the real 700–900 so B1+ students can
-finish; 13 questions each, 20 minutes) with True / False / Not Given, matching headings, and sentence or summary completion. `npm run db:seed -- --texts`
-validates them (answers must appear in the passage and respect the word limit). On the IELTS page students see:
-
-- an estimated reading band, averaged over their last three passages, from the raw-score-out-of-40 conversion table;
-- their progress through Coxhead's Academic Word List (570 headwords, 10 sublists, `data/awl.json`, from
-  [EAP Foundation](https://www.eapfoundation.com/vocab/academic/awllists/)); UK and US spellings both count;
-- the passages, each with its coverage. After the test, a passage can be studied like any text (word lookups, chunks)
-  once the student knows 90% of its words.
-
-Answers count towards the reading sub-skill profile, and the teacher sees each student's band and attempts.
-
-## Teacher texts
-
-Teachers add their own texts under **My texts** (title, genre, paragraphs, up to 5 multiple-choice questions). The text is
-lemmatized on save, appears only in the libraries of that teacher's students, follows the same 95% rule, and can be
-assigned. The list shows how many students can already read each text.
-
-## Time tracking
-
-Only *active* time counts. The browser adds a second only while the tab is visible and the student interacted recently
-(2 minutes for reading, 1 minute for everything else), and reports it every 15 seconds to `/api/heartbeat`, which caps
-each report at 60 seconds. Time is stored per student, per day, per activity.
-
 ## Known limitations
 
-- Definitions come from the free [Free Dictionary API](https://dictionaryapi.dev) and are cached in the database. Some
-  definitions are written for native speakers, and lookups need internet access the first time.
-- Days and weeks use the server's time zone (override with `APP_TIMEZONE`).
-- The library has 20 graded texts and 6 IELTS passages; TASK.md suggests at least 100 for launch. Teacher texts help
-  fill the gap.
-- Teacher texts have no glossary entries, lesson stages, chunks or grammar points; lookups fall back to the dictionary API.
-- Uzbek translations were written for this project and should be checked by an Uzbek-speaking teacher.
-- Offline, texts have no lesson stages or questions, and pronunciation and full dictionary entries are unavailable.
-  IELTS, speed reading and new texts need a connection.
+- **Bands are estimates.** A passage is a third of the real test, so its score is scaled to 40 before converting.
+- **Anki import.** The scheduling history inside the package is not imported: every student starts the deck fresh.
+  Typing-answer fields (`{{type:…}}`), text-to-speech and LaTeX are not rendered.
+- **Card meanings.** Without `ANTHROPIC_API_KEY`, many highlighted chunks get no meaning on the back.
+- **Offline.** Passage questions and new cards from highlights need a connection.
+- **Uzbek translations** come from Claude or the project glossary and should be checked by an Uzbek-speaking teacher.

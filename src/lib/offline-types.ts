@@ -1,38 +1,35 @@
-import type { GlossaryEntry } from "./glossary";
-import type { GradableState } from "./review-grade";
-import type { ReviewCard } from "./review-queue";
-import type { Mark, Token } from "./texts";
+import type { Schedule } from "./anki";
 
-/** What the laptop keeps so the student can read and review with no internet. */
-export type OfflineText = {
+/** What the laptop keeps so the student can study flashcards and read passages with no internet. */
+
+/** Dates travel as ISO strings in JSON and IndexedDB. */
+export type StoredSchedule = Omit<Schedule, "due"> & { due: string };
+export type OfflineCard = { id: string; front: string; back: string; noteType: string; schedule: StoredSchedule };
+
+export const revive = (s: StoredSchedule): Schedule => ({ ...s, due: new Date(s.due) });
+export const store = (s: Schedule): StoredSchedule => ({ ...s, due: s.due.toISOString() });
+
+export type OfflineDeck = {
   id: string;
-  slug: string;
-  title: string;
-  genre: string;
-  assigned: boolean;
-  paragraphs: Token[][];
-  /** meanings for every word in the text the student does not know yet */
-  glosses: Record<string, GlossaryEntry>;
-  phrases: { phrase: string; meaning: string; uz?: string; marks: Mark[] }[];
-  learning: string[];
+  name: string;
+  css: Record<string, string>;
+  /** due and soon-due cards plus today's new cards */
+  cards: OfflineCard[];
+  newLeft: number;
+  reviewsLeft: number;
 };
 
-export type OfflineCard = ReviewCard & { answer: string; dueAt: string; state: GradableState };
+export type OfflinePassage = { id: string; slug: string; title: string; paragraphs: string[]; assigned: boolean };
 
 export type OfflinePack = {
   userId: string;
   name: string;
-  uzbek: boolean;
   packedAt: string;
-  texts: OfflineText[];
-  review: { mode: "typed" | "choice"; cards: OfflineCard[] };
+  decks: OfflineDeck[];
+  passages: OfflinePassage[];
 };
 
-/** Things done offline, sent to the server when the connection is back. */
-export type OfflineQueue = {
-  reviews: { lemma: string; answer: string; at: string }[];
-  lookups: { textId: string; lemma: string; word: string; sentenceIndex: number; at: string }[];
-  finished: { textId: string; at: string }[];
-};
+/** Flashcard answers given offline, sent to the server when the connection is back. */
+export type OfflineQueue = { reviews: { cardId: string; rating: number; at: string }[] };
 
-export const emptyQueue = (): OfflineQueue => ({ reviews: [], lookups: [], finished: [] });
+export const emptyQueue = (): OfflineQueue => ({ reviews: [] });

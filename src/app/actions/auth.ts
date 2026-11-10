@@ -27,10 +27,10 @@ export async function signup(_: AuthState, formData: FormData): Promise<AuthStat
     return { fieldErrors: { email: "An account with this email already exists." } };
   }
   const user = await db.user.create({
-    data: { name, email, role, passwordHash: await bcrypt.hash(password, 10), placementDone: role === "TEACHER" },
+    data: { name, email, role, passwordHash: await bcrypt.hash(password, 10) },
   });
   await createSession({ userId: user.id, role: user.role, name: user.name });
-  redirect(role === "TEACHER" ? "/teacher" : "/student/placement");
+  redirect(role === "TEACHER" ? "/teacher" : "/student");
 }
 
 const loginSchema = z.object({
