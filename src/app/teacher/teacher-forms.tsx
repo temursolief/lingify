@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useActionState, useState, useTransition } from "react";
+import { deleteLesson, uploadLesson } from "@/app/actions/listening";
 import { assignPassage, createClass, deleteAssignment, deleteDeck, deletePassage, removeStudent, uploadPassage, type FormState } from "@/app/actions/teacher";
 import { Button } from "@/components/ui";
 
@@ -92,8 +93,8 @@ export function AssignPassageForm({
   );
 }
 
-export function UploadPassageForm() {
-  const [state, action, pending] = useActionState(uploadPassage, undefined);
+export function UploadPassageForm({ lesson = false }: { lesson?: boolean }) {
+  const [state, action, pending] = useActionState(lesson ? uploadLesson : uploadPassage, undefined);
   return (
     <form action={action} className="space-y-3">
       <label className="block text-sm">
@@ -102,9 +103,9 @@ export function UploadPassageForm() {
       </label>
       <details className="text-sm">
         <summary className="cursor-pointer text-accent">or paste the JSON</summary>
-        <textarea name="json" rows={8} className={`${inputClass} mt-2 w-full font-mono text-xs`} placeholder='{ "title": "…", "paragraphs": [ … ], "questionGroups": [ … ] }' />
+        <textarea name="json" rows={8} className={`${inputClass} mt-2 w-full font-mono text-xs`} placeholder={lesson ? '{ "title": "…", "video": "https://www.youtube.com/watch?v=…", "questionGroups": [ … ], "vocabulary": [ … ] }' : '{ "title": "…", "paragraphs": [ … ], "questionGroups": [ … ] }'} />
       </details>
-      <Button type="submit" disabled={pending}>{pending ? "Checking…" : "Upload passage"}</Button>
+      <Button type="submit" disabled={pending}>{pending ? "Checking…" : lesson ? "Upload lesson" : "Upload passage"}</Button>
       <Feedback state={state} />
     </form>
   );
@@ -125,6 +126,7 @@ function ConfirmButton({ label, confirmText, onConfirm }: { label: string; confi
 
 export const DeleteAssignmentButton = ({ id }: { id: string }) => <ConfirmButton label="Remove" confirmText="Remove this assignment?" onConfirm={() => deleteAssignment(id)} />;
 export const DeletePassageButton = ({ id }: { id: string }) => <ConfirmButton label="Delete" confirmText="Delete passage and its results?" onConfirm={() => deletePassage(id)} />;
+export const DeleteLessonButton = ({ id }: { id: string }) => <ConfirmButton label="Delete" confirmText="Delete lesson and students' results?" onConfirm={() => deleteLesson(id)} />;
 export const DeleteDeckButton = ({ id }: { id: string }) => <ConfirmButton label="Delete" confirmText="Delete deck for every student?" onConfirm={() => deleteDeck(id)} />;
 export const RemoveStudentButton = ({ classId, studentId, name }: { classId: string; studentId: string; name: string }) => (
   <ConfirmButton label="Remove from class" confirmText={`Remove ${name}?`} onConfirm={() => removeStudent(classId, studentId)} />

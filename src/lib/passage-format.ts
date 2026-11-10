@@ -23,6 +23,16 @@ const base = {
 
 const instructions = z.string().min(1).max(600);
 
+/** An accepted answer. Placeholders from the sample file ("FILL IN", "?") are rejected so they are never uploaded by mistake. */
+const answerText = z
+  .string()
+  .min(1)
+  .max(60)
+  .refine((a) => !/^(\?+|todo|fill in|xxx+|_+)$/i.test(a.trim()), "Replace the placeholder with the real answer");
+const answers = z.array(answerText).min(1);
+/** "NO MORE THAN TWO WORDS AND/OR A NUMBER": a number in the answer does not count towards maxWords. */
+const allowNumber = z.boolean().optional();
+
 export const tfngGroup = z.object({
   type: z.literal("tfng"),
   instructions,
@@ -69,21 +79,68 @@ export const completionGroup = z.object({
   type: z.literal("completion"),
   instructions,
   maxWords: z.number().int().min(1).max(5),
+  allowNumber,
   /** each sentence has one gap written as ___ (three underscores) */
-  questions: z.array(z.object({ ...base, text: z.string().includes("___", { message: "Mark the gap with ___" }), answers: z.array(z.string().min(1).max(60)).min(1) })).min(1),
+  questions: z.array(z.object({ ...base, text: z.string().includes("___", { message: "Mark the gap with ___" }), answers })).min(1),
 });
 
 export const summaryGroup = z.object({
   type: z.literal("summary"),
   instructions,
   maxWords: z.number().int().min(1).max(5),
+  allowNumber,
   title: z.string().max(120).optional(),
   /** the summary, with each gap written as {{number}}, e.g. "Early research was {{12}} because…" */
   text: z.string().min(1).max(3000),
-  questions: z.array(z.object({ ...base, answers: z.array(z.string().min(1).max(60)).min(1) })).min(1),
+  questions: z.array(z.object({ ...base, answers })).min(1),
 });
 
-export const questionGroup = z.discriminatedUnion("type", [tfngGroup, ynngGroup, mcqGroup, headingsGroup, matchingGroup, completionGroup, summaryGroup]);
+/**
+ * Note completion, as in IELTS Listening: one note per line, "## " starts a heading, "* " a bullet point,
+ * and each gap is written as {{number}}.
+ */
+export const notesGroup = z.object({
+  type: z.literal("notes"),
+  instructions,
+  maxWords: z.number().int().min(1).max(5),
+  allowNumber,
+  title: z.string().max(120).optional(),
+  text: z.string().min(1).max(5000),
+  questions: z.array(z.object({ ...base, answers })).min(1),
+});
+
+export const questionGroup = z.discriminatedUnion("type", [tfngGroup, ynngGroup, mcqGroup, headingsGroup, matchingGroup, completionGroup, summaryGroup, notesGroup]);
+
+type AnyGroup = z.output<typeof questionGroup>;
+
+/** Rules shared by reading and listening: unique numbers, valid options, and a gap in the text for every question. */
+export function checkGroups(groups: AnyGroup[], ctx: z.RefinementCtx, lastLetter: string | null) {
+  const seen = new Set<number>();
+  groups.forEach((g, gi) => {
+    g.questions.forEach((q, qi) => {
+      const path = ["questionGroups", gi, "questions", qi];
+      if (seen.has(q.number)) ctx.addIssue({ code: "custom", path: [...path, "number"], message: `Question ${q.number} appears twice` });
+      seen.add(q.number);
+      const letters = [q.evidence, g.type === "headings" ? (q as { paragraph: string }).paragraph : null, g.type === "matching" ? (q as { answer: string }).answer : null];
+      for (const l of letters) {
+        if (!l) continue;
+        if (lastLetter === null) ctx.addIssue({ code: "custom", path, message: "Listening lessons have no paragraphs: remove evidence and paragraph letters" });
+        else if (l > lastLetter) ctx.addIssue({ code: "custom", path, message: `Paragraph ${l} does not exist (the last one is ${lastLetter})` });
+      }
+      if (g.type === "mcq" && (q as { answer: string }).answer.charCodeAt(0) - 65 >= (q as { options: string[] }).options.length) {
+        ctx.addIssue({ code: "custom", path: [...path, "answer"], message: `Answer ${(q as { answer: string }).answer} is not one of the options` });
+      }
+      if (g.type === "headings" && ROMAN.indexOf((q as { answer: string }).answer) >= g.headings.length) {
+        ctx.addIssue({ code: "custom", path: [...path, "answer"], message: `There is no heading ${(q as { answer: string }).answer}` });
+      }
+    });
+    if (g.type === "summary" || g.type === "notes") {
+      for (const q of g.questions) {
+        if (!g.text.includes(`{{${q.number}}}`)) ctx.addIssue({ code: "custom", path: ["questionGroups", gi, "text"], message: `The text has no gap {{${q.number}}}` });
+      }
+    }
+  });
+}
 
 export const passageSchema = z
   .object({
@@ -92,32 +149,17 @@ export const passageSchema = z
     paragraphs: z.array(z.string().min(1).max(4000)).min(1).max(26),
     questionGroups: z.array(questionGroup).min(1),
   })
-  .superRefine((p, ctx) => {
-    const seen = new Set<number>();
-    const lastLetter = paragraphLetter(p.paragraphs.length - 1);
-    p.questionGroups.forEach((g, gi) => {
-      g.questions.forEach((q, qi) => {
-        const path = ["questionGroups", gi, "questions", qi];
-        if (seen.has(q.number)) ctx.addIssue({ code: "custom", path: [...path, "number"], message: `Question ${q.number} appears twice` });
-        seen.add(q.number);
-        const letters = [q.evidence, g.type === "headings" ? (q as { paragraph: string }).paragraph : null, g.type === "matching" ? (q as { answer: string }).answer : null];
-        for (const l of letters) {
-          if (l && l > lastLetter) ctx.addIssue({ code: "custom", path, message: `Paragraph ${l} does not exist (the last one is ${lastLetter})` });
-        }
-        if (g.type === "mcq" && (q as { answer: string }).answer.charCodeAt(0) - 65 >= (q as { options: string[] }).options.length) {
-          ctx.addIssue({ code: "custom", path: [...path, "answer"], message: `Answer ${(q as { answer: string }).answer} is not one of the options` });
-        }
-        if (g.type === "headings" && ROMAN.indexOf((q as { answer: string }).answer) >= g.headings.length) {
-          ctx.addIssue({ code: "custom", path: [...path, "answer"], message: `There is no heading ${(q as { answer: string }).answer}` });
-        }
-      });
-      if (g.type === "summary") {
-        for (const q of g.questions) {
-          if (!g.text.includes(`{{${q.number}}}`)) ctx.addIssue({ code: "custom", path: ["questionGroups", gi, "text"], message: `The summary has no gap {{${q.number}}}` });
-        }
-      }
-    });
-  });
+  .superRefine((p, ctx) => checkGroups(p.questionGroups, ctx, paragraphLetter(p.paragraphs.length - 1)));
+
+/** The YouTube video id from a watch, share, embed or shorts link, or a bare id. */
+export function youtubeId(input: string): string | null {
+  const s = input.trim();
+  if (/^[\w-]{11}$/.test(s)) return s;
+  const m = s.match(/(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/);
+  return m ? m[1] : null;
+}
+
+
 
 export type PassageInput = z.input<typeof passageSchema>;
 export type PassageData = z.output<typeof passageSchema>;
@@ -135,6 +177,7 @@ export const GROUP_LABEL: Record<GroupType, string> = {
   matching: "Matching information",
   completion: "Sentence completion",
   summary: "Summary completion",
+  notes: "Note completion",
 };
 
 /** Readable error lines for the upload form, e.g. "questionGroups → 2 → questions → 1 → answer: …". */
@@ -142,16 +185,18 @@ export function formatIssues(error: z.ZodError) {
   return error.issues.slice(0, 12).map((i) => `${i.path.length ? i.path.join(" → ") + ": " : ""}${i.message}`);
 }
 
-export function parsePassageJson(raw: string): { ok: true; data: PassageData } | { ok: false; errors: string[] } {
+export function parseJson<T>(raw: string, schema: z.ZodType<T>): { ok: true; data: T } | { ok: false; errors: string[] } {
   let json: unknown;
   try {
     json = JSON.parse(raw);
   } catch (e) {
     return { ok: false, errors: [`This is not valid JSON: ${(e as Error).message}`] };
   }
-  const parsed = passageSchema.safeParse(json);
+  const parsed = schema.safeParse(json);
   return parsed.success ? { ok: true, data: parsed.data } : { ok: false, errors: formatIssues(parsed.error) };
 }
+
+export const parsePassageJson = (raw: string) => parseJson(raw, passageSchema);
 
 /* ---------------- what the browser may see ---------------- */
 
@@ -168,8 +213,8 @@ export type PublicGroup =
   | { type: "tfng" | "ynng" | "matching"; instructions: string; questions: { number: number; statement: string }[] }
   | { type: "mcq"; instructions: string; questions: { number: number; question: string; options: string[] }[] }
   | { type: "headings"; instructions: string; headings: string[]; questions: { number: number; paragraph: string }[] }
-  | { type: "completion"; instructions: string; maxWords: number; questions: { number: number; text: string }[] }
-  | { type: "summary"; instructions: string; maxWords: number; title?: string; text: string; questions: { number: number }[] };
+  | { type: "completion"; instructions: string; maxWords: number; allowNumber?: boolean; questions: { number: number; text: string }[] }
+  | { type: "summary" | "notes"; instructions: string; maxWords: number; allowNumber?: boolean; title?: string; text: string; questions: { number: number }[] };
 
 /* ---------------- grading ---------------- */
 
@@ -200,14 +245,14 @@ export function answerKey(groups: QuestionGroup[]): QuestionKey[] {
           return { ...common, check: (given) => given.trim().toUpperCase() === expected.toUpperCase() };
         }
         case "completion":
-        case "summary": {
-          const answers = (q as { answers: string[] }).answers.map(normalizeAnswer);
+        case "summary":
+        case "notes": {
+          const accepted = (q as { answers: string[] }).answers.map(normalizeAnswer);
           return {
             ...common,
             check: (given) => {
               const n = normalizeAnswer(given);
-              const words = n.split(" ").filter(Boolean).length;
-              return words > 0 && words <= g.maxWords && answers.includes(n);
+              return withinLimit(n, g.maxWords, !!g.allowNumber) && accepted.includes(n);
             },
           };
         }
@@ -216,15 +261,25 @@ export function answerKey(groups: QuestionGroup[]): QuestionKey[] {
   );
 }
 
-/** Raw score out of 40 → band, following the published IELTS Academic Reading conversion. */
-const BAND_TABLE: [number, number][] = [
-  [39, 9], [37, 8.5], [35, 8], [33, 7.5], [30, 7], [27, 6.5], [23, 6], [19, 5.5], [15, 5], [13, 4.5], [10, 4], [8, 3.5], [6, 3], [4, 2.5], [0, 2],
-];
+/** Word limit for gap answers; with allowNumber, one number ("1878", "1.5 million") does not count as a word. */
+export function withinLimit(normalized: string, maxWords: number, allowNumber: boolean) {
+  const tokens = normalized.split(" ").filter(Boolean);
+  if (!tokens.length) return false;
+  const isNumber = (t: string) => /^[\d.,%]+$/.test(t) || ["million", "thousand", "hundred", "billion"].includes(t);
+  const numbers = tokens.filter(isNumber).length;
+  return allowNumber && numbers ? tokens.length - numbers <= maxWords : tokens.length <= maxWords;
+}
 
-/** One passage is a third of a real test, so its score is scaled to 40 before converting: an estimate, not a real band. */
-export function estimateBand(correct: number, total: number) {
+/** Raw score out of 40 → band, following the published IELTS Academic Reading and Listening conversions. */
+const BAND_TABLE: Record<"reading" | "listening", [number, number][]> = {
+  reading: [[39, 9], [37, 8.5], [35, 8], [33, 7.5], [30, 7], [27, 6.5], [23, 6], [19, 5.5], [15, 5], [13, 4.5], [10, 4], [8, 3.5], [6, 3], [4, 2.5], [0, 2]],
+  listening: [[39, 9], [37, 8.5], [35, 8], [32, 7.5], [30, 7], [26, 6.5], [23, 6], [18, 5.5], [16, 5], [13, 4.5], [10, 4], [8, 3.5], [6, 3], [4, 2.5], [0, 2]],
+};
+
+/** One passage or lesson is part of a real test, so its score is scaled to 40 before converting: an estimate, not a real band. */
+export function estimateBand(correct: number, total: number, kind: "reading" | "listening" = "reading") {
   const raw = total ? Math.round((correct / total) * 40) : 0;
-  return BAND_TABLE.find(([min]) => raw >= min)![1];
+  return BAND_TABLE[kind].find(([min]) => raw >= min)![1];
 }
 
 /* ---------------- the example on the Format guide ---------------- */

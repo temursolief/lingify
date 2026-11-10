@@ -15,7 +15,7 @@ async function TeacherNav() {
     db.user.findUnique({ where: { id: session.userId }, select: { email: true } }),
     db.class.findMany({ where: { teacherId: session.userId }, include: { _count: { select: { enrollments: true } } }, orderBy: { createdAt: "desc" } }),
   ]);
-  const [active, stuck, passages, decks] = await Promise.all([
+  const [active, stuck, passages, decks, lessons] = await Promise.all([
     activeStudentCounts(classes.map((c) => c.id)),
     Promise.all(
       classes.map((c) =>
@@ -30,6 +30,7 @@ async function TeacherNav() {
     ),
     db.passage.count({ where: { ownerId: session.userId } }),
     db.deck.count({ where: { ownerId: null } }),
+    db.listeningLesson.count(),
   ]);
   const admin = !!user && isAdmin(user.email);
   return (
@@ -44,6 +45,7 @@ async function TeacherNav() {
             : `${c._count.enrollments} student${c._count.enrollments === 1 ? "" : "s"} · ${active[i]} active this week`,
         })),
         { href: "/teacher/passages", label: "My passages", subtitle: passages ? `${passages} uploaded` : "Upload passages as JSON" },
+        ...(admin ? [{ href: "/teacher/listening", label: "Listening", subtitle: lessons ? `${lessons} video lesson${lessons === 1 ? "" : "s"}` : "Upload video lessons as JSON" }] : []),
         ...(admin ? [{ href: "/teacher/decks", label: "Anki decks", subtitle: decks ? `${decks} deck${decks === 1 ? "" : "s"} for all students` : "Upload an .apkg for everyone" }] : []),
         { href: "/teacher/new", label: "New class", subtitle: classes.length ? "Create a class and get its code" : "Start here" },
       ]}

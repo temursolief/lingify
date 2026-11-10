@@ -1,0 +1,177 @@
+{
+  "title": "Ugly History: The Armenian Genocide (Ümit Kurt, TED-Ed)",
+  "video": "https://www.youtube.com/watch?v=DXgrI8GlUB8",
+  "questionGroups": [
+    {
+      "type": "notes",
+      "instructions": "Listen the first time. Complete the notes below. Write NO MORE THAN TWO WORDS AND/OR A NUMBER for each answer.",
+      "maxWords": 2,
+      "allowNumber": true,
+      "title": "Armenians in the Ottoman Empire",
+      "text": "## Before 1900\n* In 1878, Armenian activists agreed a {{11}} that promised changes, but the sultan did not keep his word.\n* The massacres of 1894-1896 came after centuries of Armenian {{12}}.\n## Early history\n* Over the following {{13}} years, Armenia was ruled by different local and foreign leaders.\n* The empire treated Muslims better, which made life hard for Armenians, Jews and {{14}}.\n## Resistance and war\n* Two groups from Russia gave a safe place to {{15}} and supplied weapons to villages.\n* During the First Balkan War, newcomers sent to Anatolia increased {{16}} between Christians and Muslims.\n## The genocide\n* By {{17}}, the Ottomans were using more violence against their own Armenian citizens than against any foreign enemy.\n* Most Armenians were forced to walk to camps in the Syrian {{18}}.\n* When most of the killings ended, the Armenian population of the empire had fallen to roughly {{19}}.\n## Today\n* In recent years, some Turkish {{20}} have rejected the government’s official position.",
+      "questions": [
+        {
+          "number": 11,
+          "answers": [
+            "FILL IN"
+          ]
+        },
+        {
+          "number": 12,
+          "answers": [
+            "FILL IN"
+          ]
+        },
+        {
+          "number": 13,
+          "answers": [
+            "FILL IN"
+          ]
+        },
+        {
+          "number": 14,
+          "answers": [
+            "FILL IN"
+          ]
+        },
+        {
+          "number": 15,
+          "answers": [
+            "FILL IN"
+          ]
+        },
+        {
+          "number": 16,
+          "answers": [
+            "FILL IN"
+          ]
+        },
+        {
+          "number": 17,
+          "answers": [
+            "FILL IN"
+          ]
+        },
+        {
+          "number": 18,
+          "answers": [
+            "FILL IN"
+          ]
+        },
+        {
+          "number": 19,
+          "answers": [
+            "FILL IN"
+          ]
+        },
+        {
+          "number": 20,
+          "answers": [
+            "FILL IN"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "completion",
+      "instructions": "Listen the second time. Complete the sentences below. Write NO MORE THAN TWO WORDS AND/OR A NUMBER for each answer.",
+      "maxWords": 2,
+      "allowNumber": true,
+      "questions": [
+        {
+          "number": 31,
+          "text": "The Hamidian Massacres killed more than ___ Armenians.",
+          "answers": [
+            "FILL IN"
+          ]
+        },
+        {
+          "number": 32,
+          "text": "The Armenians were originally a group of tribes living in the ___ of Western Asia.",
+          "answers": [
+            "FILL IN"
+          ]
+        },
+        {
+          "number": 33,
+          "text": "Christianity became an important part of the Armenians’ ethnic ___.",
+          "answers": [
+            "FILL IN"
+          ]
+        },
+        {
+          "number": 34,
+          "text": "The growing influence of educated Armenians in banking and government caused ___ among many Muslim Ottomans.",
+          "answers": [
+            "FILL IN"
+          ]
+        },
+        {
+          "number": 35,
+          "text": "After the sultan was removed in 1909, the new government also failed to pass meaningful ___.",
+          "answers": [
+            "FILL IN"
+          ]
+        },
+        {
+          "number": 36,
+          "text": "When Enver Pasha sent his troops on a difficult route to attack Russian forces, the whole unit ___ to death.",
+          "answers": [
+            "FILL IN"
+          ]
+        },
+        {
+          "number": 37,
+          "text": "Talaat Pasha ordered the removal of all Armenians from eastern Anatolia, saying it was necessary for ___.",
+          "answers": [
+            "FILL IN"
+          ]
+        },
+        {
+          "number": 38,
+          "text": "Armenian children who escaped were placed in ___, where they were taught Muslim culture and traditions.",
+          "answers": [
+            "FILL IN"
+          ]
+        },
+        {
+          "number": 39,
+          "text": "The modern nation of Armenia became independent in ___.",
+          "answers": [
+            "FILL IN"
+          ]
+        },
+        {
+          "number": 40,
+          "text": "Armenian organisations continue to campaign for the ___ of the genocide.",
+          "answers": [
+            "FILL IN"
+          ]
+        }
+      ]
+    }
+  ],
+  "vocabulary": [
+    {
+      "word": "massacre",
+      "meaning": "the killing of a large number of people who cannot defend themselves",
+      "example": "The massacres of 1894-1896 came after centuries of Armenian persecution."
+    },
+    {
+      "word": "persecution",
+      "meaning": "cruel and unfair treatment of a group, especially because of their religion or race"
+    },
+    {
+      "word": "deport",
+      "meaning": "to force someone to leave a place or country"
+    },
+    {
+      "word": "uprising",
+      "meaning": "an occasion when a group of people fight against the people in power"
+    },
+    {
+      "word": "deny",
+      "meaning": "to say that something is not true or did not happen"
+    }
+  ]
+}

@@ -53,6 +53,8 @@ model User {
   ownPassages   Passage[]             @relation("TeacherPassages")
   attempts      PassageAttempt[]
   decks         Deck[]                @relation("DeckOwner")
+  lessons       ListeningLesson[]     @relation("LessonOwner")
+  listenings    ListeningAttempt[]
   cardStates    CardState[]
   reviewLogs    ReviewLog[]
 }
@@ -158,6 +160,43 @@ model QuestionAnswer {
   attempt      PassageAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
 
   @@id([attemptId, number])
+}
+
+/// A Listening Comprehension lesson: a YouTube video (e.g. TED-Ed), IELTS Listening questions and key vocabulary,
+/// all from one JSON file uploaded by a teacher. Kept as one row so a lesson page is a single read.
+model ListeningLesson {
+  id         String             @id @default(cuid())
+  slug       String             @unique
+  title      String
+  videoId    String
+  /// QuestionGroup[] (src/lib/listening-format.ts); answers never leave the server
+  questions  Json
+  /// { word, meaning, uz?, example? }[]
+  vocabulary Json               @default("[]")
+  total      Int
+  ownerId    String?
+  owner      User?              @relation("LessonOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  createdAt  DateTime           @default(now())
+  attempts   ListeningAttempt[]
+}
+
+/// One student working on one lesson. Every question's state lives in one JSON column, so checking an answer
+/// reads and writes a single row.
+model ListeningAttempt {
+  id               String          @id @default(cuid())
+  userId           String
+  lessonId         String
+  startedAt        DateTime        @default(now())
+  firstSubmittedAt DateTime?
+  firstCorrect     Int?
+  band             Float?
+  completedAt      DateTime?
+  /// { [number]: { answer, correct, firstCorrect, tries, wrong: string[] } }
+  answers          Json            @default("{}")
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson           ListeningLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@index([userId, lessonId])
 }
 
 /// An Anki deck: imported from .apkg by an admin teacher (ownerId null, shared with every student) or a student's own deck.

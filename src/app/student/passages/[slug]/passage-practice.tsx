@@ -8,6 +8,7 @@ import { ActivityTracker } from "@/components/activity-tracker";
 import { Button, cx } from "@/components/ui";
 import { GROUP_LABEL, paragraphLetter, ROMAN, type PublicGroup } from "@/lib/passage-format";
 import type { AttemptView, Evidence, QuestionState } from "@/lib/passages";
+import { NotesText } from "@/components/notes-text";
 
 type Passage = { id: string; title: string; timeLimit: number; paragraphs: string[] };
 type Tag = "VOCAB" | "DISTRACTOR" | "LOGIC" | "CARELESS";
@@ -391,7 +392,9 @@ function Group({
   const locked = (n: number) => submitted && !!stateOf.get(n)?.correct;
   const tried = (n: number) => new Set((stateOf.get(n)?.wrongAnswers ?? []).map((a) => a.toUpperCase()));
 
-  const Options = ({ n, options }: { n: number; options: { value: string; label: string }[] }) => {
+  // Plain render functions, not components: a component defined in here would be a new type on every render,
+  // so React would remount the input and the student would lose focus after each letter.
+  const renderOptions = (n: number, options: { value: string; label: string }[]) => {
     const s = stateOf.get(n);
     const current = answers[n] ?? "";
     return (
@@ -428,7 +431,7 @@ function Group({
     );
   };
 
-  const Gap = ({ n }: { n: number }) => {
+  const renderGap = (n: number) => {
     const s = stateOf.get(n);
     return (
       <input
@@ -453,7 +456,7 @@ function Group({
           {g.questions.map((q) => (
             <li key={q.number} id={`q${q.number}`} onClick={() => onFocus(q.number)}>
               <p><b>{q.number}</b> {q.statement}</p>
-              <Options n={q.number} options={opts} />
+              {renderOptions(q.number, opts)}
               {renderFooter(q.number)}
             </li>
           ))}
@@ -466,7 +469,7 @@ function Group({
           {g.questions.map((q) => (
             <li key={q.number} id={`q${q.number}`} onClick={() => onFocus(q.number)}>
               <p><b>{q.number}</b> {q.question}</p>
-              <Options n={q.number} options={q.options.map((o, i) => ({ value: paragraphLetter(i), label: `${paragraphLetter(i)}  ${o}` }))} />
+              {renderOptions(q.number, q.options.map((o, i) => ({ value: paragraphLetter(i), label: `${paragraphLetter(i)}  ${o}` })))}
               {renderFooter(q.number)}
             </li>
           ))}
@@ -478,7 +481,7 @@ function Group({
           {g.questions.map((q) => (
             <li key={q.number} id={`q${q.number}`} onClick={() => onFocus(q.number)}>
               <p><b>{q.number}</b> {q.statement}</p>
-              <Options n={q.number} options={Array.from({ length: 26 }, (_, i) => paragraphLetter(i)).slice(0, paragraphCount).map((l) => ({ value: l, label: l }))} />
+              {renderOptions(q.number, Array.from({ length: 26 }, (_, i) => paragraphLetter(i)).slice(0, paragraphCount).map((l) => ({ value: l, label: l })))}
               {renderFooter(q.number)}
             </li>
           ))}
@@ -494,7 +497,7 @@ function Group({
             {g.questions.map((q) => (
               <li key={q.number} id={`q${q.number}`} onClick={() => onFocus(q.number)}>
                 <p><b>{q.number}</b> Paragraph {q.paragraph}</p>
-                <Options n={q.number} options={g.headings.map((_, i) => ({ value: ROMAN[i], label: ROMAN[i] }))} />
+                {renderOptions(q.number, g.headings.map((_, i) => ({ value: ROMAN[i], label: ROMAN[i] })))}
                 {renderFooter(q.number)}
               </li>
             ))}
@@ -508,12 +511,26 @@ function Group({
             const [before, after] = q.text.split("___");
             return (
               <li key={q.number} id={`q${q.number}`}>
-                <p className="leading-loose"><b>{q.number}</b> {before}<Gap n={q.number} />{after}</p>
+                <p className="leading-loose"><b>{q.number}</b> {before}{renderGap(q.number)}{after}</p>
                 {renderFooter(q.number)}
               </li>
             );
           })}
         </ol>
+      );
+    case "notes":
+      return (
+        <div>
+          <NotesText title={g.title} text={g.text} gap={(n) => <span id={`q${n}`}><b className="text-sm">{n}</b>{renderGap(n)}</span>} />
+          <div className="mt-2 space-y-3">
+            {g.questions.map((q) => (
+              <div key={q.number} onClick={() => onFocus(q.number)}>
+                {stateOf.has(q.number) && <p className="text-sm font-semibold">Question {q.number}</p>}
+                {renderFooter(q.number)}
+              </div>
+            ))}
+          </div>
+        </div>
       );
     case "summary":
       return (
@@ -524,7 +541,7 @@ function Group({
               const m = part.match(/^\{\{(\d+)\}\}$/);
               if (!m) return <span key={i}>{part}</span>;
               const n = Number(m[1]);
-              return <span key={i} id={`q${n}`}><b className="text-sm">({n})</b><Gap n={n} /></span>;
+              return <span key={i} id={`q${n}`}><b className="text-sm">({n})</b>{renderGap(n)}</span>;
             })}
           </div>
           <div className="mt-2 space-y-3">

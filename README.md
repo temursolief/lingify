@@ -54,10 +54,10 @@ the importer.
 
 The layout follows Telegram Desktop: a list column on the left and the open section on the right.
 
-- **Students** have three rows: **Passages** (badge: passages from the teacher still to do), **Flashcards** (badge:
-  cards due today) and **Progress**.
-- **Teachers** have one row per class (badge: stuck students), then **My passages**, **Anki decks** (admins only) and
-  **New class**.
+- **Students** have four rows: **Passages** (badge: passages from the teacher still to do), **Listening**,
+  **Flashcards** (badge: cards due today) and **Progress**.
+- **Teachers** have one row per class (badge: stuck students), then **My passages**, **Listening** and **Anki decks**
+  (admins only) and **New class**.
 
 System fonts only, so nothing is downloaded before the first page shows.
 
@@ -107,6 +107,37 @@ Question types: `tfng`, `ynng`, `mcq`, `headings`, `matching`, `completion` (gap
 written as `{{number}}`). Uploads are validated by the schema in `src/lib/passage-format.ts`. Errors come back as a
 list, e.g. `questionGroups → 1 → questions → 0 → answer: Answer F is not one of the options`. The six built-in passages
 in `content/ielts/` use the same format.
+
+### Listening Comprehension
+
+A separate library of video lessons, e.g. TED-Ed. Admin teachers upload one JSON file per lesson on **Listening**
+(format guide and a TED-Ed example at `public/samples/listening-example.json`). The file holds three things:
+
+- the YouTube link
+- the IELTS Listening questions with their answers: note completion (`notes`: `## ` headings, `* ` bullets, gaps
+  `{{11}}`), sentence completion, summary, multiple choice and T/F/NG. `"allowNumber": true` implements "NO MORE THAN
+  TWO WORDS AND/OR A NUMBER".
+- optional key vocabulary (`word`, `meaning`, `uz`, `example`)
+
+The upload refuses the example until every "FILL IN" placeholder answer is replaced.
+
+Each file becomes a lesson page:
+
+- **Layout.** The video and its key words on the left, the questions on the right, question numbers along the bottom.
+- **First submission.** It gives the score and an estimated listening band (IELTS Listening conversion table).
+- **Corrections.** Wrong answers turn red and are never corrected for the student: they replay the video and try a new
+  answer. Answers already tried are refused.
+- **Key words.** **Add to my flashcards** puts the key words into the student's own deck, with the word blanked out in
+  its example sentence.
+
+**Keeping it light:**
+
+- A lesson is one row (`ListeningLesson`: questions and vocabulary as JSON), and a student's attempt is one row
+  (`ListeningAttempt`: every question's state in one JSON column). Opening a lesson reads two rows, and checking an
+  answer reads and writes one.
+- The video shows as a ~20 KB thumbnail. The YouTube player (about 1 MB) loads from youtube-nocookie.com only when the
+  student presses play, and only on that page.
+- Answers stay on the server. Listening needs a connection, so it is not part of the offline copy.
 
 ### Anki flashcards
 

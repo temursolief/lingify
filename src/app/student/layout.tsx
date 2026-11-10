@@ -26,6 +26,7 @@ async function StudentNav() {
           badge: assigned,
           subtitle: assigned ? `${assigned} from your teacher to do` : summary.band ? `Estimated band ${summary.band}` : "IELTS Academic Reading",
         },
+        { href: "/student/listening", label: "Listening", subtitle: "Video lessons with questions" },
         { href: "/student/flashcards", label: "Flashcards", badge: due, subtitle: due ? `${due} card${due === 1 ? "" : "s"} due today` : "Anki decks and your own cards" },
         { href: "/student/progress", label: "Progress", subtitle: summary.passagesStarted ? `${summary.passagesStarted} passage${summary.passagesStarted === 1 ? "" : "s"} · see your mistakes` : "Your mistakes, explained" },
       ]}
