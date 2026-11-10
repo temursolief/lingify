@@ -198,23 +198,80 @@ The service worker is registered only in production builds (`npm run build && np
 
 ## Deploying
 
-One Node server and one PostgreSQL database are enough for a school (tens of students at once).
+One always-on Node server and one PostgreSQL database are enough for a school (tens of students at once). Everything,
+including deck images and sounds, is stored in the database, so the server keeps no files and a redeploy loses nothing.
+
+Requirements for any host:
+
+- **One always-on Node 24 process**, not serverless functions: login attempts are counted in memory, and an Anki
+  package (up to 200 MB) is uploaded in one request and read in memory. Give it at least 1 GB of RAM.
+- **Exactly one instance.** It is plenty for 40 students; a second copy would not share the login limits.
+- **The database in the same region as the server**, and the region close to the students (for Uzbekistan:
+  Amsterdam, Frankfurt or Helsinki, about 70–100 ms).
+- **HTTPS on your own domain**: the app can be installed and works offline only over HTTPS.
+
+Any host, by hand:
 
 ```bash
 npm ci
 npm run db:deploy           # applies new migrations; never resets data
 npm run build
-npm start                   # PORT=3000 by default; put it behind HTTPS (the app is installable only over HTTPS)
+npm start                   # listens on $PORT (3000 by default)
 ```
 
-- Set `SESSION_SECRET`, `APP_TIMEZONE`, `ADMIN_EMAILS` and `APP_URL` on the server. Do not run `npm run db:seed` there
-  unless you want the demo accounts: use `npm run db:seed -- --content` for the built-in passages only.
+- Set `DATABASE_URL`, `SESSION_SECRET`, `APP_URL`, `APP_TIMEZONE` and `ADMIN_EMAILS` (see [Environment](#environment)).
 - Run `npm run db:deploy` before starting every new version.
-- Run a single server process. Login attempts are counted in memory, per process.
-- Uploads: passage and lesson JSON files go through the teacher pages, many files at a time (400 KB per passage,
-  200 KB per lesson). An Anki package may be up to 200 MB and is read in memory while it is imported, so give the
-  server at least 1 GB.
+- `GET /api/health` answers 200 when the server and the database are up, for the host's health check.
 - Anyone can sign up as a teacher. Only the emails in `ADMIN_EMAILS` can upload content for every student.
+
+### On Railway
+
+Railway builds the app from GitHub and redeploys on every push to `main`. Settings are made in the dashboard (Railway
+no longer reads a config file for new services).
+
+1. **Project.** On [railway.com](https://railway.com): **New Project → Deploy from GitHub repo** → this repository.
+   The first build may fail because the database is missing; that is fixed by the next steps.
+2. **Database.** In the project: **+ Create → Database → PostgreSQL**.
+3. **Region.** For both services (the app and Postgres): **Settings → Deploy → Region → EU West (Amsterdam)**. Do this
+   before adding data: moving a database later means downtime.
+4. **Variables.** On the app service, **Variables**:
+
+   | Variable | Value |
+   | --- | --- |
+   | `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` (Railway fills it in; private network, no egress cost) |
+   | `SESSION_SECRET` | the output of `openssl rand -hex 32`, kept secret |
+   | `APP_URL` | `https://your-domain` (step 6) |
+   | `APP_TIMEZONE` | `Asia/Tashkent` |
+   | `ADMIN_EMAILS` | your own teacher email(s), comma-separated. **Not** `teacher@lingify.test`: anyone could sign up with it |
+   | `TELEGRAM_*`, `ANTHROPIC_API_KEY` | optional, see [Environment](#environment) |
+
+5. **Commands.** On the app service, **Settings → Deploy**:
+   - **Pre-deploy command:** `npm run db:deploy` (applies migrations before each new version takes over; a failed
+     migration stops the deploy and the old version keeps running)
+   - **Healthcheck path:** `/api/health`
+   - **Replicas:** 1. Build and start are found automatically (`npm run build`, `npm start`) and Node 24 comes from
+     `engines` in `package.json`.
+
+   Then **Deploy** (or push to `main`).
+6. **Domain.** App service → **Settings → Networking → Generate Domain** for a `*.up.railway.app` address, or
+   **Custom Domain** and add the CNAME record it shows at your domain registrar. HTTPS is set up automatically. Put
+   the final address in `APP_URL`.
+7. **Built-in passages (once).** Postgres → **Settings → Networking → Public access** (temporarily), copy
+   `DATABASE_PUBLIC_URL` from its **Variables**, and on your computer:
+
+   ```bash
+   DATABASE_URL="postgresql://…copied public URL…" npm run db:seed -- --content
+   ```
+
+   Then turn public access off again. Run this **only once**: running it again deletes and recreates the demo deck,
+   with the students' progress on it. Never run plain `npm run db:seed` against the live database: it creates the
+   demo accounts.
+8. **Backups.** Postgres → **Backups** → add a **Daily** schedule (and Weekly for longer history).
+9. **Check** on a phone: sign up as a student, study a few cards, turn on airplane mode and reopen the app (offline
+   mode), then sign up with an `ADMIN_EMAILS` address and upload a passage.
+
+Updating later is a `git push` to `main`: Railway builds it, runs the pre-deploy migration, waits for
+`/api/health`, then switches over.
 
 ## Scripts
 
