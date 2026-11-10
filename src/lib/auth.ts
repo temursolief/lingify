@@ -1,15 +1,25 @@
 import "server-only";
 import { cache } from "react";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "./db";
 import { SESSION_COOKIE, decryptSession, encryptSession, sessionMaxAge, type SessionPayload } from "./session";
+
+/**
+ * Whether the browser reached us over HTTPS. A host or reverse proxy (nginx, Railway, Render…) passes this on in
+ * x-forwarded-proto; without one, Next.js fills it in from the connection itself.
+ */
+async function overHttps() {
+  return (await headers()).get("x-forwarded-proto")?.split(",")[0]?.trim() === "https";
+}
 
 export async function createSession(payload: SessionPayload) {
   const token = await encryptSession(payload);
   (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    // Secure only over HTTPS: a browser drops a Secure cookie sent over plain http (e.g. http://192.168.x.x:3000),
+    // and the student would land back on the log-in page after every click.
+    secure: await overHttps(),
     sameSite: "lax",
     path: "/",
     maxAge: sessionMaxAge,
