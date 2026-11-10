@@ -22,64 +22,48 @@ async function IeltsContent() {
   const awl = awlProgress(known);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8">
+    <>
       <PageHeader
         title="IELTS Reading"
-        subtitle="Timed Academic passages with real question types: 20 minutes each, no dictionary."
-        action={
-          <div className="text-right">
-            <div className="text-sm text-muted">Estimated band</div>
-            <div className="text-[1.75rem] leading-none font-semibold tabular-nums">{estimate ?? "–"}</div>
-          </div>
-        }
+        subtitle={`${estimate ? `Estimated band ${estimate}` : "No band estimate yet"} · 20 minutes per passage, no dictionary`}
       />
-      <div>
-        <table className="w-full text-left">
-          <thead className="border-b border-line text-sm">
-            <tr className="text-muted">
-              <th className="py-2 pr-3 font-normal">Passage</th>
-              <th className="py-2 pr-3 font-normal">You know</th>
-              <th className="py-2 pr-3 text-right font-normal">Best score</th>
-              <th className="py-1 font-normal" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-line">
-            {texts.map((t) => {
-              const best = attempts.filter((a) => a.textId === t.id).sort((a, b) => b.correct - a.correct)[0];
-              const { coverage } = coverageOf(t.lemmaCounts as LemmaCounts, known);
-              return (
-                <tr key={t.id}>
-                  <td className="py-2.5 pr-3">
-                    <Link href={`/student/ielts/${t.slug}`} className="no-underline hover:underline">{t.title}</Link>
-                    <span className="block text-sm text-muted">{t.wordCount} words · {t.timeLimit} min</span>
-                  </td>
-                  <td className={`py-2.5 pr-3 tabular-nums ${coverage < 0.9 ? "text-warn" : ""}`}>{(coverage * 100).toFixed(0)}%</td>
-                  <td className="py-2.5 pr-3 text-right tabular-nums">{best ? `${best.correct}/${best.total} (band ${best.band})` : "–"}</td>
-                  <td className="py-2.5 text-right">
-                    <Link href={`/student/ielts/${t.slug}`}>{best ? "Try again" : "Start"}</Link>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        <p className="mt-3 text-sm text-muted">These passages are harder than the library, so they may feel difficult. That is normal. After a test, study the passage&apos;s words and phrases.</p>
-      </div>
-
-      <Card>
-        <h2 className="font-semibold">Academic words <span className="font-normal text-muted">· {awl.known} of {awl.total} known</span></h2>
-        <p className="mb-3 text-sm text-muted">The Academic Word List: 570 word families common in IELTS texts, most frequent first. Aim for sublists 1–3 first.</p>
-        <ul className="grid gap-x-8 gap-y-2 sm:grid-cols-2">
-          {awl.sublists.map((s) => (
-            <li key={s.sublist} className="grid grid-cols-[5rem_1fr_3.5rem] items-center gap-3 text-sm">
-              <span>Sublist {s.sublist}</span>
-              <ProgressBar value={s.known / s.total} label={`Sublist ${s.sublist}`} />
-              <span className="text-right text-muted tabular-nums">{s.known}/{s.total}</span>
-            </li>
-          ))}
+      <div className="mx-auto max-w-3xl space-y-4">
+        <ul className="divide-y divide-line overflow-hidden rounded-xl bg-surface shadow-bubble">
+          {texts.map((t) => {
+            const best = attempts.filter((a) => a.textId === t.id).sort((a, b) => b.correct - a.correct)[0];
+            const { coverage } = coverageOf(t.lemmaCounts as LemmaCounts, known);
+            return (
+              <li key={t.id}>
+                <Link href={`/student/ielts/${t.slug}`} className="flex items-center gap-4 px-4 py-3 text-ink no-underline hover:bg-hover hover:no-underline">
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-medium">{t.title}</span>
+                    <span className="block truncate text-sm text-muted">
+                      {t.timeLimit} min · you know {(coverage * 100).toFixed(0)}% of the words
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-sm text-muted tabular-nums">{best ? `${best.correct}/${best.total} · band ${best.band}` : "Not taken"}</span>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
-      </Card>
-    </div>
+        <p className="text-sm text-muted">These passages are harder than your reading texts. That is normal. After a test, study the passage&apos;s words and phrases.</p>
+
+        <Card>
+          <p className="font-semibold">Academic words <span className="font-normal text-muted">· {awl.known} of {awl.total} known</span></p>
+          <p className="mb-3 text-sm text-muted">570 word families common in IELTS texts. Learn sublists 1–3 first.</p>
+          <ul className="grid gap-x-8 gap-y-2 sm:grid-cols-2">
+            {awl.sublists.map((s) => (
+              <li key={s.sublist} className="grid grid-cols-[5rem_1fr_3.5rem] items-center gap-3 text-sm">
+                <span>Sublist {s.sublist}</span>
+                <ProgressBar value={s.known / s.total} label={`Sublist ${s.sublist}`} />
+                <span className="text-right text-muted tabular-nums">{s.known}/{s.total}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      </div>
+    </>
   );
 }
 

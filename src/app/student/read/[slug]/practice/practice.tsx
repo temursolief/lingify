@@ -117,7 +117,7 @@ export function Practice(props: Props) {
       {section !== "done" && <ActivityTracker key={section} activity={ACTIVITY[section]} />}
       <div className="mb-5">
         <p className="text-sm text-muted">After reading</p>
-        <h1 className="text-[2.25rem] leading-tight font-semibold">{props.title}</h1>
+        <h1 className="text-2xl leading-tight font-semibold">{props.title}</h1>
         <div className="mt-3 flex flex-wrap gap-2 text-sm">
           <Badge tone="good">Finished in {props.minutes} min</Badge>
           {props.wpm && <Badge>{props.wpm} words per minute</Badge>}

@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Sign Up" };
 
 export default function SignupPage() {
   return (
-    <PublicShell hideSignup>
+    <PublicShell>
       <SignupForm />
     </PublicShell>
   );

@@ -1,8 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { TodayPlan } from "@/components/today-plan";
-import { ButtonLink, Card, PageSkeleton } from "@/components/ui";
+import { ButtonLink, Card, PageHeader, PageSkeleton } from "@/components/ui";
 import { requireStudent } from "@/lib/auth";
 import { dailyPlan } from "@/lib/daily-plan";
 import { db } from "@/lib/db";
@@ -28,42 +27,37 @@ async function StudentHomeContent() {
   const next = open.find((t) => t.assigned) ?? open[0];
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
-      <div>
-        <h1 className="text-[1.75rem] leading-tight font-semibold">Hello, {user.name.split(" ")[0]}</h1>
-        <p className="mt-1 text-muted">
-          {stats.streak > 0 ? `${stats.streak}-day streak` : "Start a streak today"} · {stats.knownCount.toLocaleString()} words known
-        </p>
-      </div>
+    <>
+      <PageHeader
+        title={`Hello, ${user.name.split(" ")[0]}`}
+        subtitle={`${stats.streak > 0 ? `${stats.streak}-day streak` : "Start a streak today"} · ${stats.knownCount.toLocaleString()} words known`}
+      />
+      <div className="mx-auto max-w-2xl space-y-4">
+        <TodayPlan plan={plan} />
 
-      <TodayPlan plan={plan} />
-
-      {next && (
-        <section>
-          <h2 className="mb-2 text-lg font-semibold">Next text for you</h2>
-          <Card className="flex flex-wrap items-center justify-between gap-4">
-            <div className="min-w-0 flex-1">
-              <Link href={`/student/read/${next.slug}`} className="text-lg font-medium no-underline hover:underline">{next.title}</Link>
-              <p className="mt-0.5 text-muted">{next.summary}</p>
-              <p className="mt-1 text-sm text-muted">
+        {next && (
+          <Card>
+            <p className="text-sm text-muted">{next.assigned ? "From your teacher" : "Next text for you"}</p>
+            <p className="mt-0.5 text-lg font-semibold">{next.title}</p>
+            <p className="mt-1 text-muted">{next.summary}</p>
+            <div className="mt-4 flex items-center justify-between gap-4">
+              <span className="text-sm text-muted">
                 {next.genre} · about {readingMinutes(next.wordCount, wpm)} min · you know {(next.coverage * 100).toFixed(0)}% of the words
-                {next.assigned && <span className="text-accent"> · from your teacher</span>}
-              </p>
+              </span>
+              <ButtonLink href={`/student/read/${next.slug}`}>Start reading</ButtonLink>
             </div>
-            <ButtonLink href={`/student/read/${next.slug}`}>Start reading</ButtonLink>
           </Card>
-          <p className="mt-2 text-sm"><Link href="/student/library">Choose another text</Link></p>
-        </section>
-      )}
+        )}
 
-      {classCount === 0 && (
-        <Card>
-          <h2 className="font-semibold">Join your class</h2>
-          <p className="mt-1 text-sm text-muted">Enter the code your teacher gave you so they can follow your progress.</p>
-          <JoinClassForm />
-        </Card>
-      )}
-    </div>
+        {classCount === 0 && (
+          <Card>
+            <p className="font-semibold">Join your class</p>
+            <p className="mt-1 text-sm text-muted">Enter the code your teacher gave you so they can follow your progress.</p>
+            <JoinClassForm />
+          </Card>
+        )}
+      </div>
+    </>
   );
 }
 

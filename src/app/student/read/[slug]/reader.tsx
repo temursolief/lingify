@@ -18,7 +18,7 @@ import {
 import { ActivityTracker, flushActivity } from "@/components/activity-tracker";
 import { ChoiceQuestion, feedbackLine } from "@/components/choice-question";
 import { setUzbekGlosses } from "@/app/actions/student";
-import { Button, Card, cx } from "@/components/ui";
+import { Button, Card, PageHeader, cx } from "@/components/ui";
 import { phraseQuestion } from "@/lib/lesson";
 import type { DictionaryData } from "@/lib/dictionary";
 import type { Mark, Token } from "@/lib/texts";
@@ -114,15 +114,14 @@ export function Reader({ text, coverage, pleasure, learningLemmas, readBefore, s
   }, [text.id]);
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <>
       {sessionId && <ActivityTracker activity="READING" sessionId={sessionId} />}
-      <p className="mb-2 text-sm text-muted">
-        {text.genre}
-        {series && ` · ${series.title}, part ${series.part} of ${series.total}`} · you know {Math.round(coverage * 100)}% of the words
-        {pleasure && <span className="text-good"> · easy read</span>}
-      </p>
-      <h1 className="font-serif text-3xl font-semibold leading-tight sm:text-4xl">{text.title}</h1>
-      {error && <p className="mt-4 rounded-lg bg-bad-soft p-3 text-sm text-bad">{error}</p>}
+      <PageHeader
+        title={text.title}
+        subtitle={`${text.genre}${series ? ` · ${series.title}, part ${series.part} of ${series.total}` : ""} · you know ${Math.round(coverage * 100)}% of the words${pleasure ? " · easy read" : ""}`}
+      />
+      <div className="mx-auto max-w-3xl">
+      {error && <p className="mb-4 rounded-xl bg-bad-soft p-3 text-sm text-bad">{error}</p>}
 
       {stage === "before" ? (
         <BeforeReading lesson={lesson} sessionId={sessionId} optional={pleasure} onDone={() => setStage("reading")} />
@@ -148,7 +147,8 @@ export function Reader({ text, coverage, pleasure, learningLemmas, readBefore, s
           }}
         />
       )}
-    </div>
+      </div>
+    </>
   );
 }
 
@@ -175,7 +175,7 @@ function BeforeReading({ lesson, sessionId, optional, onDone }: { lesson: Lesson
   };
 
   return (
-    <Card className="mt-6">
+    <Card>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <ol className="flex gap-2 text-sm" aria-label="Before you read">
           {steps.map((s, i) => (
@@ -436,14 +436,14 @@ function ReadingView({
   return (
     <>
       {lesson.gist && (
-        <div className="mt-5 rounded-md border border-accent/30 bg-accent-soft p-4 text-sm">
+        <div className="rounded-xl bg-accent-soft p-4 text-sm">
           <p className="font-medium text-accent">Read for the main idea</p>
           <p className="mt-1">{lesson.gist}</p>
           <p className="mt-1 text-muted">Keep going when you meet a new word: you can often guess it from the sentence. Click a word only if you need it.</p>
         </div>
       )}
 
-      <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
         <label className="flex cursor-pointer items-center gap-1.5 text-muted">
           <input type="checkbox" checked={highlight} onChange={(e) => setHighlight(e.target.checked)} className="accent-[var(--accent)]" />
           My learning words
@@ -478,7 +478,7 @@ function ReadingView({
       )}
       {showGrammar && <p className="mt-3 text-sm text-muted">Highlighted: {lesson.grammar.map((g) => g.structure).join(" · ")}</p>}
 
-      <div ref={containerRef} className={cx("relative mt-6 space-y-5 font-serif leading-relaxed", FONT_SIZES[fontSize])}>
+      <div ref={containerRef} className={cx("relative mt-4 space-y-5 rounded-xl bg-surface px-8 py-7 font-serif leading-relaxed shadow-bubble", FONT_SIZES[fontSize])}>
         {text.paragraphs.map((para, p) => (
           <p key={p}>
             {para.map((token, i) => {
@@ -521,7 +521,7 @@ function ReadingView({
             data-popover
             role="dialog"
             aria-label={`Meaning of ${popover.token.v}`}
-            className="absolute z-10 w-[22rem] max-w-full rounded-xl border border-line bg-surface p-4 font-sans text-base shadow-lg"
+            className="absolute z-10 w-[22rem] max-w-full rounded-xl bg-surface p-4 font-sans text-base shadow-lg ring-1 ring-line"
             style={{ top: popover.top, left: popover.left }}
           >
             <div className="flex items-start justify-between gap-2">
@@ -632,7 +632,7 @@ function ReadingView({
         )}
       </div>
 
-      <div className="mt-12 flex flex-col items-center gap-3 border-t border-line pt-8">
+      <div className="mt-8 flex flex-col items-center gap-3">
         <Button onClick={() => startBusy(onFinish)} disabled={!sessionId || busy} className="px-6 py-3 text-base">
           {busy ? "Saving…" : "I've finished reading"}
         </Button>
@@ -642,7 +642,7 @@ function ReadingView({
             Stop reading this text
           </button>
         ) : (
-          <div className="w-full max-w-md rounded-xl border border-line bg-surface p-4 text-center text-sm">
+          <div className="w-full max-w-md rounded-xl bg-surface p-4 text-center text-sm shadow-bubble">
             <p className="font-medium">That&apos;s fine. Good readers stop books they don&apos;t enjoy.</p>
             <p className="mt-1 text-muted">Why are you stopping? This helps us suggest better texts.</p>
             <div className="mt-3 flex flex-wrap justify-center gap-2">

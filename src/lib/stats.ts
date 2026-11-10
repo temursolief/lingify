@@ -118,8 +118,8 @@ export type StudentStats = Awaited<ReturnType<typeof studentStats>>;
 
 export async function goalProgress(userId: string): Promise<GoalProgress[]> {
   const thisWeek = weekStart(dayOf(new Date()));
-  const [goals, assigned, sessions, minutes] = await Promise.all([
-    db.goal.findMany({ where: { userId, active: true }, orderBy: { createdAt: "asc" } }),
+  // Weekly goals come from the teacher; students no longer set their own.
+  const [assigned, sessions, minutes] = await Promise.all([
     db.assignmentRecipient.findMany({
       where: { studentId: userId, assignment: { kind: "GOAL" } },
       select: { assignment: { select: { id: true, goalType: true, target: true, note: true } } },
@@ -149,7 +149,6 @@ export async function goalProgress(userId: string): Promise<GoalProgress[]> {
         fromTeacher: true,
         note: a.assignment.note,
       })),
-    ...goals.map((g) => ({ id: g.id, type: g.type, target: g.target, current: current(g.type), fromTeacher: false })),
   ];
 }
 

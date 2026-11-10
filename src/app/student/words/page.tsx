@@ -30,8 +30,9 @@ async function WordsPageContent() {
 
   return (
     <div>
-      <PageHeader title="Progress" />
+      <PageHeader title="Progress" subtitle="How your English is growing" />
       <ProgressTabs current="words" />
+      <div className="mx-auto max-w-4xl">
       <Card>
         <h2 className="mb-1 font-semibold">Learning <span className="font-normal text-muted">· {learning.length} words, {due} due now</span></h2>
         <p className="mb-4 text-sm text-muted">
@@ -67,13 +68,14 @@ async function WordsPageContent() {
       </Card>
 
       {learned.length > 0 && (
-        <Card className="mt-6">
+        <Card className="mt-4">
           <h2 className="mb-3 font-semibold">Recently learned</h2>
           <div className="flex flex-wrap gap-2">
             {learned.map((w) => <Badge key={w.lemma} tone="good">{w.lemma}</Badge>)}
           </div>
         </Card>
       )}
+      </div>
     </div>
   );
 }

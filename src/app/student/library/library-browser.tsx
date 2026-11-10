@@ -2,66 +2,54 @@
 
 import { useState } from "react";
 import { TextTable } from "@/components/text-table";
-import { EmptyState, cx } from "@/components/ui";
+import { Card, cx } from "@/components/ui";
 import type { LibraryEntry } from "@/lib/recommend";
 
-const LEVELS = [
-  { key: "open", label: "For me" },
-  { key: "pleasure", label: "Easy reads" },
-  { key: "locked", label: "Coming soon" },
-  { key: "all", label: "All" },
+/** Telegram-style folder chips instead of filters: each shows its count. */
+const FOLDERS = [
+  { key: "open", label: "For me", empty: "You have read every text at your level. New ones open as you learn more words." },
+  { key: "pleasure", label: "Easy reads", empty: "No easy reads yet. Texts become easy as you learn their words." },
+  { key: "read", label: "Read", empty: "Texts you finish will appear here." },
+  { key: "locked", label: "Coming soon", empty: "Every text is open to you." },
 ] as const;
 
-type LevelKey = (typeof LEVELS)[number]["key"];
+type Folder = (typeof FOLDERS)[number]["key"];
 
-const matches = (e: LibraryEntry, key: LevelKey) =>
-  key === "all" || (key === "open" ? e.level !== "locked" : e.level === key);
+const inFolder = (e: LibraryEntry, key: Folder) =>
+  key === "read" ? e.completed : key === "locked" ? e.level === "locked" : !e.completed && (key === "open" ? e.level !== "locked" : e.level === "pleasure");
 
 export function LibraryBrowser({ entries, wpm }: { entries: LibraryEntry[]; wpm: number }) {
-  const [level, setLevel] = useState<LevelKey>("open");
-  const [genre, setGenre] = useState("");
-  const [hideRead, setHideRead] = useState(false);
-
-  const genres = [...new Set(entries.map((e) => e.genre))].sort();
-  const shown = entries.filter((e) => matches(e, level) && (!genre || e.genre === genre) && (!hideRead || !e.completed));
-  const ordered = level === "locked" ? [...shown].sort((a, b) => b.coverage - a.coverage) : shown;
+  const [folder, setFolder] = useState<Folder>("open");
+  const shown = entries.filter((e) => inFolder(e, folder));
+  const ordered = folder === "locked" ? [...shown].sort((a, b) => b.coverage - a.coverage) : shown;
+  const current = FOLDERS.find((f) => f.key === folder)!;
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-center gap-x-5 gap-y-3">
-        <div className="inline-flex" role="group" aria-label="Show">
-          {LEVELS.map((l, i) => (
+      <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label="Show">
+        {FOLDERS.map((f) => {
+          const count = entries.filter((e) => inFolder(e, f.key)).length;
+          return (
             <button
-              key={l.key}
+              key={f.key}
               type="button"
-              aria-pressed={level === l.key}
-              onClick={() => setLevel(l.key)}
+              aria-pressed={folder === f.key}
+              onClick={() => setFolder(f.key)}
               className={cx(
-                "border border-accent px-3 py-1.5 text-sm",
-                i === 0 ? "rounded-l-md" : "-ml-px",
-                i === LEVELS.length - 1 && "rounded-r-md",
-                level === l.key ? "bg-accent text-accent-ink" : "text-accent hover:bg-accent-soft",
+                "rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
+                folder === f.key ? "bg-accent text-white" : "bg-surface text-muted shadow-bubble hover:text-ink",
               )}
             >
-              {l.label} <span className="opacity-70">{entries.filter((e) => matches(e, l.key)).length}</span>
+              {f.label} <span className="opacity-70">{count}</span>
             </button>
-          ))}
-        </div>
-        <select
-          value={genre}
-          onChange={(e) => setGenre(e.target.value)}
-          aria-label="Type of text"
-          className="rounded-md border border-line bg-surface px-2 py-1.5 text-sm"
-        >
-          <option value="">All types</option>
-          {genres.map((g) => <option key={g} value={g}>{g}</option>)}
-        </select>
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={hideRead} onChange={(e) => setHideRead(e.target.checked)} className="accent-[var(--accent)]" />
-          Hide texts I&apos;ve read
-        </label>
+          );
+        })}
       </div>
-      {ordered.length ? <TextTable entries={ordered} wpm={wpm} /> : <EmptyState title="No texts match." />}
+      {ordered.length ? (
+        <TextTable entries={ordered} wpm={wpm} />
+      ) : (
+        <Card className="py-8 text-center text-muted">{current.empty}</Card>
+      )}
     </div>
   );
 }

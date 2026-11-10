@@ -10,11 +10,34 @@ See [TASK.md](TASK.md) for the full specification.
 
 ## Interface
 
-Study first, statistics second. Students have five sections: **Today** (the plan and one suggested text), **Read**
-(library and speed reading), **Review**, **IELTS** and **Progress** (Overview, My words, Skills tabs). The teacher's class
-page has tabs for Students, Daily plan, Assignments and Reading skills; each student's page has Overview, Skills, IELTS
-and All statistics. Interface text uses Inter; passages use Literata, a typeface designed for long-form reading. Colours
-follow AnkiWeb (Bootstrap 5).
+Laid out like Telegram Desktop: a list column on the left and the open section on the right, each scrolling on its own.
+Students see six rows, each with one line of status, like the last message in a chat: **Today** (the plan and one
+suggested text), **Read**, **Review** (with a due-count badge), **IELTS**, **Speed reading** and **Progress** (Overview
+and My words). Their name at the bottom opens Settings, where Log out lives. Teachers see one row per class, plus New
+class and My texts; signing in opens their newest class. Interface text uses the system font, so nothing is downloaded
+before the first page shows. Passages use serif fonts already installed on Windows and macOS. Students no longer set
+their own goals; weekly goals come from the teacher.
+
+## Installable app and offline use
+
+Lingify is a progressive web app: Chrome and Edge offer **Install**, which opens it in its own window like a desktop app.
+
+- **Fast start.** A service worker (`public/sw.js`) keeps the built app files, so the app opens without downloading
+  them again. Pages always come from the server, since they are personal.
+- **Offline copy.** While the student is online, the sidebar keeps a copy of their next six texts (teacher assignments
+  first) and the review words due within a day in IndexedDB (`/api/offline/pack`). An ETag means nothing is downloaded
+  when the copy has not changed. The line at the bottom of the sidebar says what is saved.
+- **No connection.** Any page opened without a connection shows `/offline`: Review, plus the saved texts with word
+  meanings and Uzbek translations. Answers, lookups and finished texts are queued and sent to `/api/offline/sync` once
+  the server can be reached again, with a retry every 30 seconds. Graded offline, a review gives the same result as
+  online: both use `src/lib/review-grade.ts`.
+- **Slow connection.** `experimental.useOffline` shows a banner when requests fail and retries them when the connection
+  returns.
+- **Shared laptops.** Log out deletes the offline copy, and a different student signing in replaces the previous
+  student's copy.
+
+The service worker is registered only in production builds (`npm run build && npm start`); in development it is
+removed, so cached files never hide code changes.
 
 ## Stack
 
@@ -84,7 +107,7 @@ Demo accounts (local only, password `lingify-demo`):
 | 1 | Easy, comprehensible input | 95% coverage gate (`src/lib/texts.ts`, `src/lib/recommend.ts`) |
 | 2 | Variety of topics and genres | 20 texts across 6 genres and 20 topics; library filters; genre variety in recommendations |
 | 3 | Learners choose | Free choice in the library; recommendations are suggestions |
-| 4 | Read a lot | Words-read stats, weekly word/text/minute goals, streaks |
+| 4 | Read a lot | Words-read stats, teacher-set weekly word/text/minute goals, streaks |
 | 5 | Reading fluency | Words-per-minute per text and trend chart; skimmed sessions are excluded |
 | 6 | Read for meaning | Comprehension questions ask about meaning, not form |
 | 7 | Individual, silent reading | Self-paced reader |
@@ -97,7 +120,7 @@ Demo accounts (local only, password `lingify-demo`):
 | 14 | Immediate feedback | Every answer is checked on the server and explained at once |
 | 15 | Incidental grammar | Grammar points quote a sentence from the text, with one recognition exercise |
 | 16 | Balance of activities | Each text moves through reading → understanding → words → grammar; daily review |
-| 17 | Goals and visible progress | Goals, vocabulary growth curve, time-by-activity charts |
+| 17 | Goals and visible progress | Teacher goals, vocabulary growth curve, time-by-activity charts |
 | 18 | Desirable difficulty | Review switches from multiple choice to typed recall once recent accuracy is above 90% |
 
 ## ELT methodology in the lesson flow
@@ -188,3 +211,5 @@ each report at 60 seconds. Time is stored per student, per day, per activity.
   fill the gap.
 - Teacher texts have no glossary entries, lesson stages, chunks or grammar points; lookups fall back to the dictionary API.
 - Uzbek translations were written for this project and should be checked by an Uzbek-speaking teacher.
+- Offline, texts have no lesson stages or questions, and pronunciation and full dictionary entries are unavailable.
+  IELTS, speed reading and new texts need a connection.

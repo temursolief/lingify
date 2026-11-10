@@ -3,14 +3,14 @@ import { botLink, telegramConfigured } from "@/lib/telegram";
 import { Button, Card } from "./ui";
 
 export function TelegramCard({ user, role }: { user: { telegramChatId: string | null; telegramCode: string | null }; role: "STUDENT" | "TEACHER" }) {
+  // Nothing to show students or teachers until the server has a bot.
+  if (!telegramConfigured()) return null;
   const what = role === "STUDENT" ? "a reminder when today's plan is not finished" : "a weekly summary of your classes";
   return (
     <Card>
-      <h2 className="font-semibold">Telegram</h2>
+      <p className="font-semibold">Telegram reminders</p>
       <p className="mt-1 text-muted">Get {what} in Telegram.</p>
-      {!telegramConfigured() ? (
-        <p className="mt-3 text-sm text-muted">Telegram is not set up on this server yet. The administrator needs to add a bot token.</p>
-      ) : user.telegramChatId ? (
+      {user.telegramChatId ? (
         <form action={unlinkTelegram} className="mt-3 flex flex-wrap items-center gap-3">
           <span className="text-good">✓ Connected</span>
           <Button variant="secondary" type="submit">Disconnect</Button>

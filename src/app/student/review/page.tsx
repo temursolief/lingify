@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { ButtonLink, EmptyState, PageHeader, PageSkeleton } from "@/components/ui";
+import { ButtonLink, Card, PageHeader, PageSkeleton } from "@/components/ui";
 import { requireStudent } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { reviewQueue } from "@/lib/review-queue";
@@ -19,28 +19,29 @@ async function ReviewPageContent() {
       select: { srsDue: true },
     });
     return (
-      <div className="mx-auto max-w-2xl">
-        <PageHeader title="Review" subtitle="Words come back here just before you would forget them." />
-        <EmptyState title="Nothing to review right now">
-          {nextDue?.srsDue ? (
-            <p>Your next word is due {nextDue.srsDue.toLocaleString("en-GB", { weekday: "long", hour: "2-digit", minute: "2-digit" })}.</p>
-          ) : (
-            <p>Tap words while you read to add them here.</p>
-          )}
-          <ButtonLink href="/student/library" className="mt-4">Read something</ButtonLink>
-        </EmptyState>
-      </div>
+      <>
+        <PageHeader title="Review" subtitle="Words come back just before you would forget them" />
+        <Card className="mx-auto max-w-xl py-8 text-center">
+          <p className="font-medium">Nothing to review right now</p>
+          <p className="mt-1 text-muted">
+            {nextDue?.srsDue
+              ? `Your next word is due ${nextDue.srsDue.toLocaleString("en-GB", { weekday: "long", hour: "2-digit", minute: "2-digit" })}.`
+              : "Click words while you read to add them here."}
+          </p>
+          <ButtonLink href="/student/library" className="mt-5">Read something</ButtonLink>
+        </Card>
+      </>
     );
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <>
       <PageHeader
         title="Review"
-        subtitle={`${totalDue} word${totalDue === 1 ? "" : "s"} due. ${mode === "typed" ? "You're doing great, so type each word from memory." : "Choose the missing word."}`}
+        subtitle={`${totalDue} word${totalDue === 1 ? "" : "s"} due · ${mode === "typed" ? "type each word from memory" : "choose the missing word"}`}
       />
       <ReviewSession cards={cards} mode={mode} />
-    </div>
+    </>
   );
 }
 

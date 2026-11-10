@@ -5,17 +5,17 @@ function cx(...classes: (string | false | null | undefined)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
-/** Bootstrap 5 button styles, as used across AnkiWeb. */
+/** Telegram-style buttons: one filled blue action, everything else a quiet blue text button. */
 const buttonStyles = {
-  primary: "border-accent bg-accent text-accent-ink hover:border-accent-hover hover:bg-accent-hover",
-  secondary: "border-accent bg-transparent text-accent hover:bg-accent hover:text-accent-ink",
-  ghost: "border-transparent bg-transparent text-nav hover:text-ink",
+  primary: "bg-accent text-accent-ink hover:bg-accent-hover",
+  secondary: "bg-accent-soft text-accent hover:bg-[#dcebfb]",
+  ghost: "bg-transparent text-muted hover:bg-hover hover:text-ink",
 };
 
 type Variant = keyof typeof buttonStyles;
 
 const buttonBase =
-  "inline-flex items-center justify-center gap-2 rounded-md border px-3 py-1.5 text-base font-normal leading-6 no-underline transition-colors disabled:pointer-events-none disabled:opacity-65";
+  "inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-[15px] font-medium leading-5 no-underline hover:no-underline transition-colors disabled:pointer-events-none disabled:opacity-50";
 
 export function Button({ variant = "primary", className, ...props }: ComponentProps<"button"> & { variant?: Variant }) {
   return <button className={cx(buttonBase, buttonStyles[variant], className)} {...props} />;
@@ -25,21 +25,22 @@ export function ButtonLink({ variant = "primary", className, ...props }: Compone
   return <Link className={cx(buttonBase, buttonStyles[variant], className)} {...props} />;
 }
 
+/** A white rounded "bubble" on the grey content area. */
 export function Card({ className, ...props }: ComponentProps<"div">) {
-  return <div className={cx("rounded-md border border-line bg-surface p-4", className)} {...props} />;
+  return <div className={cx("rounded-xl bg-surface p-4 shadow-bubble", className)} {...props} />;
 }
 
 const badgeTones = {
-  neutral: "bg-[#e9ecef] text-[#495057]",
-  accent: "bg-[#cfe2ff] text-[#052c65]",
-  good: "bg-good-soft text-[#0a3622]",
-  warn: "bg-warn-soft text-[#664d03]",
-  bad: "bg-bad-soft text-[#58151c]",
+  neutral: "bg-grid text-muted",
+  accent: "bg-accent-soft text-accent",
+  good: "bg-good-soft text-good",
+  warn: "bg-warn-soft text-warn",
+  bad: "bg-bad-soft text-bad",
 };
 
 export function Badge({ tone = "neutral", children, className }: { tone?: keyof typeof badgeTones; children: ReactNode; className?: string }) {
   return (
-    <span className={cx("inline-flex items-center rounded-md px-1.5 py-0.5 text-xs font-semibold whitespace-nowrap", badgeTones[tone], className)}>
+    <span className={cx("inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap", badgeTones[tone], className)}>
       {children}
     </span>
   );
@@ -47,17 +48,17 @@ export function Badge({ tone = "neutral", children, className }: { tone?: keyof 
 
 export function ProgressBar({ value, tone = "accent", label }: { value: number; tone?: "accent" | "good" | "warn"; label?: string }) {
   const pct = Math.max(0, Math.min(1, value)) * 100;
-  const fill = { accent: "bg-accent", good: "bg-good", warn: "bg-[#ffc107]" }[tone];
+  const fill = { accent: "bg-accent", good: "bg-good", warn: "bg-[#f0a020]" }[tone];
   return (
-    <div className="h-2 w-full overflow-hidden rounded-md bg-grid" role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100} aria-label={label}>
-      <div className={cx("h-full transition-all", fill)} style={{ width: `${pct}%` }} />
+    <div className="h-1.5 w-full overflow-hidden rounded-full bg-grid" role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100} aria-label={label}>
+      <div className={cx("h-full rounded-full transition-all", fill)} style={{ width: `${pct}%` }} />
     </div>
   );
 }
 
 export function Stat({ label, value, hint }: { label: string; value: ReactNode; hint?: ReactNode }) {
   return (
-    <div className="rounded-md border border-line bg-surface p-3">
+    <div className="rounded-xl bg-surface p-3 shadow-bubble">
       <div className="text-sm text-muted">{label}</div>
       <div className="text-2xl font-semibold tabular-nums">{value}</div>
       {hint && <div className="text-sm text-muted">{hint}</div>}
@@ -65,40 +66,47 @@ export function Stat({ label, value, hint }: { label: string; value: ReactNode; 
   );
 }
 
+/**
+ * The bar across the top of the open pane, like a Telegram chat header: title, one muted line under it,
+ * and at most one action on the right. It sticks while the page scrolls.
+ */
 export function PageHeader({ title, subtitle, action }: { title: string; subtitle?: ReactNode; action?: ReactNode }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <h1 className="text-[1.75rem] leading-tight font-semibold">{title}</h1>
-        {subtitle && <p className="mt-1 text-muted">{subtitle}</p>}
+    <div className="sticky top-0 z-10 -mx-6 -mt-6 mb-6 flex min-h-14 items-center justify-between gap-4 border-b border-line bg-bar px-6 py-2">
+      <div className="min-w-0">
+        <h1 className="truncate text-base leading-tight font-semibold">{title}</h1>
+        {subtitle && <p className="truncate text-sm text-muted">{subtitle}</p>}
       </div>
-      {action}
+      {action && <div className="shrink-0">{action}</div>}
     </div>
   );
 }
 
-/** Bootstrap nav-tabs: one row of links, the current one joined to the content below. */
+/** Telegram folder tabs: plain words, the current one in blue with a rounded underline. */
 export function Tabs({ items, current }: { items: { key: string; label: ReactNode; href: string }[]; current: string }) {
   return (
-    <nav className="mb-6 flex gap-1 overflow-x-auto border-b border-line">
-      {items.map((t) => (
-        <Link
-          key={t.key}
-          href={t.href}
-          aria-current={t.key === current ? "page" : undefined}
-          className={cx(
-            "-mb-px rounded-t-md border px-4 py-2 whitespace-nowrap no-underline",
-            t.key === current ? "border-line border-b-page bg-page text-ink" : "border-transparent text-accent hover:border-grid hover:border-b-line",
-          )}
-        >
-          {t.label}
-        </Link>
-      ))}
+    <nav className="-mx-6 -mt-6 mb-6 flex gap-1 overflow-x-auto border-b border-line bg-bar px-4">
+      {items.map((t) => {
+        const active = t.key === current;
+        return (
+          <Link
+            key={t.key}
+            href={t.href}
+            aria-current={active ? "page" : undefined}
+            className={cx(
+              "relative px-3 py-2.5 text-[15px] font-medium whitespace-nowrap no-underline hover:no-underline",
+              active ? "text-accent" : "text-muted hover:text-ink",
+            )}
+          >
+            {t.label}
+            {active && <span className="absolute inset-x-2 bottom-0 h-[3px] rounded-t-full bg-accent" />}
+          </Link>
+        );
+      })}
     </nav>
   );
 }
 
-/** Bootstrap "form-floating" input: the label sits inside the field and moves up when it has a value. */
 export function Field({ label, error, className, ...props }: ComponentProps<"input"> & { label: string; error?: string }) {
   return (
     <div className={className}>
@@ -106,12 +114,12 @@ export function Field({ label, error, className, ...props }: ComponentProps<"inp
         <input
           placeholder=" "
           className={cx(
-            "peer block h-[3.625rem] w-full rounded-md border bg-surface px-3 pt-6 pb-2 text-ink transition focus:outline-none focus:ring-4",
-            error ? "border-bad focus:ring-bad/25" : "border-line focus:border-[#86b7fe] focus:ring-accent/25",
+            "peer block h-[3.25rem] w-full rounded-md border bg-surface px-3 pt-5 pb-1.5 text-ink transition focus:outline-none",
+            error ? "border-bad" : "border-line focus:border-accent",
           )}
           {...props}
         />
-        <span className="pointer-events-none absolute top-0 left-0 origin-top-left translate-x-3 translate-y-4 text-ink transition-transform peer-focus:translate-y-1.5 peer-focus:scale-85 peer-focus:text-muted peer-[:not(:placeholder-shown)]:translate-y-1.5 peer-[:not(:placeholder-shown)]:scale-85 peer-[:not(:placeholder-shown)]:text-muted">
+        <span className="pointer-events-none absolute top-0 left-0 origin-top-left translate-x-3 translate-y-3.5 text-muted transition-transform peer-focus:translate-y-1.5 peer-focus:scale-80 peer-focus:text-accent peer-[:not(:placeholder-shown)]:translate-y-1.5 peer-[:not(:placeholder-shown)]:scale-80">
           {label}
         </span>
       </label>
@@ -127,22 +135,19 @@ export function Skeleton({ className }: { className?: string }) {
 export function PageSkeleton() {
   return (
     <div className="space-y-4" aria-busy="true" aria-label="Loading">
-      <Skeleton className="h-10 w-64" />
-      <Skeleton className="h-4 w-96 max-w-full" />
-      <div className="grid gap-3 sm:grid-cols-3">
-        <Skeleton className="h-20" />
-        <Skeleton className="h-20" />
-        <Skeleton className="h-20" />
+      <div className="-mx-6 -mt-6 mb-6 flex h-14 items-center border-b border-line bg-bar px-6">
+        <Skeleton className="h-4 w-40" />
       </div>
-      <Skeleton className="h-64" />
+      <Skeleton className="h-24 rounded-xl" />
+      <Skeleton className="h-48 rounded-xl" />
     </div>
   );
 }
 
 export function EmptyState({ title, children }: { title: string; children?: ReactNode }) {
   return (
-    <div className="py-6">
-      <p>{title}</p>
+    <div className="py-10 text-center">
+      <p className="font-medium">{title}</p>
       {children && <div className="mt-1 text-muted">{children}</div>}
     </div>
   );

@@ -28,29 +28,6 @@ export async function joinClass(_: FormState, formData: FormData): Promise<FormS
   return { ok: `You joined ${cls.name}.` };
 }
 
-const goalSchema = z.object({
-  type: z.enum(["WORDS_WEEK", "TEXTS_WEEK", "MINUTES_WEEK"]),
-  target: z.coerce.number().int().min(1).max(100_000),
-});
-
-export async function setGoal(_: FormState, formData: FormData): Promise<FormState> {
-  const user = await requireStudent();
-  const parsed = goalSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { error: "Choose a goal and a number above zero." };
-  await db.$transaction([
-    db.goal.updateMany({ where: { userId: user.id, type: parsed.data.type, active: true }, data: { active: false } }),
-    db.goal.create({ data: { userId: user.id, ...parsed.data } }),
-  ]);
-  refresh();
-  return { ok: "Goal saved." };
-}
-
-export async function removeGoal(goalId: string) {
-  const user = await requireStudent();
-  await db.goal.updateMany({ where: { id: goalId, userId: user.id }, data: { active: false } });
-  refresh();
-}
-
 export async function setUzbekGlosses(on: boolean) {
   const user = await requireStudent();
   await db.user.update({ where: { id: user.id }, data: { uzbekGlosses: z.boolean().parse(on) } });

@@ -32,7 +32,7 @@ export function PlacementFlow({ name, initialTopics, retake }: { name: string; i
   if (step.kind === "topics") {
     return (
       <div className="mx-auto max-w-2xl">
-        <h1 className="text-[2.25rem] leading-tight font-semibold">{retake ? "Retake your placement" : `Welcome, ${name.split(" ")[0]}!`}</h1>
+        <h1 className="text-2xl leading-tight font-semibold">{retake ? "Retake your placement" : `Welcome, ${name.split(" ")[0]}!`}</h1>
         <p className="mt-2 text-muted">First, what do you like reading about? We use this to suggest texts. Choose as many as you like.</p>
         <div className="mt-6 flex flex-wrap gap-2">
           {TOPICS.map((t) => {
@@ -64,7 +64,7 @@ export function PlacementFlow({ name, initialTopics, retake }: { name: string; i
   if (step.kind === "intro") {
     return (
       <div className="mx-auto max-w-2xl">
-        <h1 className="text-[2.25rem] leading-tight font-semibold">How many words do you know?</h1>
+        <h1 className="text-2xl leading-tight font-semibold">How many words do you know?</h1>
         <div className="mt-4 space-y-3 text-muted">
           <p>You will see a list of English words. <strong className="text-ink">Tap every word you know the meaning of.</strong></p>
           <p>Some words are not real English words. Do not tap those. Guessing makes your result less accurate, and then the texts we choose for you will be too hard.</p>

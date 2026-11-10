@@ -12,22 +12,21 @@ export function SignupForm() {
 
   return (
     <form action={action}>
-      <h1 className="text-[2.25rem] leading-tight font-semibold">Sign Up</h1>
-      <p className="mt-2 mb-4">Create a free account.</p>
+      <h1 className="text-center text-lg font-semibold">Create an account</h1>
+      <p className="mt-1 mb-5 text-center text-sm text-muted">It is free.</p>
       <fieldset className="mb-4">
-        <legend className="mb-2">I am a</legend>
-        <div className="inline-flex" role="group">
-          {(["STUDENT", "TEACHER"] as const).map((r, i) => (
+        <legend className="sr-only">I am a</legend>
+        <div className="grid grid-cols-2 gap-1 rounded-md bg-paper p-1" role="group">
+          {(["STUDENT", "TEACHER"] as const).map((r) => (
             <label
               key={r}
               className={cx(
-                "cursor-pointer border border-accent px-3 py-1.5",
-                i === 0 ? "rounded-l-md" : "-ml-px rounded-r-md",
-                role === r ? "bg-accent text-accent-ink" : "text-accent hover:bg-accent-soft",
+                "cursor-pointer rounded-md py-1.5 text-center font-medium",
+                role === r ? "bg-surface text-ink shadow-bubble" : "text-muted hover:text-ink",
               )}
             >
               <input type="radio" name="role" value={r} checked={role === r} onChange={() => setRole(r)} className="sr-only" />
-              {r === "STUDENT" ? "Student" : "Teacher"}
+              {r === "STUDENT" ? "I'm a student" : "I'm a teacher"}
             </label>
           ))}
         </div>
@@ -37,11 +36,11 @@ export function SignupForm() {
         <Field label="Email" name="email" type="email" autoComplete="email" required error={errors.email} />
         <Field label="Password (8 characters or more)" name="password" type="password" autoComplete="new-password" required minLength={8} error={errors.password} />
       </div>
-      <Button type="submit" disabled={pending} className="mt-4 px-4 py-2 text-xl">
-        {pending ? "Creating account…" : "Sign Up"}
+      <Button type="submit" disabled={pending} className="mt-5 w-full">
+        {pending ? "Creating account…" : "Create account"}
       </Button>
-      <p className="mt-2">
-        Already have an account? <Link href="/login" className="underline">Log in</Link>
+      <p className="mt-4 text-center text-sm">
+        Already have an account? <Link href="/login">Log in</Link>
       </p>
     </form>
   );

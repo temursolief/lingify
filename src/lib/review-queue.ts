@@ -40,13 +40,14 @@ function hash(s: string) {
   return h >>> 0;
 }
 
-export async function reviewQueue(userId: string) {
+/** `until`/`size`: the offline pack also takes words falling due in the next day, so the student can review without internet. */
+export async function reviewQueue(userId: string, { until, size = SESSION_SIZE }: { until?: Date; size?: number } = {}) {
   const now = new Date();
   const [due, recent, totalDue] = await Promise.all([
     db.lemmaState.findMany({
-      where: dueWhere(userId, now),
+      where: dueWhere(userId, until ?? now),
       orderBy: { srsDue: "asc" },
-      take: SESSION_SIZE,
+      take: size,
     }),
     db.exerciseAttempt.findMany({ where: { userId, kind: "REVIEW" }, orderBy: { answeredAt: "desc" }, take: RECENT_ATTEMPTS }),
     db.lemmaState.count({ where: dueWhere(userId, now) }),

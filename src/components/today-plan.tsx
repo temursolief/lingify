@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ButtonLink, cx } from "./ui";
+import { ButtonLink, Card, cx } from "./ui";
 
 type Plan = {
   tasks: { id: string; label: string; done: boolean; detail: string; href: string }[];
@@ -11,21 +11,22 @@ function dueLabel(d: Date) {
   return d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
 }
 
+/** Today's three tasks, ticked off as they are done, with one button for the next one. */
 export function TodayPlan({ plan }: { plan: Plan }) {
   const next = plan.tasks.find((t) => !t.done);
   const done = plan.tasks.filter((t) => t.done).length;
   return (
-    <section className="rounded-md border border-line">
-      <div className="flex items-center justify-between gap-2 px-5 pt-4">
-        <h2 className="text-lg font-semibold">Today&apos;s plan</h2>
+    <Card className="p-0">
+      <div className="flex items-center justify-between gap-2 px-4 pt-4">
+        <p className="font-semibold">Today&apos;s plan</p>
         <span className={cx("text-sm", plan.complete ? "text-good" : "text-muted")}>{plan.complete ? "All done. Great work!" : `${done} of ${plan.tasks.length} done`}</span>
       </div>
-      <ul className="px-5 py-3">
+      <ul className="px-4 py-2">
         {plan.tasks.map((t) => (
-          <li key={t.id} className="flex items-center gap-3 py-1.5">
+          <li key={t.id} className="flex items-center gap-3 py-2">
             <span
               aria-hidden
-              className={cx("flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-xs", t.done ? "border-good bg-good text-white" : "border-line")}
+              className={cx("flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs", t.done ? "bg-good text-white" : "ring-2 ring-line ring-inset")}
             >
               {t.done ? "✓" : ""}
             </span>
@@ -35,8 +36,8 @@ export function TodayPlan({ plan }: { plan: Plan }) {
         ))}
       </ul>
       {plan.assignments.length > 0 && (
-        <div className="border-t border-line px-5 py-3">
-          <p className="text-sm font-medium">From your teacher</p>
+        <div className="border-t border-line px-4 py-3">
+          <p className="text-sm text-muted">From your teacher</p>
           <ul className="mt-1 space-y-1">
             {plan.assignments.map((a) => (
               <li key={a.id} className="flex flex-wrap items-baseline justify-between gap-2">
@@ -51,10 +52,10 @@ export function TodayPlan({ plan }: { plan: Plan }) {
         </div>
       )}
       {next && (
-        <div className="border-t border-line bg-paper px-5 py-3">
-          <ButtonLink href={next.href} className="px-5">{next.label}</ButtonLink>
+        <div className="border-t border-line px-4 py-3">
+          <ButtonLink href={next.href} className="w-full">{next.label}</ButtonLink>
         </div>
       )}
-    </section>
+    </Card>
   );
 }

@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Log In" };
 
 export default function LoginPage() {
   return (
-    <PublicShell hideLogin>
+    <PublicShell>
       <LoginForm />
     </PublicShell>
   );

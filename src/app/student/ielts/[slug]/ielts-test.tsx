@@ -60,7 +60,7 @@ export function IeltsTest({ text, paragraphs, tasks }: {
     return (
       <div className="max-w-3xl">
         <p className="text-muted">IELTS Academic Reading practice</p>
-        <h1 className="text-[2.25rem] leading-tight font-semibold">{text.title}</h1>
+        <h1 className="text-2xl leading-tight font-semibold">{text.title}</h1>
         <ul className="mt-4 list-disc space-y-1 pl-5">
           <li>You have <b>{text.timeLimit} minutes</b> for {totalQuestions} questions, the same pace as the real exam.</li>
           <li>No dictionary or word lookups during the test.</li>
@@ -75,8 +75,8 @@ export function IeltsTest({ text, paragraphs, tasks }: {
   return (
     <div>
       {!result && <ActivityTracker activity="IELTS" />}
-      <div className="sticky top-14 z-10 -mx-3 mb-3 flex flex-wrap items-center gap-4 border-b border-line bg-page px-3 py-2">
-        <h1 className="text-xl font-semibold">{text.title}</h1>
+      <div className="sticky top-0 z-10 -mx-6 -mt-6 mb-4 flex min-h-14 flex-wrap items-center gap-4 border-b border-line bg-bar px-6 py-2">
+        <h1 className="text-base font-semibold">{text.title}</h1>
         {!result ? (
           <>
             <span className={cx("font-mono text-xl tabular-nums", left < 120 && "text-bad")} aria-live="polite">{mmss(left)}</span>
@@ -93,7 +93,7 @@ export function IeltsTest({ text, paragraphs, tasks }: {
       {result && <ResultSummary result={result} slug={text.slug} />}
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <article className="space-y-4 font-serif text-[1.0625rem] leading-relaxed lg:sticky lg:top-28 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto lg:pr-3">
+        <article className="space-y-4 font-serif text-[1.0625rem] leading-relaxed lg:sticky lg:top-20 lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto lg:pr-3">
           {paragraphs.map((p, i) => (
             <p key={i}>
               <b className="mr-2">{paragraphLetter(i)}</b>
