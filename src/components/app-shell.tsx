@@ -7,13 +7,15 @@ import { Skeleton } from "./ui";
 export const CONTAINER = "mx-auto w-full max-w-[1140px] px-4";
 
 /** The signed-in layout: the list column (a drawer on small screens) and the open section. See ShellFrame. */
-export function AppShell({ home, nav, footer, children }: { home: string; nav: ReactNode; footer?: ReactNode; children: ReactNode }) {
+export function AppShell({ home, nav, footer, action, children }: { home: string; nav: ReactNode; footer?: ReactNode; action?: ReactNode; children: ReactNode }) {
   return (
     <ShellFrame
       brand={<Link href={home} className="text-ink no-underline hover:no-underline">Lingify</Link>}
       nav={<Suspense fallback={<NavSkeleton />}>{nav}</Suspense>}
       footer={footer}
       banner={<OfflineBanner />}
+      // Kept the size of the button while it loads, so the name next to it does not move.
+      action={action && <Suspense fallback={<div className="h-9 w-9" />}>{action}</Suspense>}
     >
       {children}
     </ShellFrame>
