@@ -148,6 +148,23 @@ function mediaFiles(files: Record<string, Uint8Array>) {
 
 /* ---- the package ---- */
 
+/**
+ * Anki's current tables sort names with its own "unicase" collation, which only Anki defines. Newer SQLite versions
+ * (Node 24.22's, which Netlify runs) refuse to read those tables at all ("no query solution", "no such collation
+ * sequence: unicase"), so the collation is removed from our temporary copy first. Only the name order changes, which
+ * the import does not use.
+ */
+function dropAnkiCollation(path: string) {
+  const db = new DatabaseSync(path, { defensive: false });
+  try {
+    db.exec("PRAGMA writable_schema = ON");
+    db.exec("UPDATE sqlite_master SET sql = replace(sql, 'COLLATE unicase', '') WHERE sql LIKE '%COLLATE unicase%'");
+    db.exec("PRAGMA writable_schema = OFF");
+  } finally {
+    db.close();
+  }
+}
+
 export function readApkg(file: Uint8Array, fallbackName: string): ImportedDeck {
   const files = unzipSync(file);
   const collection = files["collection.anki21b"] ? unz(files["collection.anki21b"]) : (files["collection.anki21"] ?? files["collection.anki2"]);
@@ -156,6 +173,7 @@ export function readApkg(file: Uint8Array, fallbackName: string): ImportedDeck {
   const dir = mkdtempSync(join(tmpdir(), "apkg-"));
   const path = join(dir, "collection.sqlite");
   writeFileSync(path, collection);
+  dropAnkiCollation(path);
   const db = new DatabaseSync(path, { readOnly: true });
   try {
     const types = noteTypes(db);
