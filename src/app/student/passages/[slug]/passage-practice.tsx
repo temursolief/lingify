@@ -750,7 +750,7 @@ function CardToast({ toast, onClose }: { toast: Toast; onClose: () => void }) {
         <p>Card removed.</p>
       ) : (
         <>
-          <p className="font-medium">Flashcard added to “My IELTS chunks”</p>
+          <p className="font-medium">Flashcard added to your flashcards for this passage</p>
           <p className="mt-1">
             <b>{toast.chunk}</b>
             {toast.meaning ? ` — ${toast.meaning}` : toast.pending && <span className="text-white/60"> — finding a simple meaning…</span>}

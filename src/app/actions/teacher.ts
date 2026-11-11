@@ -125,8 +125,43 @@ export async function deleteAssignment(assignmentId: string) {
   refresh();
 }
 
+const assignLessonSchema = z.object({
+  classId: z.string(),
+  lessonId: z.string().min(1, "Choose a lesson."),
+  dueAt: z.string().optional(),
+  note: z.string().max(200).optional(),
+});
+
+/** Assigns a listening lesson to the whole class or to the students ticked in the form. */
+export async function assignLesson(_: FormState, formData: FormData): Promise<FormState> {
+  const parsed = assignLessonSchema.safeParse(Object.fromEntries([...formData.entries()].filter(([k]) => k !== "students")));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const dueAt = parsed.data.dueAt ? endOfDayOn(parsed.data.dueAt) : null;
+  if (parsed.data.dueAt && !dueAt) return { error: "Choose a real due date." };
+  const cls = await ownClass(parsed.data.classId);
+  const lesson = await db.listeningLesson.findFirst({ where: { id: parsed.data.lessonId }, select: { id: true, title: true } });
+  if (!lesson) return { error: "Choose a lesson." };
+
+  const enrolled = (await db.enrollment.findMany({ where: { classId: cls.id }, select: { userId: true } })).map((e) => e.userId);
+  const picked = formData.getAll("students").map(String).filter((id) => enrolled.includes(id));
+  const students = picked.length ? picked : enrolled;
+  if (!students.length) return { error: "This class has no students yet." };
+
+  await db.assignment.create({
+    data: {
+      classId: cls.id,
+      lessonId: lesson.id,
+      note: parsed.data.note?.trim() || null,
+      dueAt,
+      recipients: { create: students.map((studentId) => ({ studentId })) },
+    },
+  });
+  refresh();
+  return { ok: `Assigned “${lesson.title}” to ${students.length === enrolled.length ? "the whole class" : `${students.length} student${students.length === 1 ? "" : "s"}`}.` };
+}
+
 export async function deleteDeck(deckId: string) {
   await requireAdmin();
-  await db.deck.deleteMany({ where: { id: deckId, ownerId: null } });
+  await db.deck.deleteMany({ where: { id: deckId, ownerId: null, passageId: null, lessonId: null } });
   refresh();
 }

@@ -13,14 +13,17 @@ import { sendMessage, studentReminder, teacherSummary, telegramConfigured } from
 async function reminderFor(userId: string) {
   const [due, open] = await Promise.all([
     dueToday(userId),
-    db.assignmentRecipient.findMany({ where: { studentId: userId, completedAt: null }, include: { assignment: { include: { passage: { select: { title: true } } } } } }),
+    db.assignmentRecipient.findMany({
+      where: { studentId: userId, completedAt: null, assignment: { passageId: { not: null } } },
+      include: { assignment: { include: { passage: { select: { title: true } } } } },
+    }),
   ]);
   const now = new Date();
   const tasks = [
     ...(due ? [`Review ${due} flashcard${due === 1 ? "" : "s"}`] : []),
-    ...open.filter((a) => !a.assignment.dueAt || a.assignment.dueAt >= now).map((a) => `Passage: ${a.assignment.passage.title}`),
+    ...open.filter((a) => !a.assignment.dueAt || a.assignment.dueAt >= now).map((a) => `Passage: ${a.assignment.passage!.title}`),
   ];
-  const overdue = open.filter((a) => a.assignment.dueAt && a.assignment.dueAt < now).map((a) => a.assignment.passage.title);
+  const overdue = open.filter((a) => a.assignment.dueAt && a.assignment.dueAt < now).map((a) => a.assignment.passage!.title);
   return { tasks, overdue, needed: tasks.length + overdue.length > 0 };
 }
 

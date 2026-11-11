@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: "Anki decks" };
 async function DecksContent() {
   await requireAdmin();
   const decks = await db.deck.findMany({
-    where: { ownerId: null },
+    where: { ownerId: null, passageId: null, lessonId: null },
     orderBy: { createdAt: "desc" },
     include: { _count: { select: { cards: true, media: true } } },
   });

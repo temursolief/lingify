@@ -24,13 +24,12 @@ const dueLabel = (d: Date) => formatDay(d, true);
 async function PassagesContent() {
   const user = await requireStudent();
   const now = new Date();
-  const [assigned, builtIn, attempts, summary] = await Promise.all([
+  const [assigned, attempts, summary] = await Promise.all([
     db.assignmentRecipient.findMany({
-      where: { studentId: user.id },
+      where: { studentId: user.id, assignment: { passageId: { not: null } } },
       include: { assignment: { include: { passage: { select: { id: true, slug: true, title: true, timeLimit: true } } } } },
       orderBy: [{ completedAt: { sort: "asc", nulls: "first" } }, { assignment: { dueAt: { sort: "asc", nulls: "last" } } }],
     }),
-    db.passage.findMany({ where: { ownerId: null }, orderBy: { title: "asc" }, select: { id: true, slug: true, title: true, timeLimit: true } }),
     db.passageAttempt.findMany({
       where: { userId: user.id },
       orderBy: { startedAt: "desc" },
@@ -40,7 +39,6 @@ async function PassagesContent() {
   ]);
   const latest = new Map<string, AttemptInfo>();
   for (const a of attempts) if (!latest.has(a.passageId)) latest.set(a.passageId, { ...a, red: a.answers.length });
-  const assignedIds = new Set(assigned.map((a) => a.assignment.passageId));
 
   const Row = ({ p, extra }: { p: { slug: string; title: string; timeLimit: number; id: string }; extra?: React.ReactNode }) => {
     const s = status(latest.get(p.id));
@@ -61,14 +59,16 @@ async function PassagesContent() {
     <>
       <PageHeader title="Passages" subtitle={summary.band ? `Estimated band ${summary.band} from your last passages` : "IELTS Academic Reading practice"} />
       <div className="mx-auto max-w-3xl space-y-6">
-        {assigned.length > 0 && (
-          <section>
-            <h2 className="mb-2 px-1 text-sm font-medium text-muted">From your teacher</h2>
+        <section>
+          <h2 className="mb-2 px-1 text-sm font-medium text-muted">From your teacher</h2>
+          {assigned.length === 0 ? (
+            <Card className="text-muted">Nothing assigned yet. Ask your teacher.</Card>
+          ) : (
             <ul className="divide-y divide-line overflow-hidden rounded-xl bg-surface shadow-bubble">
               {assigned.map((r) => (
                 <Row
                   key={r.assignmentId}
-                  p={r.assignment.passage}
+                  p={r.assignment.passage!}
                   extra={
                     <>
                       {r.assignment.dueAt && (
@@ -82,16 +82,6 @@ async function PassagesContent() {
                 />
               ))}
             </ul>
-          </section>
-        )}
-        <section>
-          <h2 className="mb-2 px-1 text-sm font-medium text-muted">Practice passages</h2>
-          {builtIn.filter((p) => !assignedIds.has(p.id)).length ? (
-            <ul className="divide-y divide-line overflow-hidden rounded-xl bg-surface shadow-bubble">
-              {builtIn.filter((p) => !assignedIds.has(p.id)).map((p) => <Row key={p.id} p={p} />)}
-            </ul>
-          ) : (
-            <Card className="text-muted">No practice passages yet.</Card>
           )}
         </section>
         <p className="px-1 text-sm text-muted">

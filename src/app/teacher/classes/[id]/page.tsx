@@ -9,13 +9,14 @@ import { classOverview, teacherClass } from "@/lib/class-overview";
 import { db } from "@/lib/db";
 import { errorBreakdown, passageHeatmap, stuckStudents } from "@/lib/insights";
 import { formatDay } from "@/lib/time";
-import { AssignPassageForm, DeleteAssignmentButton } from "../../teacher-forms";
+import { AssignLessonForm, AssignPassageForm, DeleteAssignmentButton } from "../../teacher-forms";
 
 export const metadata: Metadata = { title: "Class" };
 
 const TABS = [
   { key: "students", label: "Students" },
   { key: "passages", label: "Passages" },
+  { key: "listening", label: "Listening" },
   { key: "mistakes", label: "Mistakes" },
 ];
 
@@ -95,6 +96,8 @@ async function ClassContent(props: PageProps<"/teacher/classes/[id]">) {
       )}
 
       {tab === "passages" && <PassagesTab classId={cls.id} teacherId={teacher.id} base={base} selected={typeof sp.p === "string" ? sp.p : null} students={rows} />}
+
+      {tab === "listening" && <ListeningTab classId={cls.id} students={rows} />}
 
       {tab === "mistakes" && (
         <div className="mx-auto max-w-3xl">
@@ -198,7 +201,7 @@ async function PassagesTab({ classId, teacherId, base, selected, students }: { c
               const late = a.dueAt && a.dueAt < new Date() ? a.recipients.length - done : 0;
               return (
                 <li key={a.id} className={cx("flex flex-wrap items-center gap-3 px-4 py-2.5", a.passageId === passageId && "bg-accent-soft")}>
-                  <Link href={`${base}?tab=passages&p=${a.passageId}`} className="min-w-0 flex-1 truncate">{a.passage.title}</Link>
+                  <Link href={`${base}?tab=passages&p=${a.passageId}`} className="min-w-0 flex-1 truncate">{a.passage!.title}</Link>
                   <span className="text-sm text-muted">
                     {done}/{a.recipients.length} done
                     {a.dueAt && ` · due ${formatDay(a.dueAt)}`}
@@ -215,6 +218,51 @@ async function PassagesTab({ classId, teacherId, base, selected, students }: { c
       <Card>
         <p className="mb-3 font-semibold">Assign a passage</p>
         <AssignPassageForm classId={classId} passages={passages.map((p) => ({ id: p.id, title: p.title, mine: p.ownerId === teacherId }))} students={students} />
+      </Card>
+    </div>
+  );
+}
+
+async function ListeningTab({ classId, students }: { classId: string; students: { id: string; name: string }[] }) {
+  const [assignments, lessons] = await Promise.all([
+    db.assignment.findMany({
+      where: { classId, lessonId: { not: null } },
+      orderBy: { createdAt: "desc" },
+      include: { lesson: { select: { id: true, title: true } }, recipients: { select: { completedAt: true } } },
+    }),
+    db.listeningLesson.findMany({ orderBy: { title: "asc" }, select: { id: true, title: true } }),
+  ]);
+
+  return (
+    <div className="space-y-4">
+      <Card className="p-0">
+        <p className="px-4 pt-4 font-semibold">Assigned lessons</p>
+        {assignments.length === 0 ? (
+          <p className="px-4 pt-1 pb-4 text-sm text-muted">Nothing assigned yet.</p>
+        ) : (
+          <ul className="mt-2 divide-y divide-line">
+            {assignments.map((a) => {
+              const done = a.recipients.filter((r) => r.completedAt).length;
+              const late = a.dueAt && a.dueAt < new Date() ? a.recipients.length - done : 0;
+              return (
+                <li key={a.id} className="flex flex-wrap items-center gap-3 px-4 py-2.5">
+                  <span className="min-w-0 flex-1 truncate">{a.lesson!.title}</span>
+                  <span className="text-sm text-muted">
+                    {done}/{a.recipients.length} done
+                    {a.dueAt && ` · due ${formatDay(a.dueAt)}`}
+                    {late > 0 && <span className="text-bad"> · {late} late</span>}
+                  </span>
+                  <DeleteAssignmentButton id={a.id} />
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Card>
+
+      <Card>
+        <p className="mb-3 font-semibold">Assign a lesson</p>
+        <AssignLessonForm classId={classId} lessons={lessons} students={students} />
       </Card>
     </div>
   );

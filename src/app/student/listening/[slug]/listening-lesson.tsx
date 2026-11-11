@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState, useTransition, type ReactNode } from "react";
-import { addLessonVocabulary, recheckAnswer, restartLesson, submitLesson } from "@/app/actions/listening";
+import { markVocabularySeen, recheckAnswer, restartLesson, submitLesson } from "@/app/actions/listening";
 import { ActivityTracker } from "@/components/activity-tracker";
 import { LiteVideo } from "@/components/lite-video";
 import { NotesText } from "@/components/notes-text";
@@ -23,11 +23,12 @@ export function ListeningLesson({ lesson, groups, vocabulary, initial }: { lesso
   const [answers, setAnswers] = useState<Record<number, string>>(() => Object.fromEntries(Object.entries(initial.questions).map(([n, q]) => [n, q.answer])));
   const [errors, setErrors] = useState<Record<number, string>>({});
   const [active, setActive] = useState<number | null>(null);
-  const [vocabAdded, setVocabAdded] = useState<number | null>(null);
   const [pending, start] = useTransition();
   const numbers = useMemo(() => groups.flatMap((g) => g.questions.map((q) => q.number)), [groups]);
   const states = view.questions;
   const red = Object.values(states).filter((q) => !q.correct).length;
+  // A lesson with no key words has nothing to gate on.
+  const gated = vocabulary.length > 0 && !view.vocabRead;
 
   const set = (n: number, v: string) => setAnswers((a) => ({ ...a, [n]: v }));
   const submit = () => start(async () => setView(await submitLesson({ attemptId: view.id, answers: Object.fromEntries(Object.entries(answers)) })));
@@ -43,7 +44,7 @@ export function ListeningLesson({ lesson, groups, vocabulary, initial }: { lesso
       setAnswers({});
       setErrors({});
     });
-  const addVocab = () => start(async () => setVocabAdded((await addLessonVocabulary(lesson.id)).added));
+  const readVocab = () => start(async () => setView(await markVocabularySeen(view.id)));
   const jump = (n: number) => {
     setActive(n);
     document.getElementById(`q${n}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -196,14 +197,16 @@ export function ListeningLesson({ lesson, groups, vocabulary, initial }: { lesso
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-base font-semibold">{lesson.title}</h1>
           <p className="truncate text-sm text-muted">
-            {!view.submitted
-              ? `${Object.values(answers).filter((a) => a?.trim()).length} of ${numbers.length} answered`
-              : view.completed
-                ? `Complete · first try ${view.firstCorrect}/${view.total} · estimated band ${view.band}`
-                : `First try ${view.firstCorrect}/${view.total} · band ${view.band} · ${red} to correct`}
+            {gated
+              ? "Read the key words first"
+              : !view.submitted
+                ? `${Object.values(answers).filter((a) => a?.trim()).length} of ${numbers.length} answered`
+                : view.completed
+                  ? `Complete · first try ${view.firstCorrect}/${view.total} · estimated band ${view.band}`
+                  : `First try ${view.firstCorrect}/${view.total} · band ${view.band} · ${red} to correct`}
           </p>
         </div>
-        {!view.submitted ? (
+        {gated ? null : !view.submitted ? (
           <Button className="max-md:px-3" onClick={submit} disabled={pending}>
             {pending ? "Checking…" : <>Submit<span className="max-md:hidden"> answers</span></>}
           </Button>
@@ -224,16 +227,10 @@ export function ListeningLesson({ lesson, groups, vocabulary, initial }: { lesso
           <p className="order-2 px-4 pt-3 text-sm text-muted md:p-0">
             Pause, rewind and replay as often as you need.{view.submitted && red ? " For each red answer, find that part of the video and listen again." : ""}
           </p>
-          {vocabulary.length > 0 && (
+          {gated && (
             <section className="order-4 mx-4 mb-6 rounded-xl bg-paper p-4 md:m-0">
-              <div className="flex flex-wrap items-baseline justify-between gap-x-2">
-                <p className="font-semibold">Key words</p>
-                {vocabAdded === null ? (
-                  <button type="button" disabled={pending} onClick={addVocab} className="text-sm text-accent hover:underline">Add to my flashcards</button>
-                ) : (
-                  <span className="text-sm text-good">{vocabAdded ? `${vocabAdded} added to “My IELTS chunks”` : "Already in your flashcards"}</span>
-                )}
-              </div>
+              <p className="font-semibold">Key words</p>
+              <p className="mt-1 text-sm text-muted">Read these before the questions: they appear in the video and in what you&apos;ll answer.</p>
               <ul className="mt-2 space-y-2.5">
                 {vocabulary.map((v) => (
                   <li key={v.word}>
@@ -243,66 +240,75 @@ export function ListeningLesson({ lesson, groups, vocabulary, initial }: { lesso
                   </li>
                 ))}
               </ul>
+              <Button className="mt-3" onClick={readVocab} disabled={pending}>I&apos;ve read these words</Button>
             </section>
           )}
         </div>
 
         <div className="pane-x order-3 py-5 md:min-h-0 md:overflow-y-auto md:py-6">
-          {view.completed && (
-            <div className="mb-6 rounded-xl bg-good-soft p-4 text-good">
-              <p className="font-semibold">Lesson complete</p>
-              <p className="mt-1 text-sm">
-                First try: {view.firstCorrect} of {view.total} (estimated listening band {view.band}). Every answer is now correct.{" "}
-                <Link href="/student/listening" className="text-good underline">Back to the library</Link>
-              </p>
-            </div>
+          {gated ? (
+            <p className="text-muted">Read the key words on the left, then press “I&apos;ve read these words” to see the questions.</p>
+          ) : (
+            <>
+              {view.completed && (
+                <div className="mb-6 rounded-xl bg-good-soft p-4 text-good">
+                  <p className="font-semibold">Lesson complete</p>
+                  <p className="mt-1 text-sm">
+                    First try: {view.firstCorrect} of {view.total} (estimated listening band {view.band}). Every answer is now correct.{" "}
+                    <Link href="/student/listening" className="text-good underline">Back to the library</Link>
+                  </p>
+                </div>
+              )}
+              {view.submitted && !view.completed && (
+                <div className="mb-6 rounded-xl bg-paper p-4 text-sm">
+                  <p className="font-medium">Correct the red answers</p>
+                  <p className="mt-1 text-muted">Listen to that part of the video again, write a new answer and press Check.</p>
+                </div>
+              )}
+              <div className="space-y-8">
+                {groups.map((g, gi) => (
+                  <section key={gi}>
+                    <h2 className="font-semibold">
+                      Questions {g.questions[0].number}
+                      {g.questions.length > 1 && `–${g.questions[g.questions.length - 1].number}`}
+                      <span className="ml-2 text-sm font-normal text-muted">{GROUP_LABEL[g.type]}</span>
+                    </h2>
+                    <p className="mt-1 mb-3 text-sm text-muted">{g.instructions}</p>
+                    {renderGroup(g)}
+                  </section>
+                ))}
+              </div>
+            </>
           )}
-          {view.submitted && !view.completed && (
-            <div className="mb-6 rounded-xl bg-paper p-4 text-sm">
-              <p className="font-medium">Correct the red answers</p>
-              <p className="mt-1 text-muted">Listen to that part of the video again, write a new answer and press Check.</p>
-            </div>
-          )}
-          <div className="space-y-8">
-            {groups.map((g, gi) => (
-              <section key={gi}>
-                <h2 className="font-semibold">
-                  Questions {g.questions[0].number}
-                  {g.questions.length > 1 && `–${g.questions[g.questions.length - 1].number}`}
-                  <span className="ml-2 text-sm font-normal text-muted">{GROUP_LABEL[g.type]}</span>
-                </h2>
-                <p className="mt-1 mb-3 text-sm text-muted">{g.instructions}</p>
-                {renderGroup(g)}
-              </section>
-            ))}
-          </div>
         </div>
       </div>
 
-      <nav className="pane-x flex shrink-0 items-center gap-1.5 overflow-x-auto border-t border-line bg-bar py-2 md:flex-wrap md:overflow-visible" aria-label="Questions">
-        {numbers.map((n) => {
-          const s = view.submitted ? states[n] : undefined;
-          const answered = !!answers[n]?.trim();
-          return (
-            <button
-              key={n}
-              type="button"
-              onClick={() => jump(n)}
-              aria-label={`Question ${n}${s ? (s.correct ? ", correct" : ", incorrect") : answered ? ", answered" : ""}`}
-              className={cx(
-                "h-8 min-w-8 shrink-0 rounded-md px-1.5 text-sm font-medium tabular-nums",
-                s ? (s.correct ? "bg-good text-white" : "bg-bad text-white") : answered ? "bg-accent-soft text-accent" : "bg-paper text-muted",
-                active === n && "outline-2 outline-offset-2 outline-ink",
-              )}
-            >
-              {n}
-            </button>
-          );
-        })}
-        {view.submitted && (
-          <span className="ml-auto text-sm text-muted max-md:hidden"><span className="text-good">●</span> correct <span className="ml-2 text-bad">●</span> incorrect</span>
-        )}
-      </nav>
+      {!gated && (
+        <nav className="pane-x flex shrink-0 items-center gap-1.5 overflow-x-auto border-t border-line bg-bar py-2 md:flex-wrap md:overflow-visible" aria-label="Questions">
+          {numbers.map((n) => {
+            const s = view.submitted ? states[n] : undefined;
+            const answered = !!answers[n]?.trim();
+            return (
+              <button
+                key={n}
+                type="button"
+                onClick={() => jump(n)}
+                aria-label={`Question ${n}${s ? (s.correct ? ", correct" : ", incorrect") : answered ? ", answered" : ""}`}
+                className={cx(
+                  "h-8 min-w-8 shrink-0 rounded-md px-1.5 text-sm font-medium tabular-nums",
+                  s ? (s.correct ? "bg-good text-white" : "bg-bad text-white") : answered ? "bg-accent-soft text-accent" : "bg-paper text-muted",
+                  active === n && "outline-2 outline-offset-2 outline-ink",
+                )}
+              >
+                {n}
+              </button>
+            );
+          })}
+          {view.submitted && (
+            <span className="ml-auto text-sm text-muted max-md:hidden"><span className="text-good">●</span> correct <span className="ml-2 text-bad">●</span> incorrect</span>
+          )}
+        </nav>
+      )}
     </div>
   );
 }

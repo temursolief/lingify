@@ -16,7 +16,7 @@ All six fit the free plans. Three things would strain them if built the obvious 
 The rule for all three: one shared deck per lesson or passage, and tracking data rides inside requests the app
 already makes.
 
-## 1. Listening: vocabulary first, then a deck, then the questions
+## 1. Listening: vocabulary first, then a deck, then the questions — done
 
 **Cost: low.** The vocabulary is already stored in the lesson (`ListeningLesson.vocabulary`).
 
@@ -26,12 +26,17 @@ already makes.
 - **Gate:** the student presses "I've read these words" and one timestamp is saved on their `ListeningAttempt`. The
   questions stay hidden until then, and the words are hidden while the questions are shown.
 - **Side effects:**
-  - Students who already pressed "Add to My IELTS chunks" will have the words twice. That button goes.
-  - Existing lessons need their decks created once.
-  - Students who already started a lesson count as having read the words.
-  - Link the deck by lesson ID, not title: two lessons can share a title.
+  - Students who already pressed "Add to My IELTS chunks" will have the words twice. That button goes. — done:
+    removed, with the action replaced by "I've read these words".
+  - Existing lessons need their decks created once. — done: created lazily the first time the lesson is opened
+    (`ensureLessonDeck` in `src/lib/listening.ts`), and also at upload time for new ones.
+  - Students who already started a lesson count as having read the words. — done: a fresh attempt with any
+    answer or a first submission already on it (from before the gate existed) counts as read.
+  - Link the deck by lesson ID, not title: two lessons can share a title. — done (`Deck.lessonId`, unique).
+  - Not done: the deck's "O'zbekcha" line can no longer follow each student's own `uzbekGlosses` setting, since the
+    cards are now shared rather than personal. It is always shown when the lesson has one.
 
-## 2. Videos keep playing after leaving the page
+## 2. Videos keep playing after leaving the page — done
 
 **Cost: none, and it saves data.** Cause confirmed: with Cache Components on, Next.js keeps up to 3 recent pages
 alive but hidden (React `<Activity>`), so the YouTube player keeps playing.
@@ -39,29 +44,38 @@ alive but hidden (React `<Activity>`), so the YouTube player keeps playing.
 - **Fix:** in `LiteVideo` (`src/components/lite-video.tsx`), turn `playing` off in a `useLayoutEffect` cleanup, the
   pattern in `node_modules/next/dist/docs/01-app/02-guides/preserving-ui-state.md`.
 - **Side effect:** returning to the page starts the video from the beginning. If that matters, save the playback
-  position and resume with `?start=`.
+  position and resume with `?start=`. — not done; no report that it matters yet.
 
-## 3. One Anki deck per passage; highlights go to that deck
+## 3. One Anki deck per passage; highlights go to that deck — mostly done
 
 **Cost: low for the database, but the storage risk grows.**
 
-- **Link:** a passage ID on `Deck`, unique: one deck per passage.
+- **Link:** a passage ID on `Deck`, unique: one deck per passage. — done.
 - **Students' own cards:** the deck is shared, so a highlight added to it would show for every student. Add an
   owner to `Card`: empty for the teacher's cards, the student's ID for their own. Every deck query shows "teacher's
-  cards plus mine". One column and one index, no copies.
+  cards plus mine". One column and one index, no copies. — done.
 - **Side effects:**
   - **Re-uploading a deck** would today replace the cards and lose every student's progress on them. Store Anki's
-    note ID and update matching cards instead.
+    note ID and update matching cards instead. — done (`Card.ankiNoteId`; `src/lib/deck-import.ts`).
   - **Passages with no deck:** highlights need a home, either an empty deck created automatically or the personal
-    deck as before.
-  - **Who uploads:** only admins can upload decks today; teachers need upload access.
-  - **Upload limit:** Netlify's limit of about 4.5 MB still applies.
+    deck as before. — done: created automatically (`passageDeck` in `src/lib/decks.ts`), the same way the personal
+    deck is.
+  - **Who uploads:** only admins can upload decks today; teachers need upload access. — done: a teacher uploads a
+    deck for their own passage from `/teacher/passages`; uploading one with no passage (the old shared-with-everyone
+    kind, from `/teacher/decks`) is still admin only.
+  - **Upload limit:** Netlify's limit of about 4.5 MB still applies. — unchanged; not addressed here.
   - **Storage:** every deck's images and sounds count against Neon's storage. Store each media file once by
-    content hash and cap media size per deck.
+    content hash and cap media size per deck. — **partly done, deliberately cut down:** each deck now has a 20 MB
+    cap (`MAX_DECK_MEDIA_BYTES`), and re-uploading the same export does not add duplicate media rows. What is not
+    done: content-hash dedup **across** decks (two decks sharing an identical sound would still store it twice).
+    That needs media URLs keyed by hash instead of by deck ID, which means rewriting the `/api/media` route and the
+    HTML already baked into every existing card — a real migration, not attempted without discussing it first.
   - **Deleting a passage** today deletes the deck, students' own cards and their review history. Archive instead.
-  - **Old cards:** existing "My IELTS chunks" cards stay where they are.
+    — **not done.** `deletePassage` (`src/app/actions/teacher.ts`) still hard-deletes, cascading to its deck. Needs
+    an `archived` flag and a filter everywhere passages are listed; left for a dedicated pass.
+  - **Old cards:** existing "My IELTS chunks" cards stay where they are. — true: unaffected.
 
-## 4. Students see only what is assigned; flashcards follow
+## 4. Students see only what is assigned; flashcards follow — done
 
 **Cost: low.** Mostly filter changes.
 
@@ -120,8 +134,9 @@ there is no clean word to sort by.
 
 ## Order
 
-1. Video fix (2): trivial.
-2. Visibility (4): changes 1, 3 and 6 depend on it.
-3. Listening deck and passage decks (1 and 3) together: both create decks linked to content.
-4. Vocabulary list (6).
-5. Analytics (5).
+1. Video fix (2): trivial. — done.
+2. Visibility (4): changes 1, 3 and 6 depend on it. — done.
+3. Listening deck and passage decks (1 and 3) together: both create decks linked to content. — done (3 with the
+   storage dedup and passage-archiving side effects deliberately left; see above).
+4. Vocabulary list (6). — not started.
+5. Analytics (5). — not started.

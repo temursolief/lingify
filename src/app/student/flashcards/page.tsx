@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader, PageSkeleton } from "@/components/ui";
 import { requireStudent } from "@/lib/auth";
-import { deckSummaries, studentDecks } from "@/lib/decks";
+import { deckSummaries, PERSONAL_DECK, studentDecks } from "@/lib/decks";
 import { OPTIONS } from "@/lib/anki";
 
 export const metadata: Metadata = { title: "Flashcards" };
@@ -36,7 +36,14 @@ async function FlashcardsContent() {
                   <span className="min-w-0">
                     <span className="block truncate font-medium">{deck.name}</span>
                     <span className="block truncate text-sm text-muted">
-                      {deck.ownerId ? "Your cards from highlighted passages" : "From your school"} · {counts.total} card{counts.total === 1 ? "" : "s"}
+                      {deck.name === PERSONAL_DECK
+                        ? "Your own highlighted phrases"
+                        : deck.passageId
+                          ? "From this passage, plus your own highlights in it"
+                          : deck.lessonId
+                            ? "This lesson's key words"
+                            : "From your school"}{" "}
+                      · {counts.total} card{counts.total === 1 ? "" : "s"}
                     </span>
                   </span>
                   <span className={`text-right tabular-nums ${counts.new ? "text-accent" : "text-muted/50"}`}>{counts.new}</span>

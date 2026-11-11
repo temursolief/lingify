@@ -135,7 +135,7 @@ export function OfflineApp() {
           key={p.id}
           active={current === p.id}
           label={p.title}
-          subtitle={p.assigned ? "From your teacher" : "Practice passage"}
+          subtitle="From your teacher"
           color={AVATAR[(i + 3) % AVATAR.length]}
           onClick={() => openRow(p.id)}
         />

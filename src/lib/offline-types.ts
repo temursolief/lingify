@@ -19,7 +19,7 @@ export type OfflineDeck = {
   reviewsLeft: number;
 };
 
-export type OfflinePassage = { id: string; slug: string; title: string; paragraphs: string[]; assigned: boolean };
+export type OfflinePassage = { id: string; slug: string; title: string; paragraphs: string[] };
 
 export type OfflinePack = {
   userId: string;

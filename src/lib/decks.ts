@@ -2,7 +2,9 @@ import "server-only";
 import { Prisma, type CardQueue } from "@/generated/prisma/client";
 import { answer, newSchedule, OPTIONS, type Rating, type Schedule } from "./anki";
 import { db } from "./db";
+import { lessonVisibleTo } from "./listening";
 import { store, type OfflineCard } from "./offline-types";
+import { passageVisibleTo } from "./passages";
 import type { StudyQueue } from "./study";
 import { endOfDay, startOfDay } from "./time";
 
@@ -13,21 +15,40 @@ export function personalDeck(userId: string) {
   return db.deck.upsert({ where: { ownerId: userId }, create: { name: PERSONAL_DECK, ownerId: userId }, update: {} });
 }
 
-const deckFields = { id: true, name: true, css: true, ownerId: true } as const;
-
-/** Shared decks uploaded by an admin, plus the student's own deck. */
-export async function studentDecks(userId: string) {
-  const where = { OR: [{ ownerId: null }, { ownerId: userId }] };
-  const orderBy = [{ ownerId: "asc" as const }, { createdAt: "asc" as const }];
-  const decks = await db.deck.findMany({ where, orderBy, select: deckFields });
-  if (decks.some((d) => d.ownerId === userId)) return decks;
-  await personalDeck(userId);
-  return db.deck.findMany({ where, orderBy, select: deckFields });
+/** The deck for one passage's shared cards and students' own highlights, created on first use like the personal deck. */
+export function passageDeck(passageId: string, title: string) {
+  return db.deck.upsert({ where: { passageId }, create: { name: title, passageId }, update: {} });
 }
 
-/** The deck, if this student may study it: a shared deck or their own. */
+const deckFields = { id: true, name: true, css: true, ownerId: true, passageId: true, lessonId: true } as const;
+
+/** Decks this student may study: their own, plus the ones linked to a passage or lesson a teacher assigned them. */
+function visibleDeckWhere(userId: string): Prisma.DeckWhereInput {
+  return {
+    OR: [
+      { ownerId: userId },
+      { ownerId: null, passageId: null, lessonId: null },
+      { passageId: { not: null }, passage: passageVisibleTo(userId) },
+      { lessonId: { not: null }, lesson: lessonVisibleTo(userId) },
+    ],
+  };
+}
+
+/** Cards in a shared deck this student may see: the deck's own (teacher-made) cards, plus their own highlights in it. */
+function visibleCardWhere(userId: string): Prisma.CardWhereInput {
+  return { OR: [{ ownerId: null }, { ownerId: userId }] };
+}
+
+/** A student's own deck, plus any shared deck linked to a passage or lesson assigned to them. */
+export async function studentDecks(userId: string) {
+  const personal = await personalDeck(userId);
+  const shared = await db.deck.findMany({ where: { id: { not: personal.id }, ...visibleDeckWhere(userId) }, orderBy: { createdAt: "asc" }, select: deckFields });
+  return [personal, ...shared];
+}
+
+/** The deck, if this student may study it: their own, or one linked to content assigned to them. */
 export function usableDeck(userId: string, deckId: string) {
-  return db.deck.findFirst({ where: { id: deckId, OR: [{ ownerId: null }, { ownerId: userId }] }, select: deckFields });
+  return db.deck.findFirst({ where: { id: deckId, ...visibleDeckWhere(userId) }, select: deckFields });
 }
 
 const scheduleFields = { queue: true, due: true, interval: true, ease: true, reps: true, lapses: true, step: true } as const;
@@ -80,7 +101,7 @@ export async function deckSummaries(userId: string, deckIds: string[], now = new
              (count(*) FILTER (WHERE s."queue" = 'REVIEW' AND s."due" <= ${endOfDay(now)}))::int AS due
       FROM "Card" c
       LEFT JOIN "CardState" s ON s."cardId" = c."id" AND s."userId" = ${userId}
-      WHERE c."deckId" IN (${Prisma.join(deckIds)})
+      WHERE c."deckId" IN (${Prisma.join(deckIds)}) AND (c."ownerId" IS NULL OR c."ownerId" = ${userId})
       GROUP BY c."deckId"`,
     db.$queryRaw<{ deckId: string; queue: CardQueue; n: number }[]>`
       SELECT c."deckId" AS "deckId", l."queue" AS queue, count(*)::int AS n
@@ -133,7 +154,12 @@ export async function studyQueue(
     }),
     db.cardState.findMany({ where: dueReviews, select: { ...scheduleFields, card: { select: cardFields } }, orderBy: { due: "asc" }, take: batch }),
     db.cardState.count({ where: dueReviews }),
-    db.card.findMany({ where: { deckId, states: { none: { userId } } }, select: cardFields, orderBy: { position: "asc" }, take: OPTIONS.newPerDay }),
+    db.card.findMany({
+      where: { deckId, states: { none: { userId } }, ...visibleCardWhere(userId) },
+      select: cardFields,
+      orderBy: { position: "asc" },
+      take: OPTIONS.newPerDay,
+    }),
   ]);
   const shown = reviews.slice(0, limits.reviewsLeft);
   const cards: OfflineCard[] = [
@@ -155,7 +181,7 @@ export async function applyReviews(userId: string, reviews: Review[]): Promise<n
   const ids = [...new Set(reviews.map((r) => r.cardId))];
   const oldest = new Date(Math.min(...reviews.map((r) => r.at.getTime())));
   const [cards, states, logs] = await Promise.all([
-    db.card.findMany({ where: { id: { in: ids }, deck: { OR: [{ ownerId: null }, { ownerId: userId }] } }, select: { id: true } }),
+    db.card.findMany({ where: { id: { in: ids }, deck: visibleDeckWhere(userId), ...visibleCardWhere(userId) }, select: { id: true } }),
     db.cardState.findMany({ where: { userId, cardId: { in: ids } }, select: { cardId: true, ...scheduleFields } }),
     db.reviewLog.findMany({ where: { userId, cardId: { in: ids }, at: { gte: oldest } }, select: { cardId: true, at: true } }),
   ]);
@@ -191,5 +217,5 @@ export async function applyReviews(userId: string, reviews: Review[]): Promise<n
 
 /** Flashcards due today across all of a student's decks, for the sidebar badge. */
 export async function dueToday(userId: string, now = new Date()) {
-  return db.cardState.count({ where: { userId, queue: { not: "NEW" }, due: { lte: endOfDay(now) } } });
+  return db.cardState.count({ where: { userId, queue: { not: "NEW" }, due: { lte: endOfDay(now) }, card: { deck: visibleDeckWhere(userId) } } });
 }

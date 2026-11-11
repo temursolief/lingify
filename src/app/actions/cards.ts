@@ -6,7 +6,7 @@ import { z } from "zod";
 import { requireStudent } from "@/lib/auth";
 import { chunkMeaning, knownChunkMeaning } from "@/lib/chunk-meaning";
 import { db } from "@/lib/db";
-import { personalDeck, studyQueue, usableDeck } from "@/lib/decks";
+import { passageDeck, studyQueue, usableDeck } from "@/lib/decks";
 import { passageVisibleTo } from "@/lib/passages";
 import type { StudyQueue } from "@/lib/study";
 
@@ -38,19 +38,19 @@ type ChunkInput = z.infer<typeof chunkSchema>;
 /** `pending`: the meaning is still being written; ask for it with explainChunkCard. */
 export type ChunkCard = { id: string; chunk: string; meaning: string; uz: string | null; front: string; pending: boolean } | { error: string };
 
-type ChunkContext = { chunk: string; sentence: string; before: string; after: string };
+type ChunkContext = { passageId: string; title: string; chunk: string; sentence: string; before: string; after: string };
 
 /** The highlighted chunk and its sentence, read from the stored passage so a card never trusts text sent by the browser. */
 async function chunkContext(userId: string, input: ChunkInput): Promise<ChunkContext | { error: string }> {
   const { passageId, paragraph, start, end } = chunkSchema.parse(input);
-  const passage = await db.passage.findFirst({ where: { id: passageId, ...passageVisibleTo(userId) }, select: { paragraphs: true } });
+  const passage = await db.passage.findFirst({ where: { id: passageId, ...passageVisibleTo(userId) }, select: { title: true, paragraphs: true } });
   const text = passage?.paragraphs[paragraph];
   if (!text || end > text.length || end <= start) return { error: "Select a few words in the passage first." };
   const chunk = text.slice(start, end).trim();
   if (chunk.split(/\s+/).length > 8) return { error: "Select a shorter chunk: up to 8 words." };
   const { sentence, offset } = sentenceAround(text, start, end);
   const chunkStart = text.indexOf(chunk, start) - offset;
-  return { chunk, sentence, before: sentence.slice(0, chunkStart), after: sentence.slice(chunkStart + chunk.length) };
+  return { passageId, title: passage!.title, chunk, sentence, before: sentence.slice(0, chunkStart), after: sentence.slice(chunkStart + chunk.length) };
 }
 
 function cardBack({ chunk, before, after }: ChunkContext, meaning: string, uz: string | null) {
@@ -66,12 +66,13 @@ function cardBack({ chunk, before, after }: ChunkContext, meaning: string, uz: s
 async function fillMeaning(userId: string, cardId: string, ctx: ChunkContext, showUz: boolean) {
   const { meaning, uz } = await chunkMeaning(ctx.chunk, ctx.sentence);
   const shownUz = showUz ? uz : null;
-  await db.card.updateMany({ where: { id: cardId, deck: { ownerId: userId } }, data: { back: cardBack(ctx, meaning, shownUz) } });
+  await db.card.updateMany({ where: { id: cardId, ownerId: userId }, data: { back: cardBack(ctx, meaning, shownUz) } });
   return { meaning, uz: shownUz };
 }
 
 /**
- * Highlight → flashcard in one click, saved at once. Front: the whole sentence from the passage with the chunk blanked
+ * Highlight → flashcard in one click, saved at once, into that passage's shared deck (created on first use) with
+ * this student as its owner, so only they see it. Front: the whole sentence from the passage with the chunk blanked
  * out. Back: the chunk in its sentence, a short meaning and, if the student wants it, Uzbek. A meaning not known yet is
  * looked up in the background (the free dictionary), so the student never waits for it.
  */
@@ -83,9 +84,9 @@ export async function addChunkCard(input: ChunkInput): Promise<ChunkCard> {
   const known = await knownChunkMeaning(ctx.chunk, ctx.sentence);
   const uz = known && user.uzbekGlosses ? known.uz : null;
   const front = `<div class="sentence">${escapeHtml(ctx.before)}<span class="cloze">[...]</span>${escapeHtml(ctx.after)}</div>`;
-  const deck = await personalDeck(user.id);
+  const deck = await passageDeck(ctx.passageId, ctx.title);
   const position = await db.card.count({ where: { deckId: deck.id } });
-  const card = await db.card.create({ data: { deckId: deck.id, front, back: cardBack(ctx, known?.meaning ?? "", uz), noteType: "chunk", position } });
+  const card = await db.card.create({ data: { deckId: deck.id, ownerId: user.id, front, back: cardBack(ctx, known?.meaning ?? "", uz), noteType: "chunk", position } });
   // Runs after the reply: the card gets its meaning even if the student closes the page straight away.
   if (!known) after(() => fillMeaning(user.id, card.id, ctx, user.uzbekGlosses).catch((e) => console.error("Chunk meaning failed", e)));
   return { id: card.id, chunk: ctx.chunk, meaning: known?.meaning ?? "", uz, front: `${ctx.before}[...]${ctx.after}`, pending: !known };
@@ -103,6 +104,6 @@ export async function explainChunkCard(cardId: string, input: ChunkInput): Promi
 /** Undo for a card the student just made from a highlight. */
 export async function deleteOwnCard(cardId: string) {
   const user = await requireStudent();
-  await db.card.deleteMany({ where: { id: cardId, deck: { ownerId: user.id } } });
+  await db.card.deleteMany({ where: { id: cardId, ownerId: user.id } });
   refresh();
 }

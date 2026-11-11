@@ -7,8 +7,9 @@ export type Section = { href: string; label: string; subtitle: string; badge?: n
 
 /** A student's four sections with what is waiting in each: the folders on the home page. */
 export async function studentSections(userId: string): Promise<Section[]> {
-  const [assigned, due, summary] = await Promise.all([
-    db.assignmentRecipient.count({ where: { studentId: userId, completedAt: null } }),
+  const [assignedPassages, assignedLessons, due, summary] = await Promise.all([
+    db.assignmentRecipient.count({ where: { studentId: userId, completedAt: null, assignment: { passageId: { not: null } } } }),
+    db.assignmentRecipient.count({ where: { studentId: userId, completedAt: null, assignment: { lessonId: { not: null } } } }),
     dueToday(userId),
     studentSummary(userId),
   ]);
@@ -16,11 +17,17 @@ export async function studentSections(userId: string): Promise<Section[]> {
     {
       href: "/student/passages",
       label: "Passages",
-      badge: assigned,
-      subtitle: assigned ? `${assigned} from your teacher to do` : summary.band ? `Estimated band ${summary.band}` : "IELTS Academic Reading",
+      badge: assignedPassages,
+      subtitle: assignedPassages ? `${assignedPassages} from your teacher to do` : summary.band ? `Estimated band ${summary.band}` : "IELTS Academic Reading",
       peek: "Reading",
     },
-    { href: "/student/listening", label: "Listening", subtitle: "Video lessons with questions", peek: "Video" },
+    {
+      href: "/student/listening",
+      label: "Listening",
+      badge: assignedLessons,
+      subtitle: assignedLessons ? `${assignedLessons} from your teacher to do` : "Video lessons with questions",
+      peek: "Video",
+    },
     { href: "/student/flashcards", label: "Flashcards", badge: due, subtitle: due ? `${due} card${due === 1 ? "" : "s"} due today` : "Anki decks and your own cards", peek: "Anki" },
     {
       href: "/student/progress",

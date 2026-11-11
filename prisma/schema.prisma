@@ -57,6 +57,7 @@ model User {
   listenings    ListeningAttempt[]
   cardStates    CardState[]
   reviewLogs    ReviewLog[]
+  ownCards      Card[]                @relation("CardOwner")
 }
 
 model Class {
@@ -85,39 +86,45 @@ model Enrollment {
 
 /// An IELTS Academic Reading passage. `ownerId` null = built into Lingify, visible to everyone.
 model Passage {
-  id          String           @id @default(cuid())
-  slug        String           @unique
-  title       String
+  id             String           @id @default(cuid())
+  slug           String           @unique
+  title          String
   /// paragraphs, labelled A, B, C… in order
-  paragraphs  String[]
+  paragraphs     String[]
   /// QuestionGroup[] in the documented upload format (src/lib/passage-format.ts)
-  groups      Json
-  timeLimit   Int              @default(20)
+  groups         Json
+  timeLimit      Int              @default(20)
   /// kept beside the content so lists show them without loading the passage itself
-  paragraphCount Int           @default(0)
-  questionCount  Int           @default(0)
-  ownerId     String?
-  owner       User?            @relation("TeacherPassages", fields: [ownerId], references: [id], onDelete: Cascade)
-  createdAt   DateTime         @default(now())
-  assignments Assignment[]
-  attempts    PassageAttempt[]
+  paragraphCount Int              @default(0)
+  questionCount  Int              @default(0)
+  ownerId        String?
+  owner          User?            @relation("TeacherPassages", fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt      DateTime         @default(now())
+  assignments    Assignment[]
+  attempts       PassageAttempt[]
+  /// the shared deck for this passage's uploaded cards and students' own highlights, if any
+  deck           Deck?
 
   @@index([ownerId])
 }
 
+/// A passage or a listening lesson given to a class: exactly one of passageId/lessonId is set.
 model Assignment {
   id         String                @id @default(cuid())
   classId    String
-  passageId  String
+  passageId  String?
+  lessonId   String?
   note       String?
   dueAt      DateTime?
   createdAt  DateTime              @default(now())
   class      Class                 @relation(fields: [classId], references: [id], onDelete: Cascade)
-  passage    Passage               @relation(fields: [passageId], references: [id], onDelete: Cascade)
+  passage    Passage?              @relation(fields: [passageId], references: [id], onDelete: Cascade)
+  lesson     ListeningLesson?      @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   recipients AssignmentRecipient[]
 
   @@index([classId])
   @@index([passageId])
+  @@index([lessonId])
 }
 
 model AssignmentRecipient {
@@ -133,10 +140,10 @@ model AssignmentRecipient {
 
 /// One student working through one passage: a timed first submission, then corrections until every answer is green.
 model PassageAttempt {
-  id               String          @id @default(cuid())
+  id               String           @id @default(cuid())
   userId           String
   passageId        String
-  startedAt        DateTime        @default(now())
+  startedAt        DateTime         @default(now())
   /// first submission: the exam-like score
   firstSubmittedAt DateTime?
   firstSeconds     Int?
@@ -145,8 +152,8 @@ model PassageAttempt {
   band             Float?
   /// every question answered correctly
   completedAt      DateTime?
-  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  passage          Passage         @relation(fields: [passageId], references: [id], onDelete: Cascade)
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  passage          Passage          @relation(fields: [passageId], references: [id], onDelete: Cascade)
   answers          QuestionAnswer[]
 
   @@index([userId, passageId])
@@ -177,21 +184,24 @@ model QuestionAnswer {
 /// A Listening Comprehension lesson: a YouTube video (e.g. TED-Ed), IELTS Listening questions and key vocabulary,
 /// all from one JSON file uploaded by a teacher. Kept as one row so a lesson page is a single read.
 model ListeningLesson {
-  id         String             @id @default(cuid())
-  slug       String             @unique
-  title      String
-  videoId    String
+  id          String             @id @default(cuid())
+  slug        String             @unique
+  title       String
+  videoId     String
   /// QuestionGroup[] (src/lib/listening-format.ts); answers never leave the server
-  questions  Json
+  questions   Json
   /// { word, meaning, uz?, example? }[]
-  vocabulary Json               @default("[]")
-  total      Int
+  vocabulary  Json               @default("[]")
+  total       Int
   /// number of key words, so lists do not load the vocabulary
-  wordCount  Int                @default(0)
-  ownerId    String?
-  owner      User?              @relation("LessonOwner", fields: [ownerId], references: [id], onDelete: SetNull)
-  createdAt  DateTime           @default(now())
-  attempts   ListeningAttempt[]
+  wordCount   Int                @default(0)
+  ownerId     String?
+  owner       User?              @relation("LessonOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  createdAt   DateTime           @default(now())
+  attempts    ListeningAttempt[]
+  assignments Assignment[]
+  /// the shared deck for this lesson's key words, if any
+  deck        Deck?
 
   @@index([ownerId])
 }
@@ -207,6 +217,8 @@ model ListeningAttempt {
   firstCorrect     Int?
   band             Float?
   completedAt      DateTime?
+  /// set once the student has pressed "I've read these words"; the questions stay hidden until then
+  vocabSeenAt      DateTime?
   /// { [number]: { answer, correct, firstCorrect, tries, wrong: string[] } }
   answers          Json            @default("{}")
   user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -216,35 +228,47 @@ model ListeningAttempt {
   @@index([lessonId])
 }
 
-/// An Anki deck: imported from .apkg by an admin teacher (ownerId null, shared with every student) or a student's own deck.
-/// A student has one deck of their own: `ownerId` is unique (shared decks have none).
+/// An Anki deck: a student's own (`ownerId` unique), one shared deck per passage or lesson (`passageId`/`lessonId`
+/// unique), or, for decks uploaded before those existed, a deck shared with every student (all three null).
 model Deck {
-  id        String      @id @default(cuid())
+  id        String           @id @default(cuid())
   name      String
-  ownerId   String?     @unique
-  owner     User?       @relation("DeckOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId   String?          @unique
+  owner     User?            @relation("DeckOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  passageId String?          @unique
+  passage   Passage?         @relation(fields: [passageId], references: [id], onDelete: Cascade)
+  lessonId  String?          @unique
+  lesson    ListeningLesson? @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   /// card styling from the Anki note types: { [noteTypeId]: css }
-  css       Json        @default("{}")
-  createdAt DateTime    @default(now())
+  css       Json             @default("{}")
+  createdAt DateTime         @default(now())
   cards     Card[]
   media     DeckMedia[]
 }
 
 model Card {
-  id        String      @id @default(cuid())
-  deckId    String
+  id         String      @id @default(cuid())
+  deckId     String
   /// rendered question and answer HTML
-  front     String
-  back      String
-  noteType  String      @default("")
+  front      String
+  back       String
+  noteType   String      @default("")
   /// order cards are introduced in (Anki's "due" for new cards)
-  position  Int         @default(0)
-  createdAt DateTime    @default(now())
-  deck      Deck        @relation(fields: [deckId], references: [id], onDelete: Cascade)
-  states    CardState[]
-  logs      ReviewLog[]
+  position   Int         @default(0)
+  /// empty for a deck's own cards (the teacher's upload or a lesson's key words), the student's ID for their own
+  /// highlight card in a shared deck
+  ownerId    String?
+  owner      User?       @relation("CardOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  /// the Anki note this card came from, so re-uploading the same .apkg updates it instead of duplicating it
+  ankiNoteId String?
+  createdAt  DateTime    @default(now())
+  deck       Deck        @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  states     CardState[]
+  logs       ReviewLog[]
 
   @@index([deckId, position])
+  @@index([ownerId])
+  @@index([deckId, ankiNoteId])
 }
 
 model DeckMedia {
@@ -280,16 +304,16 @@ model CardState {
 }
 
 model ReviewLog {
-  id       String   @id @default(cuid())
+  id       String    @id @default(cuid())
   userId   String
   cardId   String
   /// 1 Again, 2 Hard, 3 Good, 4 Easy
   rating   Int
   queue    CardQueue
   interval Int
-  at       DateTime @default(now())
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  card     Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  at       DateTime  @default(now())
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  card     Card      @relation(fields: [cardId], references: [id], onDelete: Cascade)
 
   @@index([userId, at])
   @@index([cardId])

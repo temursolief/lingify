@@ -1,5 +1,6 @@
 import "server-only";
 import type { ErrorTag, Prisma } from "@/generated/prisma/client";
+import { completeAssignments } from "./assignments";
 import { db } from "./db";
 import { answerKey, estimateBand, paragraphLetter, type QuestionGroup } from "./passage-format";
 
@@ -31,9 +32,9 @@ export type AttemptView = {
 
 type History = { answer: string; correct: boolean; evidence: Evidence | null; at: string }[];
 
-/** Passages a student may open: Lingify's own, plus any a teacher assigned to them. */
+/** Passages a student may open: only the ones a teacher assigned to them. */
 export function passageVisibleTo(userId: string): Prisma.PassageWhereInput {
-  return { OR: [{ ownerId: null }, { assignments: { some: { recipients: { some: { studentId: userId } } } } }] };
+  return { assignments: { some: { recipients: { some: { studentId: userId } } } } };
 }
 
 export async function latestAttempt(userId: string, passageId: string) {
@@ -117,7 +118,7 @@ export async function submitFirst(userId: string, attemptId: string, answers: Re
     if ((e as { code?: string }).code === "P2002") return;
     throw e;
   }
-  if (allCorrect) await completeAssignments(userId, attempt.passageId, now);
+  if (allCorrect) await completeAssignments(userId, { passageId: attempt.passageId }, now);
 }
 
 export type RetryResult = { ok: true; correct: boolean; needsTag: boolean } | { ok: false; error: string };
@@ -167,12 +168,8 @@ export async function tagQuestion(userId: string, attemptId: string, number: num
   if (done && !attempt.completedAt) {
     const now = new Date();
     await db.passageAttempt.update({ where: { id: attemptId }, data: { completedAt: now } });
-    await completeAssignments(userId, attempt.passageId, now);
+    await completeAssignments(userId, { passageId: attempt.passageId }, now);
   }
-}
-
-async function completeAssignments(userId: string, passageId: string, at: Date) {
-  await db.assignmentRecipient.updateMany({ where: { studentId: userId, completedAt: null, assignment: { passageId } }, data: { completedAt: at } });
 }
 
 export const ERROR_TAG_LABEL: Record<ErrorTag, { title: string; hint: string }> = {

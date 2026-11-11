@@ -29,23 +29,23 @@ export async function GET(request: Request) {
     }),
   );
 
-  // Assigned passages first; practice passages fill what is left. Only the rows that go into the copy are read.
+  // Unfinished assignments first; finished ones fill what is left. Only the rows that go into the copy are read.
   const fields = { id: true, slug: true, title: true, paragraphs: true } as const;
-  const assigned = await db.passage.findMany({
+  const due = await db.passage.findMany({
     where: { assignments: { some: { recipients: { some: { studentId: userId, completedAt: null } } } } },
     select: fields,
     orderBy: { title: "asc" },
     take: OFFLINE_PASSAGES,
   });
-  const builtIn = assigned.length < OFFLINE_PASSAGES
+  const done = due.length < OFFLINE_PASSAGES
     ? await db.passage.findMany({
-        where: { ownerId: null, id: { notIn: assigned.map((p) => p.id) } },
+        where: { assignments: { some: { recipients: { some: { studentId: userId } } } }, id: { notIn: due.map((p) => p.id) } },
         select: fields,
         orderBy: { title: "asc" },
-        take: OFFLINE_PASSAGES - assigned.length,
+        take: OFFLINE_PASSAGES - due.length,
       })
     : [];
-  const passages: OfflinePassage[] = [...assigned.map((p) => ({ ...p, assigned: true })), ...builtIn.map((p) => ({ ...p, assigned: false }))];
+  const passages: OfflinePassage[] = [...due, ...done];
 
   const body: Omit<OfflinePack, "packedAt"> = { userId, name: session.name, decks, passages };
   const json = JSON.stringify(body);

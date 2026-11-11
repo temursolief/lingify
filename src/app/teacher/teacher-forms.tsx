@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useActionState, useState, useTransition } from "react";
 import { deleteLesson, uploadLesson } from "@/app/actions/listening";
-import { assignPassage, createClass, deleteAssignment, deleteDeck, deletePassage, removeStudent, uploadPassage, type FormState } from "@/app/actions/teacher";
+import { assignLesson, assignPassage, createClass, deleteAssignment, deleteDeck, deletePassage, removeStudent, uploadPassage, type FormState } from "@/app/actions/teacher";
 import { Button } from "@/components/ui";
 
 const inputClass = "rounded-md border border-line bg-surface px-3 py-2 focus:border-accent focus:outline-none";
@@ -86,6 +86,58 @@ export function AssignPassageForm({
       <label className="flex-1 text-sm">
         <span className="mb-1 block text-muted">Note (optional)</span>
         <input name="note" maxLength={200} className={`${inputClass} w-full`} placeholder="Focus on the headings" />
+      </label>
+      <Button type="submit" disabled={pending}>Assign</Button>
+      <Feedback state={state} />
+    </form>
+  );
+}
+
+export function AssignLessonForm({
+  classId,
+  lessons,
+  students,
+}: {
+  classId: string;
+  lessons: { id: string; title: string }[];
+  students: { id: string; name: string }[];
+}) {
+  const [state, action, pending] = useActionState(assignLesson, undefined);
+  const [some, setSome] = useState(false);
+  return (
+    <form action={action} className="flex flex-wrap items-end gap-2">
+      <input type="hidden" name="classId" value={classId} />
+      <label className="w-full text-sm">
+        <span className="mb-1 block text-muted">Lesson</span>
+        <select name="lessonId" required className={`${inputClass} w-full`} defaultValue="">
+          <option value="" disabled>Choose a lesson…</option>
+          {lessons.map((l) => <option key={l.id} value={l.id}>{l.title}</option>)}
+        </select>
+      </label>
+      <fieldset className="w-full text-sm">
+        <label className="mr-4 inline-flex items-center gap-1.5">
+          <input type="radio" checked={!some} onChange={() => setSome(false)} className="accent-[var(--accent)]" /> Whole class
+        </label>
+        <label className="inline-flex items-center gap-1.5">
+          <input type="radio" checked={some} onChange={() => setSome(true)} className="accent-[var(--accent)]" /> Some students
+        </label>
+        {some && (
+          <div className="mt-2 grid grid-cols-2 gap-1 rounded-md bg-paper p-2">
+            {students.map((s) => (
+              <label key={s.id} className="inline-flex items-center gap-1.5">
+                <input type="checkbox" name="students" value={s.id} className="accent-[var(--accent)]" /> {s.name}
+              </label>
+            ))}
+          </div>
+        )}
+      </fieldset>
+      <label className="text-sm">
+        <span className="mb-1 block text-muted">Due date</span>
+        <input name="dueAt" type="date" className={inputClass} />
+      </label>
+      <label className="flex-1 text-sm">
+        <span className="mb-1 block text-muted">Note (optional)</span>
+        <input name="note" maxLength={200} className={`${inputClass} w-full`} placeholder="Listen twice before answering" />
       </label>
       <Button type="submit" disabled={pending}>Assign</Button>
       <Feedback state={state} />
@@ -176,7 +228,7 @@ export function UploadPassageForm({ lesson = false }: { lesson?: boolean }) {
             <Feedback state={r.state} />
           </div>
         ))}
-        {!failed.length && saved > 0 && !progress && <p className="text-muted">{lesson ? "They are now in every student's Listening library." : "Assign them from a class."}</p>}
+        {!failed.length && saved > 0 && !progress && <p className="text-muted">Assign them from a class.</p>}
       </div>
     </form>
   );
@@ -203,8 +255,12 @@ export const RemoveStudentButton = ({ classId, studentId, name }: { classId: str
   <ConfirmButton label="Remove from class" confirmText={`Remove ${name}?`} onConfirm={() => removeStudent(classId, studentId)} />
 );
 
-/** Uploads an .apkg to the import route (a plain request, so large decks are not limited like form actions). */
-export function UploadDeckForm() {
+/**
+ * Uploads an .apkg to the import route (a plain request, so large decks are not limited like form actions).
+ * With a `passageId`, the cards become that passage's shared deck; re-uploading the same export updates matching
+ * cards instead of duplicating them. Without one, this is a deck shared with every student (admin teachers only).
+ */
+export function UploadDeckForm({ passageId }: { passageId?: string }) {
   const router = useRouter();
   const [message, setMessage] = useState<{ ok?: string; error?: string } | null>(null);
   const [pending, start] = useTransition();
@@ -226,6 +282,7 @@ export function UploadDeckForm() {
         });
       }}
     >
+      {passageId && <input type="hidden" name="passageId" value={passageId} />}
       <input name="file" type="file" accept=".apkg,.colpkg" required className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-accent-soft file:px-3 file:py-2 file:text-accent" />
       <Button type="submit" disabled={pending}>{pending ? "Importing… large decks take a minute" : "Upload deck"}</Button>
       {message?.ok && <p className="text-sm text-good">{message.ok}</p>}

@@ -16,7 +16,7 @@ import { renderCard, sanitizeHtml } from "./anki-template";
 export type ImportedDeck = {
   name: string;
   css: Record<string, string>;
-  cards: { front: string; back: string; noteType: string; position: number }[];
+  cards: { front: string; back: string; noteType: string; position: number; ankiNoteId: string }[];
   media: { name: string; mime: string; data: Buffer }[];
 };
 
@@ -200,7 +200,7 @@ export function readApkg(file: Uint8Array, fallbackName: string): ImportedDeck {
       if (!template) continue;
       const card = renderCard(template.qfmt, template.afmt, fields, type.cloze ? row.ord + 1 : null);
       if (!card) continue;
-      cards.push({ front: card.front, back: card.back, noteType: type.id, position });
+      cards.push({ front: card.front, back: card.back, noteType: type.id, position, ankiNoteId: String(row.nid) });
       deckCount.set(String(row.did), (deckCount.get(String(row.did)) ?? 0) + 1);
     }
     if (!cards.length) throw new Error("No cards could be read from this deck.");

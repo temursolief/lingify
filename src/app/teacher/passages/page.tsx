@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Card, PageHeader, PageSkeleton } from "@/components/ui";
 import { requireTeacher } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { DeletePassageButton, UploadPassageForm } from "../teacher-forms";
+import { DeletePassageButton, UploadDeckForm, UploadPassageForm } from "../teacher-forms";
 
 export const metadata: Metadata = { title: "My passages" };
 
@@ -14,7 +14,15 @@ async function PassagesContent() {
     where: { ownerId: teacher.id },
     orderBy: { createdAt: "desc" },
     // The stored counts stand in for the passage text and questions, which this list does not need to load.
-    select: { id: true, title: true, timeLimit: true, paragraphCount: true, questionCount: true, _count: { select: { assignments: true, attempts: true } } },
+    select: {
+      id: true,
+      title: true,
+      timeLimit: true,
+      paragraphCount: true,
+      questionCount: true,
+      _count: { select: { assignments: true, attempts: true } },
+      deck: { select: { id: true, _count: { select: { cards: true, media: true } } } },
+    },
   });
   return (
     <>
@@ -32,14 +40,29 @@ async function PassagesContent() {
           <Card className="p-0">
             <ul className="divide-y divide-line">
               {passages.map((p) => (
-                <li key={p.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate font-medium">{p.title}</span>
-                    <span className="block text-sm text-muted">
-                      {p.paragraphCount} paragraphs · {p.questionCount} questions · {p.timeLimit} min · assigned {p._count.assignments}× · {p._count.attempts} attempts
+                <li key={p.id} className="px-4 py-3">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-medium">{p.title}</span>
+                      <span className="block text-sm text-muted">
+                        {p.paragraphCount} paragraphs · {p.questionCount} questions · {p.timeLimit} min · assigned {p._count.assignments}× · {p._count.attempts} attempts
+                      </span>
                     </span>
-                  </span>
-                  <DeletePassageButton id={p.id} />
+                    <DeletePassageButton id={p.id} />
+                  </div>
+                  <details className="mt-2 text-sm">
+                    <summary className="cursor-pointer text-accent">
+                      Flashcard deck{p.deck ? ` · ${p.deck._count.cards} cards${p.deck._count.media ? `, ${p.deck._count.media} media` : ""}` : ": none yet"}
+                    </summary>
+                    <div className="mt-2 max-w-md rounded-md bg-paper p-3">
+                      <p className="mb-2 text-muted">
+                        In Anki desktop: File → Export → “Anki Deck Package (.apkg)”, with media included. Students assigned this
+                        passage study it with Anki&apos;s scheduling, and any highlight they make from it goes into the same deck, visible
+                        only to them. Uploading again updates matching cards instead of duplicating them.
+                      </p>
+                      <UploadDeckForm passageId={p.id} />
+                    </div>
+                  </details>
                 </li>
               ))}
             </ul>

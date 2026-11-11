@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PageSkeleton } from "@/components/ui";
 import { requireStudent } from "@/lib/auth";
-import { lessonAndAttempt, viewOf, vocabularyOf } from "@/lib/listening";
+import { lessonAndAttempt, vocabularyOf, viewOf } from "@/lib/listening";
 import { publicGroups, type QuestionGroup } from "@/lib/passage-format";
 import { ListeningLesson } from "./listening-lesson";
 

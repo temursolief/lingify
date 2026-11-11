@@ -8,7 +8,7 @@ import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import bcrypt from "bcryptjs";
 import { readApkg } from "../src/lib/apkg";
 import { db } from "../src/lib/db";
-import { applyReviews, type Review } from "../src/lib/decks";
+import { applyReviews, personalDeck, type Review } from "../src/lib/decks";
 import { saveImportedDeck } from "../src/lib/deck-import";
 import { answerKey, passageSchema, type QuestionGroup } from "../src/lib/passage-format";
 import { retryQuestion, submitFirst, tagQuestion, type Evidence } from "../src/lib/passages";
@@ -133,6 +133,7 @@ async function seedDemo(deckId: string) {
 
   const brains = await db.passage.findUniqueOrThrow({ where: { slug: "bilingual-brains" } });
   const aral = await db.passage.findUniqueOrThrow({ where: { slug: "the-aral-sea" } });
+  const ulughBeg = await db.passage.findUniqueOrThrow({ where: { slug: "ulugh-beg-observatory" } });
   for (const [passage, days, note] of [
     [brains, -2, "Read the questions first"],
     [aral, 3, null],
@@ -148,6 +149,16 @@ async function seedDemo(deckId: string) {
       },
     });
   }
+  // Aisha alone also has a third passage assigned, for the demo attempt below.
+  await db.assignment.create({
+    data: {
+      classId: cls.id,
+      passageId: ulughBeg.id,
+      dueAt: new Date(now.getTime() + 5 * 86_400_000),
+      createdAt: new Date(now.getTime() - 5 * 86_400_000),
+      recipients: { create: [{ studentId: aisha.id }] },
+    },
+  });
 
   // Aisha: made mistakes on headings and NG-vs-False, corrected them all.
   await demoAttempt(aisha.id, "bilingual-brains", {
@@ -164,8 +175,11 @@ async function seedDemo(deckId: string) {
   await demoAttempt(jasur.id, "bilingual-brains", { wrong: [4, 7], fixed: [{ n: 4, tag: "CARELESS" }], stuck: [7] });
   void malika;
 
-  // Some flashcard history for Aisha, so the deck list has learning and due cards.
-  const cards = await db.card.findMany({ where: { deckId }, orderBy: { position: "asc" }, take: 12 });
+  // Some flashcard history for Aisha, so her own deck has learning and due cards (shared decks aren't hers to study).
+  const demoCards = await db.card.findMany({ where: { deckId }, orderBy: { position: "asc" }, take: 12, select: { front: true, back: true, noteType: true } });
+  const aishaDeck = await personalDeck(aisha.id);
+  await db.card.createMany({ data: demoCards.map((c, position) => ({ ...c, deckId: aishaDeck.id, position })) });
+  const cards = await db.card.findMany({ where: { deckId: aishaDeck.id }, orderBy: { position: "asc" } });
   const reviews: Review[] = [];
   for (const [i, c] of cards.entries()) {
     const at = new Date(now.getTime() - (6 - (i % 5)) * 86_400_000);

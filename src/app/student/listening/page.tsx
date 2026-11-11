@@ -5,16 +5,18 @@ import { Card, PageHeader, PageSkeleton, cx } from "@/components/ui";
 import { requireStudent } from "@/lib/auth";
 import { db } from "@/lib/db";
 import type { ListeningAnswers } from "@/lib/listening";
+import { formatDay } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Listening" };
 
-/** The library of video lessons: one row each, with the student's progress. */
+/** The library of video lessons assigned to this student, one row each, with their progress. */
 async function LibraryContent() {
   const user = await requireStudent();
-  const [lessons, attempts] = await Promise.all([
-    db.listeningLesson.findMany({
-      orderBy: { createdAt: "desc" },
-      select: { id: true, slug: true, title: true, videoId: true, total: true, wordCount: true },
+  const [assigned, attempts] = await Promise.all([
+    db.assignmentRecipient.findMany({
+      where: { studentId: user.id, assignment: { lessonId: { not: null } } },
+      include: { assignment: { include: { lesson: { select: { id: true, slug: true, title: true, videoId: true, total: true, wordCount: true } } } } },
+      orderBy: [{ completedAt: { sort: "asc", nulls: "first" } }, { assignment: { dueAt: { sort: "asc", nulls: "last" } } }],
     }),
     db.listeningAttempt.findMany({
       where: { userId: user.id },
@@ -24,13 +26,15 @@ async function LibraryContent() {
   ]);
   const latest = new Map<string, (typeof attempts)[number]>();
   for (const a of attempts) if (!latest.has(a.lessonId)) latest.set(a.lessonId, a);
+  const now = new Date();
+  const lessons = assigned.map((r) => ({ ...r.assignment.lesson!, dueAt: r.assignment.dueAt, note: r.assignment.note, done: r.completedAt }));
 
   return (
     <>
       <PageHeader title="Listening" subtitle="Watch a video lesson, answer the IELTS Listening questions and learn its key words" />
       <div className="mx-auto max-w-3xl">
         {lessons.length === 0 ? (
-          <Card className="py-8 text-center text-muted">No lessons yet. Your teachers will add them soon.</Card>
+          <Card className="py-8 text-center text-muted">Nothing assigned yet. Ask your teacher.</Card>
         ) : (
           <ul className="divide-y divide-line overflow-hidden rounded-xl bg-surface shadow-bubble">
             {lessons.map((l) => {
@@ -49,7 +53,15 @@ async function LibraryContent() {
                     <img src={`https://i.ytimg.com/vi/${l.videoId}/mqdefault.jpg`} alt="" loading="lazy" width={96} height={54} className="h-[54px] w-24 shrink-0 rounded-md bg-grid object-cover" />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-medium">{l.title}</span>
-                      <span className="block truncate text-sm text-muted">{l.total} questions{words ? ` · ${words} key words` : ""}</span>
+                      <span className="block truncate text-sm text-muted">
+                        {l.total} questions{words ? ` · ${words} key words` : ""}
+                        {l.dueAt && (
+                          <span className={cx(!l.done && l.dueAt < now && "font-medium text-bad")}>
+                            {" "}· {l.dueAt < now && !l.done ? "was due" : "due"} {formatDay(l.dueAt, true)}
+                          </span>
+                        )}
+                        {l.note && ` · ${l.note}`}
+                      </span>
                     </span>
                     <span className={cx("shrink-0 text-sm tabular-nums", status.tone)}>{status.text}</span>
                   </Link>
