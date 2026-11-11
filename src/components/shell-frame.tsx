@@ -4,24 +4,21 @@ import { useEffect, useState, type ReactNode } from "react";
 import { cx } from "./ui";
 
 /**
- * The frame every signed-in screen sits in. On a desktop or a wide tablet it is Telegram Desktop's two columns: the
+ * The offline screen's frame (signed-in pages use TopShell). On a desktop or a wide tablet it is Telegram Desktop's two columns: the
  * list on the left, the open section on the right, each scrolling on its own. On a phone or a narrow tablet the
  * list becomes a drawer behind a menu button, so the open section gets the whole screen.
- * `action`: a button next to the app name (the teacher's "+"), in the list column and in the phone's top bar.
  */
 export function ShellFrame({
   brand,
   nav,
   footer,
   banner,
-  action,
   children,
 }: {
   brand: ReactNode;
   nav: ReactNode;
   footer?: ReactNode;
   banner?: ReactNode;
-  action?: ReactNode;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -50,7 +47,6 @@ export function ShellFrame({
           </svg>
         </button>
         <span className="text-lg font-semibold">{brand}</span>
-        {action && <div className="ml-auto">{action}</div>}
       </header>
 
       {open && <button type="button" aria-label="Close menu" onClick={() => setOpen(false)} className="fixed inset-0 z-30 cursor-default bg-black/30 lg:hidden" />}
@@ -68,7 +64,6 @@ export function ShellFrame({
       >
         <div className="flex h-14 shrink-0 items-center justify-between pr-3 pl-5">
           <span className="text-lg font-semibold">{brand}</span>
-          {action}
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-2">{nav}</div>
         {footer && <div className="shrink-0 border-t border-line px-2 py-2">{footer}</div>}

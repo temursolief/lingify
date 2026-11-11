@@ -28,11 +28,11 @@ export function OfflineSyncStatus({ userId }: { userId: string }) {
     };
   }, [userId]);
 
-  if (!state) return <p className="px-2.5 pt-1.5 text-xs text-muted">Saving an offline copy…</p>;
+  if (!state) return <p className="text-xs text-muted">Saving an offline copy…</p>;
   const cards = state.pack?.decks.reduce((n, d) => n + d.cards.length, 0) ?? 0;
   const passages = state.pack?.passages.length ?? 0;
   return (
-    <p className="px-2.5 pt-1.5 text-xs text-muted" title="These flashcards and passages work without internet">
+    <p className="text-xs text-muted" title="These flashcards and passages work without internet">
       {state.waiting > 0
         ? `${state.waiting} offline answer${state.waiting === 1 ? "" : "s"} waiting to sync`
         : state.pack

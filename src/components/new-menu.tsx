@@ -34,8 +34,8 @@ const ICONS = {
 } satisfies Record<string, ReactNode>;
 
 /**
- * The "+" next to the app name: everything a teacher can add (a class, passages, lessons, decks) is behind this one
- * button, so the list itself only shows their classes, like the chat list in Telegram.
+ * The "+" in the top bar: everything a teacher can add (a class, passages, lessons, decks) is behind this one
+ * button, so the home page only shows their classes.
  */
 export function NewMenu({ items }: { items: NewMenuItem[] }) {
   const [open, setOpen] = useState(false);

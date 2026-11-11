@@ -1,13 +1,12 @@
 import "server-only";
-import { cache } from "react";
 import { studentSummary } from "./class-overview";
 import { db } from "./db";
 import { dueToday } from "./decks";
 
 export type Section = { href: string; label: string; subtitle: string; badge?: number; peek: string };
 
-/** A student's four sections with what is waiting in each. Cached for the request: the sidebar and the home page show the same. */
-export const studentSections = cache(async (userId: string): Promise<Section[]> => {
+/** A student's four sections with what is waiting in each: the folders on the home page. */
+export async function studentSections(userId: string): Promise<Section[]> {
   const [assigned, due, summary] = await Promise.all([
     db.assignmentRecipient.count({ where: { studentId: userId, completedAt: null } }),
     dueToday(userId),
@@ -30,4 +29,4 @@ export const studentSections = cache(async (userId: string): Promise<Section[]> 
       peek: summary.band ? `Band ${summary.band}` : "Mistakes",
     },
   ];
-});
+}

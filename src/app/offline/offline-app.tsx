@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { StudySession, type Answered } from "@/app/student/flashcards/[deckId]/study-session";
-import { Avatar } from "@/components/nav-links";
+import { Avatar } from "@/components/avatar";
 import { ShellFrame } from "@/components/shell-frame";
 import { Card, PageHeader, cx } from "@/components/ui";
 import { loadEtag, loadPack, loadQueue, queueSize, savePack, updateQueue } from "@/lib/offline-store";
