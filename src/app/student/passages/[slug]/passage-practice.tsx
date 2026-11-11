@@ -148,12 +148,27 @@ export function PassagePractice({ passage, groups, initial }: { passage: Passage
     setTab("questions");
   };
 
-  const retry = (n: number) =>
+  // The button always answers: a student who has not yet chosen a new answer or highlighted the proof is told so,
+  // instead of facing a grey button that does nothing.
+  const retry = (n: number) => {
+    const answer = (answers[n] ?? "").trim();
+    const why = !answer || answer.toUpperCase() === (stateOf.get(n)?.answer ?? "").toUpperCase()
+      ? "Choose a different answer first."
+      : !proofs[n]
+        ? "Now highlight the sentence in the passage that proves your new answer, then press Check."
+        : "";
+    if (why) {
+      setErrors((e) => ({ ...e, [n]: why }));
+      // On a phone the passage is behind the other tab: open it, ready for the highlight.
+      if (answer && !proofs[n]) prove(n);
+      return;
+    }
     start(async () => {
       const r = await retryAnswer({ attemptId: view.id, passageId: passage.id, number: n, answer: answers[n] ?? "", evidence: proofs[n] ?? null });
       setView(r.view);
       setErrors((e) => ({ ...e, [n]: r.error ?? "" }));
     });
+  };
 
   const tag = (n: number, t: Tag) =>
     start(async () => {
@@ -306,7 +321,10 @@ export function PassagePractice({ passage, groups, initial }: { passage: Passage
                   answers={answers}
                   submitted={view.submitted}
                   stateOf={stateOf}
-                  onAnswer={(n, v) => setAnswers((a) => ({ ...a, [n]: v }))}
+                  onAnswer={(n, v) => {
+                    setAnswers((a) => ({ ...a, [n]: v }));
+                    setErrors((e) => (e[n] ? { ...e, [n]: "" } : e));
+                  }}
                   onFocus={setActive}
                   renderFooter={(n) => (
                     <QuestionFooter
@@ -317,7 +335,6 @@ export function PassagePractice({ passage, groups, initial }: { passage: Passage
                       active={active === n}
                       error={errors[n]}
                       pending={pending}
-                      changed={(answers[n] ?? "").trim() !== (stateOf.get(n)?.answer ?? "") && !!(answers[n] ?? "").trim()}
                       onActivate={() => prove(n)}
                       onRemoveProof={() => setProofs((p) => {
                         const next = { ...p };
@@ -640,7 +657,6 @@ function QuestionFooter({
   active,
   error,
   pending,
-  changed,
   onActivate,
   onRemoveProof,
   onCheck,
@@ -653,7 +669,6 @@ function QuestionFooter({
   active: boolean;
   error?: string;
   pending: boolean;
-  changed: boolean;
   onActivate: () => void;
   onRemoveProof: () => void;
   onCheck: () => void;
@@ -700,7 +715,7 @@ function QuestionFooter({
     <div className="mt-2 text-sm">
       <p className="font-medium text-bad">✗ Not correct{state.tries > 1 && ` · ${state.tries} tries`}. Find the answer in the passage.</p>
       {proofLine}
-      {!proof && (
+      {!proof && !error && (
         <p className={cx("mt-1", active ? "text-accent" : "text-muted")}>
           {active ? (
             <>
@@ -714,7 +729,7 @@ function QuestionFooter({
         </p>
       )}
       {error && <p className="mt-1 text-bad">{error}</p>}
-      <Button className="mt-2 px-3 py-1.5 text-sm" disabled={pending || !proof || !changed} onClick={onCheck}>
+      <Button className="mt-2 px-3 py-1.5 text-sm" disabled={pending} onClick={onCheck}>
         Check question {n}
       </Button>
     </div>
