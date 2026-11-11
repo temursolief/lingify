@@ -6,8 +6,8 @@ import { db } from "./db";
 import { SESSION_COOKIE, decryptSession, encryptSession, sessionMaxAge, type SessionPayload } from "./session";
 
 /**
- * Whether the browser reached us over HTTPS. A host or reverse proxy (nginx, Railway, Render…) passes this on in
- * x-forwarded-proto; without one, Next.js fills it in from the connection itself.
+ * Whether the browser reached us over HTTPS. Netlify passes this on in x-forwarded-proto; locally, Next.js fills it in
+ * from the connection itself.
  */
 async function overHttps() {
   return (await headers()).get("x-forwarded-proto")?.split(",")[0]?.trim() === "https";

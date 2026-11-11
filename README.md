@@ -193,128 +193,60 @@ Lingify is a progressive web app: Chrome and Edge offer **Install**, which opens
   Passages can be read; their questions need a connection.
 - **Shared laptops.** Log out deletes the offline copy.
 
-The service worker is registered only in production builds (`npm run build && npm start`).
+The service worker is registered only in production builds (`npm run build && npm start` locally, or on Netlify).
 
 ## Deploying
 
-One always-on Node server and one PostgreSQL database are enough for a school (tens of students at once). Everything,
-including deck images and sounds, is stored in the database, so the server keeps no files and a redeploy loses nothing.
+Lingify is hosted on **Netlify** (the app) with a **Neon** PostgreSQL database, both on their free plans. Netlify
+builds the app from GitHub and deploys every push to `main`; its settings are in `netlify.toml` (Node 24, database
+migrations, then the build). Everything, including deck images and sounds, is stored in the database, so nothing is
+lost between deploys.
 
-Requirements for any host:
+### First deploy
 
-- **One always-on Node 24 process**, not serverless functions: login attempts are counted in memory, and an Anki
-  package (up to 200 MB) is uploaded in one request and read in memory. Give it at least 1 GB of RAM.
-- **Exactly one instance.** It is plenty for 40 students; a second copy would not share the login limits.
-- **The database in the same region as the server**, and the region close to the students (for Uzbekistan:
-  Amsterdam, Frankfurt or Helsinki, about 70–100 ms).
-- **HTTPS on your own domain**: the app can be installed and works offline only over HTTPS.
-
-Any host, by hand:
-
-```bash
-npm ci
-npm run db:deploy           # applies new migrations; never resets data
-npm run build
-npm start                   # listens on $PORT (3000 by default)
-```
-
-- Set `DATABASE_URL`, `SESSION_SECRET`, `APP_URL`, `APP_TIMEZONE` and `ADMIN_EMAILS` (see [Environment](#environment)).
-- Run `npm run db:deploy` before starting every new version.
-- `GET /api/health` answers 200 when the server and the database are up, for the host's health check.
-- Anyone can sign up as a teacher. Only the emails in `ADMIN_EMAILS` can upload content for every student.
-
-### On Railway
-
-Railway builds the app from GitHub and redeploys on every push to `main`. Settings are made in the dashboard (Railway
-no longer reads a config file for new services).
-
-1. **Project.** On [railway.com](https://railway.com): **New Project → Deploy from GitHub repo** → this repository.
-   The first build may fail because the database is missing; that is fixed by the next steps.
-2. **Database.** In the project: **+ Create → Database → PostgreSQL**.
-3. **Region.** For both services (the app and Postgres): **Settings → Deploy → Region → EU West (Amsterdam)**. Do this
-   before adding data: moving a database later means downtime.
-4. **Variables.** On the app service, **Variables**:
-
-   | Variable | Value |
-   | --- | --- |
-   | `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` (Railway fills it in; private network, no egress cost) |
-   | `SESSION_SECRET` | the output of `openssl rand -hex 32`, kept secret |
-   | `APP_URL` | `https://your-domain` (step 6) |
-   | `APP_TIMEZONE` | `Asia/Tashkent` |
-   | `ADMIN_EMAILS` | your own teacher email(s), comma-separated. **Not** `teacher@lingify.test`: anyone could sign up with it |
-   | `TELEGRAM_*` | optional, see [Environment](#environment) |
-
-5. **Commands.** On the app service, **Settings → Deploy**:
-   - **Pre-deploy command:** `npm run db:deploy` (applies migrations before each new version takes over; a failed
-     migration stops the deploy and the old version keeps running)
-   - **Healthcheck path:** `/api/health`
-   - **Replicas:** 1. Build and start are found automatically (`npm run build`, `npm start`) and Node 24 comes from
-     `engines` in `package.json`.
-
-   Then **Deploy** (or push to `main`).
-6. **Domain.** App service → **Settings → Networking → Generate Domain** for a `*.up.railway.app` address, or
-   **Custom Domain** and add the CNAME record it shows at your domain registrar. HTTPS is set up automatically. Put
-   the final address in `APP_URL`.
-7. **Built-in passages (once).** Postgres → **Settings → Networking → Public access** (temporarily), copy
-   `DATABASE_PUBLIC_URL` from its **Variables**, and on your computer:
-
-   ```bash
-   DATABASE_URL="postgresql://…copied public URL…" npm run db:seed -- --content
-   ```
-
-   Then turn public access off again. Run this **only once**: running it again deletes and recreates the demo deck,
-   with the students' progress on it. Never run plain `npm run db:seed` against the live database: it creates the
-   demo accounts.
-8. **Backups.** Postgres → **Backups** → add a **Daily** schedule (and Weekly for longer history).
-9. **Check** on a phone: sign up as a student, study a few cards, turn on airplane mode and reopen the app (offline
-   mode), then sign up with an `ADMIN_EMAILS` address and upload a passage.
-
-Updating later is a `git push` to `main`: Railway builds it, runs the pre-deploy migration, waits for
-`/api/health`, then switches over.
-
-### On Netlify (for a public test)
-
-Netlify runs the app as serverless functions, which is fine for trying it out publicly. For daily use by a whole
-school, Railway (above) is the better fit, because of these limits on Netlify:
-
-- **Uploads up to about 4.5 MB.** Passage and lesson JSON files are fine; a large Anki `.apkg` (with images or sounds)
-  will be refused.
-- **Further away.** On the free plan the functions run in the US (Ohio), so each page takes roughly 0.2–0.3 s longer
-  from Uzbekistan than on a server in Europe.
-- **Login limits are per copy.** Failed logins are counted in memory, and several copies of the app may run at once.
-- **No Telegram bot or reminders**, which need a long-running process or cron.
-
-Netlify settings are in `netlify.toml` (build command with migrations, Node 24); Next.js needs no plugin.
-
-1. **Database.** On [neon.tech](https://neon.tech) (free): create a project in **AWS US East 2 (Ohio)**, next to
-   Netlify's functions. From **Connect**, copy two connection strings: the **pooled** one (host contains `-pooler`)
-   and the direct one (pooling off).
-2. **Site.** On [netlify.com](https://app.netlify.com): **Add new project → Import an existing project → GitHub** →
-   this repository. The build settings are read from `netlify.toml`; leave them as they are.
-3. **Environment variables** (before the first deploy: **Project configuration → Environment variables**, scope:
-   all):
+1. **Database.** On [neon.tech](https://neon.tech): create a project in **AWS US East 2 (Ohio)**, next to Netlify's
+   functions. From **Connect**, copy two connection strings: the **pooled** one (its host contains `-pooler`) and the
+   **direct** one (pooling off).
+2. **Site.** On [app.netlify.com](https://app.netlify.com): **Add new project → Import an existing project → GitHub** →
+   this repository. Leave the build settings as Netlify reads them from `netlify.toml`.
+3. **Environment variables.** Before deploying: **Project configuration → Environment variables**, scope all:
 
    | Variable | Value |
    | --- | --- |
    | `DATABASE_URL` | Neon's **pooled** connection string |
-   | `DIRECT_DATABASE_URL` | Neon's **direct** connection string (used for migrations at build time) |
+   | `DIRECT_DATABASE_URL` | Neon's **direct** connection string (migrations at build time) |
    | `SESSION_SECRET` | the output of `openssl rand -hex 32`, kept secret |
-   | `APP_URL` | `https://your-site.netlify.app` (the address Netlify gives the site; update it if you rename it) |
+   | `APP_URL` | `https://your-site.netlify.app`, the address Netlify gives the site (update it if you rename the site) |
    | `APP_TIMEZONE` | `Asia/Tashkent` |
-   | `ADMIN_EMAILS` | your own teacher email(s), comma-separated. **Not** `teacher@lingify.test` |
+   | `ADMIN_EMAILS` | your own teacher email(s), comma-separated. **Not** `teacher@lingify.test`: anyone could sign up with it |
+   | `TELEGRAM_*` | optional, see [Telegram reminders](#telegram-reminders) |
 
 4. **Deploy.** **Deploys → Trigger deploy**. The build applies the migrations to Neon, then builds the app.
-5. **Built-in passages (once)**, from your computer with the **direct** string:
+5. **Built-in passages, once.** On your computer, with Neon's **direct** string:
 
    ```bash
    DATABASE_URL="postgresql://…direct string…" npm run db:seed -- --content
    ```
 
-   Run it only once (see step 7 of Railway for why), and never plain `npm run db:seed` against this database.
-6. **Check** on a phone: open the `netlify.app` address, sign up as a student, study a few cards, and sign up with an
-   `ADMIN_EMAILS` address to upload a passage.
+   Run it **only once**: running it again deletes and recreates the demo deck, with the students' progress on it.
+   Never run plain `npm run db:seed` against this database: it creates the demo accounts.
+6. **Check** on a phone: open the `netlify.app` address, sign up as a student, study a few cards, turn on airplane
+   mode and reopen the app (offline mode), then sign up with an `ADMIN_EMAILS` address and upload a passage.
 
-Every push to `main` deploys again. To move to Railway later, copy the data across with `pg_dump` and `pg_restore`.
+After that, every `git push` to `main` deploys again. A failed migration stops the deploy, and the live version keeps
+running.
+
+### Free plan limits
+
+- **Uploads up to about 4.5 MB.** Passage and lesson JSON files are fine; a large Anki `.apkg` (with images or sounds)
+  is refused.
+- **Location.** Free Netlify functions run in the US (Ohio): pages take roughly 0.2–0.3 s longer from Uzbekistan than
+  from a server in Europe.
+- **Usage.** Netlify's free plan has a monthly pool of credits (deploys, requests, bandwidth): a deploy costs 15 credits,
+  so push finished work rather than every small change. Neon's free database sleeps after 5 minutes without use and
+  takes a moment to wake.
+- **Login limits are per copy.** Failed logins are counted in memory, and several copies of the app may run at once.
+- **Telegram reminders** are not sent on a schedule (see below).
 
 ## Scripts
 
@@ -335,7 +267,7 @@ Students and teachers link Telegram in Settings: the app gives a one-time link t
 2. Production: set `TELEGRAM_WEBHOOK_SECRET` and register the webhook once:
    `curl "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook?url=$APP_URL/api/telegram/webhook&secret_token=$TELEGRAM_WEBHOOK_SECRET"`.
    Local development: run `npm run telegram:bot` (long polling) instead.
-3. Schedule the reminders with cron:
+3. Send the reminders from a computer with the live `DATABASE_URL` set (Netlify does not run them on a schedule):
    - `npm run telegram:remind` every evening: students with flashcards due or an unfinished passage from their teacher.
    - `npm run telegram:remind -- --weekly` once a week: each teacher gets a summary per class (passages, flashcards,
      band and stuck students).

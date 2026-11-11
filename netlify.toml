@@ -1,4 +1,4 @@
-# Netlify builds Next.js with its own adapter (no plugin to install). See README → Deploying → On Netlify.
+# Netlify builds Next.js with its own adapter (no plugin to install). See README → Deploying.
 [build]
   # New migrations go to the database first (never resets data); a failed migration stops the deploy and the live
   # version keeps running.
