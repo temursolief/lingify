@@ -13,7 +13,7 @@ in favour of IELTS passages only.
 
 Next.js 16 (App Router, Cache Components), React 19, TypeScript, Tailwind CSS 4, Prisma 7 with PostgreSQL, Vitest.
 Anki packages are read with Node's built-in `node:sqlite` and `zlib` (zstd) plus `fflate` for the zip. Card meanings
-come from Claude (`@anthropic-ai/sdk`), with a dictionary fallback.
+come from the project glossary and the free dictionary at dictionaryapi.dev.
 
 ## Getting started
 
@@ -49,7 +49,6 @@ the importer.
 | `APP_TIMEZONE` | The school's time zone, e.g. `Asia/Tashkent`. Days, streaks and due dates are counted in it. Without it the server's own zone is used, which is usually UTC on a host |
 | `DATABASE_POOL_MAX` | Optional. Most database connections kept open (default 10) |
 | `ADMIN_EMAILS` | Comma-separated teacher emails that may upload Anki decks for every student |
-| `ANTHROPIC_API_KEY` | Optional. Claude (`claude-opus-5-5`) writes the meaning and Uzbek translation on highlight-made cards. Without it, the glossary or dictionary is used, which often finds nothing for multi-word chunks |
 | `TELEGRAM_*`, `APP_URL` | Optional Telegram reminders (below) |
 
 ## How it works
@@ -243,7 +242,7 @@ no longer reads a config file for new services).
    | `APP_URL` | `https://your-domain` (step 6) |
    | `APP_TIMEZONE` | `Asia/Tashkent` |
    | `ADMIN_EMAILS` | your own teacher email(s), comma-separated. **Not** `teacher@lingify.test`: anyone could sign up with it |
-   | `TELEGRAM_*`, `ANTHROPIC_API_KEY` | optional, see [Environment](#environment) |
+   | `TELEGRAM_*` | optional, see [Environment](#environment) |
 
 5. **Commands.** On the app service, **Settings → Deploy**:
    - **Pre-deploy command:** `npm run db:deploy` (applies migrations before each new version takes over; a failed
@@ -272,6 +271,50 @@ no longer reads a config file for new services).
 
 Updating later is a `git push` to `main`: Railway builds it, runs the pre-deploy migration, waits for
 `/api/health`, then switches over.
+
+### On Netlify (for a public test)
+
+Netlify runs the app as serverless functions, which is fine for trying it out publicly. For daily use by a whole
+school, Railway (above) is the better fit, because of these limits on Netlify:
+
+- **Uploads up to about 4.5 MB.** Passage and lesson JSON files are fine; a large Anki `.apkg` (with images or sounds)
+  will be refused.
+- **Further away.** On the free plan the functions run in the US (Ohio), so each page takes roughly 0.2–0.3 s longer
+  from Uzbekistan than on a server in Europe.
+- **Login limits are per copy.** Failed logins are counted in memory, and several copies of the app may run at once.
+- **No Telegram bot or reminders**, which need a long-running process or cron.
+
+Netlify settings are in `netlify.toml` (build command with migrations, Node 24); Next.js needs no plugin.
+
+1. **Database.** On [neon.tech](https://neon.tech) (free): create a project in **AWS US East 2 (Ohio)**, next to
+   Netlify's functions. From **Connect**, copy two connection strings: the **pooled** one (host contains `-pooler`)
+   and the direct one (pooling off).
+2. **Site.** On [netlify.com](https://app.netlify.com): **Add new project → Import an existing project → GitHub** →
+   this repository. The build settings are read from `netlify.toml`; leave them as they are.
+3. **Environment variables** (before the first deploy: **Project configuration → Environment variables**, scope:
+   all):
+
+   | Variable | Value |
+   | --- | --- |
+   | `DATABASE_URL` | Neon's **pooled** connection string |
+   | `DIRECT_DATABASE_URL` | Neon's **direct** connection string (used for migrations at build time) |
+   | `SESSION_SECRET` | the output of `openssl rand -hex 32`, kept secret |
+   | `APP_URL` | `https://your-site.netlify.app` (the address Netlify gives the site; update it if you rename it) |
+   | `APP_TIMEZONE` | `Asia/Tashkent` |
+   | `ADMIN_EMAILS` | your own teacher email(s), comma-separated. **Not** `teacher@lingify.test` |
+
+4. **Deploy.** **Deploys → Trigger deploy**. The build applies the migrations to Neon, then builds the app.
+5. **Built-in passages (once)**, from your computer with the **direct** string:
+
+   ```bash
+   DATABASE_URL="postgresql://…direct string…" npm run db:seed -- --content
+   ```
+
+   Run it only once (see step 7 of Railway for why), and never plain `npm run db:seed` against this database.
+6. **Check** on a phone: open the `netlify.app` address, sign up as a student, study a few cards, and sign up with an
+   `ADMIN_EMAILS` address to upload a passage.
+
+Every push to `main` deploys again. To move to Railway later, copy the data across with `pg_dump` and `pg_restore`.
 
 ## Scripts
 
@@ -304,6 +347,7 @@ The scripts run with `tsx --conditions=react-server` so the app's `server-only` 
 - **Bands are estimates.** A passage is a third of the real test, so its score is scaled to 40 before converting.
 - **Anki import.** The scheduling history inside the package is not imported: every student starts the deck fresh.
   Typing-answer fields (`{{type:…}}`), text-to-speech and LaTeX are not rendered.
-- **Card meanings.** Without `ANTHROPIC_API_KEY`, many highlighted chunks get no meaning on the back.
+- **Card meanings.** Multi-word chunks not in the glossary get no meaning on the back, and a single word gets the
+  dictionary's first meaning, which is not always the sense used in the passage.
 - **Offline.** Passage questions and new cards from highlights need a connection.
-- **Uzbek translations** come from Claude or the project glossary and should be checked by an Uzbek-speaking teacher.
+- **Uzbek translations** come from the project glossary and should be checked by an Uzbek-speaking teacher.
