@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { memo, useCallback, useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
-import { addChunkCard, deleteOwnCard } from "@/app/actions/cards";
+import { addChunkCard, deleteOwnCard, explainChunkCard } from "@/app/actions/cards";
 import { restartAttempt, retryAnswer, submitPassage, tagMistake } from "@/app/actions/passage";
 import { ActivityTracker } from "@/components/activity-tracker";
 import { Button, cx } from "@/components/ui";
@@ -36,7 +36,7 @@ function offsetIn(root: HTMLElement, node: Node, offset: number) {
 }
 
 type Selection = { top: number; left: number; evidence: Evidence };
-type Toast = { id: string; chunk: string; meaning: string; uz: string | null } | { error: string };
+type Toast = { id: string; chunk: string; meaning: string; uz: string | null; pending?: boolean } | { error: string };
 
 export function PassagePractice({ passage, groups, initial }: { passage: Passage; groups: PublicGroup[]; initial: AttemptView }) {
   const [view, setView] = useState(initial);
@@ -130,8 +130,14 @@ export function PassagePractice({ passage, groups, initial }: { passage: Passage
     startCard(async () => {
       setSelection(null);
       window.getSelection()?.removeAllRanges();
-      const r = await addChunkCard({ passageId: passage.id, paragraph: ev.paragraph, start: ev.start, end: ev.end });
-      setToast("error" in r ? r : { id: r.id, chunk: r.chunk, meaning: r.meaning, uz: r.uz });
+      const input = { passageId: passage.id, paragraph: ev.paragraph, start: ev.start, end: ev.end };
+      const r = await addChunkCard(input);
+      setToast("error" in r ? r : { id: r.id, chunk: r.chunk, meaning: r.meaning, uz: r.uz, pending: r.pending });
+      // The card is saved; its meaning follows a moment later, without holding up the next highlight.
+      if ("error" in r || !r.pending) return;
+      explainChunkCard(r.id, input)
+        .catch(() => null)
+        .then((explained) => setToast((t) => (t && "id" in t && t.id === r.id ? { ...t, ...explained, pending: false } : t)));
     });
 
   const setProofFor = (n: number, ev: Evidence) => {
@@ -730,7 +736,10 @@ function CardToast({ toast, onClose }: { toast: Toast; onClose: () => void }) {
       ) : (
         <>
           <p className="font-medium">Flashcard added to “My IELTS chunks”</p>
-          <p className="mt-1"><b>{toast.chunk}</b>{toast.meaning && ` — ${toast.meaning}`}</p>
+          <p className="mt-1">
+            <b>{toast.chunk}</b>
+            {toast.meaning ? ` — ${toast.meaning}` : toast.pending && <span className="text-white/60"> — finding a simple meaning…</span>}
+          </p>
           {toast.uz && <p className="text-white/70">O‘zbekcha: {toast.uz}</p>}
           <button
             type="button"
