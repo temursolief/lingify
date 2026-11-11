@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 
 /** One step up: a section's page goes back to its list, a list back home. Paths without a page of their own are skipped. */
 function parentOf(pathname: string, home: string) {
@@ -13,28 +13,35 @@ function parentOf(pathname: string, home: string) {
   return parent.length < home.length ? home : parent;
 }
 
+/** The back arrow: hidden on the home page. Reads the address, so it streams in after the rest of the bar. */
+function BackButton({ home }: { home: string }) {
+  const pathname = usePathname();
+  if (pathname === home) return null;
+  return (
+    <Link
+      href={parentOf(pathname, home)}
+      aria-label="Back"
+      className="flex h-10 w-10 items-center justify-center rounded-full text-muted no-underline hover:bg-hover hover:text-ink"
+    >
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d="M12.5 4.5 7 10l5.5 5.5" />
+      </svg>
+    </Link>
+  );
+}
+
 /**
  * The frame every signed-in screen sits in: a bar across the top (back, the app name, then the "+" and the account
  * on the right) and the open screen under it, full width. The home page's folders are the way into each section, so
  * there is no list column.
  */
 export function TopShell({ home, end, banner, children }: { home: string; end?: ReactNode; banner?: ReactNode; children: ReactNode }) {
-  const pathname = usePathname();
-  const atHome = pathname === home;
   return (
     <div className="flex h-dvh flex-col overflow-hidden">
       <header className="flex h-14 shrink-0 items-center gap-1 border-b border-line bg-bar px-2 sm:px-4">
-        {!atHome && (
-          <Link
-            href={parentOf(pathname, home)}
-            aria-label="Back"
-            className="flex h-10 w-10 items-center justify-center rounded-full text-muted no-underline hover:bg-hover hover:text-ink"
-          >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M12.5 4.5 7 10l5.5 5.5" />
-            </svg>
-          </Link>
-        )}
+        <Suspense fallback={null}>
+          <BackButton home={home} />
+        </Suspense>
         <Link href={home} className="px-2 text-lg font-semibold text-ink no-underline hover:no-underline">
           Lingify
         </Link>
