@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useLayoutEffect, useState } from "react";
 
 /**
  * A YouTube video that costs one small thumbnail until the student presses play. The full player (about 1 MB of
@@ -8,6 +8,13 @@ import { useState } from "react";
  */
 export function LiteVideo({ id, title }: { id: string; title: string }) {
   const [playing, setPlaying] = useState(false);
+
+  // Cache Components keeps recently-left pages mounted but hidden (React <Activity>), so without this the
+  // iframe would keep playing audio after navigating away. The cleanup fires when the page is hidden.
+  useLayoutEffect(() => {
+    return () => setPlaying(false);
+  }, []);
+
   return (
     <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black">
       {playing ? (

@@ -6,8 +6,7 @@ it. They also study Anki flashcards, including cards they make in one click from
 Teachers upload their own passages as JSON and assign them. They see which questions the class got wrong on the first
 try, where each student looked, why they say they missed each answer, and who is stuck.
 
-See [TASK.md](TASK.md) for the original specification. The graded-reading library it describes has since been removed
-in favour of IELTS passages only.
+See [TASK.md](TASK.md) for the current status: what is built, key decisions, known issues and next steps.
 
 ## Stack
 
