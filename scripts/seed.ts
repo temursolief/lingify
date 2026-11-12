@@ -12,6 +12,7 @@ import { applyReviews, personalDeck, type Review } from "../src/lib/decks";
 import { saveImportedDeck } from "../src/lib/deck-import";
 import { answerKey, passageSchema, type QuestionGroup } from "../src/lib/passage-format";
 import { retryQuestion, submitFirst, tagQuestion, type Evidence } from "../src/lib/passages";
+import { emptyTelemetry, type SubmissionMeta } from "../src/lib/telemetry";
 import { buildApkg, type DemoNote } from "./apkg-builder";
 
 export const DEMO_PASSWORD = "lingify-demo";
@@ -90,14 +91,30 @@ function evidenceFor(paragraphs: string[], groups: QuestionGroup[], number: numb
 async function demoAttempt(
   userId: string,
   slug: string,
-  plan: { wrong: number[]; fixed?: { n: number; tag: "VOCAB" | "DISTRACTOR" | "LOGIC" | "CARELESS"; wrongPlace?: boolean }[]; stuck?: number[] },
+  plan: { wrong: number[]; fixed?: { n: number; tag: "VOCAB" | "DISTRACTOR" | "LOGIC" | "CARELESS"; wrongPlace?: boolean }[]; stuck?: number[]; blank?: number[] },
+  test: { seconds: number; gap?: number; meta?: Partial<SubmissionMeta> } = { seconds: 17 * 60 },
 ) {
   const passage = await db.passage.findUniqueOrThrow({ where: { slug } });
   const groups = passage.groups as QuestionGroup[];
   const keys = answerKey(groups);
-  const attempt = await db.passageAttempt.create({ data: { userId, passageId: passage.id, total: keys.length, startedAt: new Date(Date.now() - 3 * 86_400_000) } });
-  const answers = Object.fromEntries(keys.map((k) => [k.number, plan.wrong.includes(k.number) ? wrongOf(groups, k.number) : answerOf(groups, k.number)]));
-  await submitFirst(userId, attempt.id, answers, {}, 17 * 60);
+  // The test "started" `seconds` ago by the server's clock, so the pacing checks see a realistic (or not) length.
+  const attempt = await db.passageAttempt.create({
+    data: { userId, passageId: passage.id, total: keys.length, startedAt: new Date(Date.now() - 3 * 86_400_000), testStartedAt: new Date(Date.now() - test.seconds * 1000) },
+  });
+  const answers = Object.fromEntries(
+    keys.map((k) => [k.number, plan.blank?.includes(k.number) ? "" : plan.wrong.includes(k.number) ? wrongOf(groups, k.number) : answerOf(groups, k.number)]),
+  );
+  // First answers spread over the test (or `gap` seconds apart), with time on each question, as the browser would send.
+  const gap = test.gap ?? Math.floor(test.seconds / (keys.length + 1));
+  const answerTimes = Object.fromEntries(keys.filter((k) => answers[k.number]).map((k, i) => [String(k.number), 30 + i * gap]));
+  const perQuestionSec = Object.fromEntries(keys.map((k) => [String(k.number), Math.max(2, gap - 3)]));
+  const meta: SubmissionMeta = {
+    reason: "NORMAL",
+    events: [],
+    ...test.meta,
+    telemetry: { ...emptyTelemetry(), durationSec: test.seconds, answerTimes, perQuestionSec, ...test.meta?.telemetry },
+  };
+  await submitFirst(userId, attempt.id, answers, {}, test.seconds, meta);
   for (const f of plan.fixed ?? []) {
     await retryQuestion(userId, attempt.id, f.n, answerOf(groups, f.n), evidenceFor(passage.paragraphs, groups, f.n, f.wrongPlace));
     await tagQuestion(userId, attempt.id, f.n, f.tag);
@@ -173,6 +190,12 @@ async function seedDemo(deckId: string) {
   await demoAttempt(aisha.id, "ulugh-beg-observatory", { wrong: [2, 6, 9], fixed: [{ n: 2, tag: "LOGIC" }, { n: 6, tag: "DISTRACTOR" }] });
   // Jasur: one question still red after three tries.
   await demoAttempt(jasur.id, "bilingual-brains", { wrong: [4, 7], fixed: [{ n: 4, tag: "CARELESS" }], stuck: [7] });
+  // Jasur again: left the tab six minutes into the Aral Sea test, which submitted it (strict lock).
+  await demoAttempt(jasur.id, "the-aral-sea", { wrong: [2, 5], blank: [6, 7, 8, 9, 10, 11, 12, 13] }, {
+    seconds: 360,
+    gap: 70,
+    meta: { reason: "TAB_HIDDEN", events: [{ type: "WINDOW_BLUR", atMs: 200_000 }, { type: "TAB_HIDDEN", atMs: 360_000 }] },
+  });
   void malika;
 
   // Some flashcard history for Aisha, so her own deck has learning and due cards (shared decks aren't hers to study).
@@ -183,10 +206,16 @@ async function seedDemo(deckId: string) {
   const reviews: Review[] = [];
   for (const [i, c] of cards.entries()) {
     const at = new Date(now.getTime() - (6 - (i % 5)) * 86_400_000);
-    reviews.push({ cardId: c.id, rating: 3, at });
-    if (i % 3 === 0) reviews.push({ cardId: c.id, rating: 3, at: new Date(at.getTime() + 600_000) });
+    reviews.push({ cardId: c.id, rating: 3, at, durationMs: 4000 + (i % 4) * 1500 });
+    if (i % 3 === 0) reviews.push({ cardId: c.id, rating: 3, at: new Date(at.getTime() + 600_000), durationMs: 3500 });
   }
   await applyReviews(aisha.id, reviews);
+
+  // Jasur clicked through a deck: every new card "Easy" in well under a second.
+  const jasurDeck = await personalDeck(jasur.id);
+  await db.card.createMany({ data: demoCards.map((c, position) => ({ ...c, deckId: jasurDeck.id, position })) });
+  const jasurCards = await db.card.findMany({ where: { deckId: jasurDeck.id }, orderBy: { position: "asc" } });
+  await applyReviews(jasur.id, jasurCards.map((c, i) => ({ cardId: c.id, rating: 4, at: new Date(now.getTime() - 86_400_000 + i * 1000), durationMs: 600 + (i % 3) * 100 })));
   console.log("demo: teacher@lingify.test, student@lingify.test, jasur@lingify.test, malika@lingify.test");
 }
 

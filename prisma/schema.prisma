@@ -25,6 +25,25 @@ enum CardQueue {
   RELEARNING
 }
 
+/// How strictly a first try is proctored, set per assignment.
+enum ProctoringPolicy {
+  /// practice: events are recorded, nothing is submitted for the student
+  NONE
+  /// the first tab switch / fullscreen exit gives a 5-second warning; the second submits
+  WARN_ONCE
+  /// the first tab switch / fullscreen exit submits the first try
+  STRICT
+}
+
+/// Why a first try was submitted.
+enum SubmissionReason {
+  NORMAL
+  TIMER_EXPIRED
+  TAB_HIDDEN
+  WINDOW_BLUR
+  FULLSCREEN_EXIT
+}
+
 /// Why a student missed a question the first time, chosen after they correct it.
 enum ErrorTag {
   VOCAB
@@ -100,6 +119,8 @@ model Passage {
   ownerId        String?
   owner          User?            @relation("TeacherPassages", fields: [ownerId], references: [id], onDelete: Cascade)
   createdAt      DateTime         @default(now())
+  /// set instead of deleting, so attempts, decks and review history are kept
+  archivedAt     DateTime?
   assignments    Assignment[]
   attempts       PassageAttempt[]
   /// the shared deck for this passage's uploaded cards and students' own highlights, if any
@@ -110,17 +131,20 @@ model Passage {
 
 /// A passage or a listening lesson given to a class: exactly one of passageId/lessonId is set.
 model Assignment {
-  id         String                @id @default(cuid())
-  classId    String
-  passageId  String?
-  lessonId   String?
-  note       String?
-  dueAt      DateTime?
-  createdAt  DateTime              @default(now())
-  class      Class                 @relation(fields: [classId], references: [id], onDelete: Cascade)
-  passage    Passage?              @relation(fields: [passageId], references: [id], onDelete: Cascade)
-  lesson     ListeningLesson?      @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  recipients AssignmentRecipient[]
+  id                String                @id @default(cuid())
+  classId           String
+  passageId         String?
+  lessonId          String?
+  note              String?
+  dueAt             DateTime?
+  proctoringPolicy  ProctoringPolicy      @default(STRICT)
+  /// homework is done only once the linked deck's cards for today are cleared (passage) or the key words read (lesson)
+  requireVocabFirst Boolean               @default(true)
+  createdAt         DateTime              @default(now())
+  class             Class                 @relation(fields: [classId], references: [id], onDelete: Cascade)
+  passage           Passage?              @relation(fields: [passageId], references: [id], onDelete: Cascade)
+  lesson            ListeningLesson?      @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  recipients        AssignmentRecipient[]
 
   @@index([classId])
   @@index([passageId])
@@ -128,11 +152,16 @@ model Assignment {
 }
 
 model AssignmentRecipient {
-  assignmentId String
-  studentId    String
-  completedAt  DateTime?
-  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
-  student      User       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  assignmentId     String
+  studentId        String
+  completedAt      DateTime?
+  /// when the timed first try was submitted
+  firstSubmitAt    DateTime?
+  /// when the linked deck's cards for the day were cleared, or the lesson's key words read
+  vocabCompletedAt DateTime?
+  integrityFlagged Boolean    @default(false)
+  assignment       Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  student          User       @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@id([assignmentId, studentId])
   @@index([studentId])
@@ -152,6 +181,18 @@ model PassageAttempt {
   band             Float?
   /// every question answered correctly
   completedAt      DateTime?
+  /// when the student pressed "Start test" (server clock): the timer and the pacing checks count from here
+  testStartedAt    DateTime?
+  submissionReason SubmissionReason @default(NORMAL)
+  integrityFlagged Boolean          @default(false)
+  /// UNREALISTIC_SPEED_HIGH_SCORE, ANSWER_KEY_SUSPECTED, LOCATING_SKILL_MISMATCH, TAB_HIDDEN, …
+  integrityReasons String[]         @default([])
+  /// { type, atMs, questionNumber? }[] recorded in the browser during the first try (src/lib/telemetry.ts)
+  integrityEvents  Json             @default("[]")
+  /// AttemptTelemetry (src/lib/telemetry.ts), sent with the first submission
+  telemetry        Json             @default("{}")
+  /// set when a teacher required a retake; the attempt is kept but left out of scores and analytics
+  invalidatedAt    DateTime?
   user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   passage          Passage          @relation(fields: [passageId], references: [id], onDelete: Cascade)
   answers          QuestionAnswer[]
@@ -198,6 +239,7 @@ model ListeningLesson {
   ownerId     String?
   owner       User?              @relation("LessonOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   createdAt   DateTime           @default(now())
+  archivedAt  DateTime?
   attempts    ListeningAttempt[]
   assignments Assignment[]
   /// the shared deck for this lesson's key words, if any
@@ -209,20 +251,32 @@ model ListeningLesson {
 /// One student working on one lesson. Every question's state lives in one JSON column, so checking an answer
 /// reads and writes a single row.
 model ListeningAttempt {
-  id               String          @id @default(cuid())
+  id               String           @id @default(cuid())
   userId           String
   lessonId         String
-  startedAt        DateTime        @default(now())
+  startedAt        DateTime         @default(now())
   firstSubmittedAt DateTime?
   firstCorrect     Int?
   band             Float?
   completedAt      DateTime?
   /// set once the student has pressed "I've read these words"; the questions stay hidden until then
   vocabSeenAt      DateTime?
+  /// when the student pressed "Start test" (server clock): the timer and the pacing checks count from here
+  testStartedAt    DateTime?
+  submissionReason SubmissionReason @default(NORMAL)
+  integrityFlagged Boolean          @default(false)
+  /// UNREALISTIC_SPEED_HIGH_SCORE, ANSWER_KEY_SUSPECTED, LOCATING_SKILL_MISMATCH, TAB_HIDDEN, …
+  integrityReasons String[]         @default([])
+  /// { type, atMs, questionNumber? }[] recorded in the browser during the first try (src/lib/telemetry.ts)
+  integrityEvents  Json             @default("[]")
+  /// AttemptTelemetry (src/lib/telemetry.ts), sent with the first submission
+  telemetry        Json             @default("{}")
+  /// set when a teacher required a retake; the attempt is kept but left out of scores and analytics
+  invalidatedAt    DateTime?
   /// { [number]: { answer, correct, firstCorrect, tries, wrong: string[] } }
-  answers          Json            @default("{}")
-  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lesson           ListeningLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  answers          Json             @default("{}")
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson           ListeningLesson  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@index([userId, lessonId])
   @@index([lessonId])
@@ -231,19 +285,20 @@ model ListeningAttempt {
 /// An Anki deck: a student's own (`ownerId` unique), one shared deck per passage or lesson (`passageId`/`lessonId`
 /// unique), or, for decks uploaded before those existed, a deck shared with every student (all three null).
 model Deck {
-  id        String           @id @default(cuid())
-  name      String
-  ownerId   String?          @unique
-  owner     User?            @relation("DeckOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  passageId String?          @unique
-  passage   Passage?         @relation(fields: [passageId], references: [id], onDelete: Cascade)
-  lessonId  String?          @unique
-  lesson    ListeningLesson? @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  id         String           @id @default(cuid())
+  name       String
+  ownerId    String?          @unique
+  owner      User?            @relation("DeckOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  passageId  String?          @unique
+  passage    Passage?         @relation(fields: [passageId], references: [id], onDelete: Cascade)
+  lessonId   String?          @unique
+  lesson     ListeningLesson? @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   /// card styling from the Anki note types: { [noteTypeId]: css }
-  css       Json             @default("{}")
-  createdAt DateTime         @default(now())
-  cards     Card[]
-  media     DeckMedia[]
+  css        Json             @default("{}")
+  createdAt  DateTime         @default(now())
+  archivedAt DateTime?
+  cards      Card[]
+  media      DeckMedia[]
 }
 
 model Card {
@@ -304,16 +359,18 @@ model CardState {
 }
 
 model ReviewLog {
-  id       String    @id @default(cuid())
-  userId   String
-  cardId   String
+  id         String    @id @default(cuid())
+  userId     String
+  cardId     String
   /// 1 Again, 2 Hard, 3 Good, 4 Easy
-  rating   Int
-  queue    CardQueue
-  interval Int
-  at       DateTime  @default(now())
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  card     Card      @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  rating     Int
+  queue      CardQueue
+  interval   Int
+  /// card shown → rating pressed, capped at 60 s; 0 = not measured (older reviews)
+  durationMs Int       @default(0)
+  at         DateTime  @default(now())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  card       Card      @relation(fields: [cardId], references: [id], onDelete: Cascade)
 
   @@index([userId, at])
   @@index([cardId])
@@ -337,7 +394,7 @@ model DictionaryEntry {
   fetchedAt DateTime @default(now())
 }
 
-/// Meanings written by the AI for chunks highlighted in passages, cached so each chunk/sentence pair costs once.
+/// Meanings found for chunks highlighted in passages (glossary or dictionary), cached so each chunk/sentence pair costs once.
 model ChunkMeaning {
   key       String   @id
   meaning   String

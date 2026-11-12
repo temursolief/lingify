@@ -17,7 +17,7 @@ async function ProgressContent() {
     studentSummary(user.id),
     errorBreakdown([user.id]),
     db.passageAttempt.findMany({
-      where: { userId: user.id, firstSubmittedAt: { not: null } },
+      where: { userId: user.id, invalidatedAt: null, firstSubmittedAt: { not: null } },
       orderBy: { firstSubmittedAt: "desc" },
       take: 10,
       include: { passage: { select: { title: true, slug: true } } },

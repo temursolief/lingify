@@ -7,8 +7,11 @@ import { Button, PageHeader, cx } from "@/components/ui";
 import { intervalLabel, RATING_LABEL, type Rating } from "@/lib/anki";
 import { applyAnswer, nextCard, queueCounts, type LiveCard, type StudyQueue } from "@/lib/study";
 
-/** One answer, as the session hands it to whoever saves it. */
-export type Answered = { cardId: string; rating: Rating; at: Date };
+/**
+ * One answer, as the session hands it to whoever saves it. `durationMs`: from the card's front appearing to the rating,
+ * capped at a minute, so a teacher can tell real study from clicking through.
+ */
+export type Answered = { cardId: string; rating: Rating; at: Date; durationMs: number };
 /** What `refill` resolves with: a new queue, or "unsent" when the server could not be reached. */
 export type Refill = StudyQueue | "unsent" | null;
 
@@ -91,6 +94,16 @@ export function StudySession({
   });
   const [shown, setShown] = useState(false);
   const [more, setMore] = useState<"none" | "loading" | "failed">("none");
+  // When the current card's front appeared and when its back was revealed (shown → flipped → rated).
+  const timing = useRef<{ cardId: string | null; shownAt: number; flippedAt: number | null }>({ cardId: null, shownAt: 0, flippedAt: null });
+  const currentId = step.card?.id ?? null;
+  useEffect(() => {
+    timing.current = { cardId: currentId, shownAt: Date.now(), flippedAt: null };
+  }, [currentId, step.studied]);
+  const reveal = useCallback(() => {
+    timing.current.flippedAt ??= Date.now();
+    setShown(true);
+  }, []);
 
   const loadMore = useCallback(() => {
     if (!refill) return;
@@ -111,11 +124,13 @@ export function StudySession({
       const { card } = step;
       if (!card) return;
       const now = new Date();
+      const ratedAt = now.getTime();
+      const durationMs = timing.current.cardId === card.id ? Math.max(0, Math.min(ratedAt - timing.current.shownAt, 60_000)) : 0;
       const next = applyAnswer(step.queue, card.id, rating, now);
       const upcoming = nextCard(next, now);
       setStep({ queue: next, card: upcoming, at: now.getTime(), studied: step.studied + 1 });
       setShown(false);
-      onAnswer({ cardId: card.id, rating, at: now }, next);
+      onAnswer({ cardId: card.id, rating, at: now, durationMs }, next);
       if (!upcoming && next.moreDue) loadMore();
     },
     [step, onAnswer, loadMore],
@@ -129,7 +144,7 @@ export function StudySession({
       if ((e.target as HTMLElement)?.closest("input, textarea, select, a, [contenteditable]")) return;
       if (!shown && (e.key === " " || e.key === "Enter")) {
         e.preventDefault();
-        setShown(true);
+        reveal();
       } else if (shown && ["1", "2", "3", "4"].includes(e.key)) rate(Number(e.key) as Rating);
       else if (shown && (e.key === " " || e.key === "Enter")) {
         e.preventDefault();
@@ -138,7 +153,7 @@ export function StudySession({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [shown, rate]);
+  }, [shown, rate, reveal]);
 
   const { card, studied } = step;
   const at = new Date(step.at);
@@ -166,7 +181,7 @@ export function StudySession({
           </div>
           <div className="mt-4 grid grid-cols-4 gap-2 sm:flex sm:justify-center">
             {!shown ? (
-              <Button className="col-span-4 sm:min-w-48" onClick={() => setShown(true)}>Show answer</Button>
+              <Button className="col-span-4 sm:min-w-48" onClick={reveal}>Show answer</Button>
             ) : (
               RATINGS.map((r) => (
                 <button

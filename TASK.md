@@ -1,12 +1,17 @@
 # Lingify — status
 
-_Updated 2026-11-11._ IELTS Academic Reading practice and Anki flashcards for Uzbek students (B1+) and their
+_Updated 2026-11-12._ IELTS Academic Reading practice and Anki flashcards for Uzbek students (B1+) and their
 teachers. The original specification (graded reading with the 95% rule) is in git history, commit `ad6decf`.
 
 The plan for the next six changes (assigned-only content, passage decks, listening vocabulary, analytics) is in
 [PLAN.md](PLAN.md). Of those six, done: video fix, visibility (assigned-only passages/lessons/decks), the listening
-vocabulary deck and gate, and passage decks (core — see PLAN.md for what was deliberately cut from that one). Not
-started: the vocabulary list and teacher analytics.
+vocabulary deck and gate, passage decks (core — see PLAN.md for what was deliberately cut from that one), and most
+of the teacher analytics (time per question and answer order, as part of §7). Not started: the vocabulary list.
+
+**Latest (2026-11-12): homework verification, test integrity and deep test analytics** — PLAN.md §7. A proctored
+first try (fullscreen + tab lock) for Reading and Listening, telemetry sent inside the one Submit request,
+anti-cheating flags, flashcard speed checks, a Homework tab for teachers, "Require retake", soft delete, and the
+retry race fixes. [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) is the engineering overview.
 
 ## Built
 
@@ -14,17 +19,31 @@ started: the vocabulary list and teacher analytics.
   class sees a "join a class" message instead.
   - Passages: only those a teacher assigned. A timed first try gives a band estimate. Wrong answers turn red, and
     the student corrects them by highlighting the sentence that proves the new answer, then says why they missed it.
+  - **Test lock** on every first try (Reading and Listening), set per assignment: strict (leaving the tab, another
+    window or fullscreen submits the test), one warning, or practice (only recorded). Fullscreen on desktop and
+    Android; visibility-only on iPhones. Copy, paste, Ctrl+F and developer-tools keys are blocked and logged. The
+    questions reach the browser only at Start. An auto-finished try is graded as it stands and the student still
+    does the "Prove it" corrections.
   - Listening lessons: only those a teacher assigned. Key words first; the student marks them read before the
     video's IELTS questions unlock.
   - Flashcards: Anki scheduling (no card waits longer than 20 days); the student's own deck, plus the shared deck
     for each assigned passage (the teacher's cards and their own highlighted phrases together) and each assigned
-    lesson's key words.
+    lesson's key words. Each answer records how long the card was on screen (`ReviewLog.durationMs`).
   - Progress: mistakes by cause.
   - Offline mode: the app installs on phones (PWA) and keeps a copy of due cards and passages, then syncs.
 - **Teachers:** classes with join codes; assigning passages and listening lessons, to the whole class or chosen
-  students; per-class view (activity, stuck students, first-try mistakes, where students looked); uploading an Anki
-  deck for one of their own passages, from `/teacher/passages` (re-uploading updates matching cards instead of
-  duplicating them). A "+" menu adds everything.
+  students, with a test-lock rule and an optional vocabulary requirement; per-class view (activity, stuck students,
+  first-try mistakes, where students looked); uploading an Anki deck for one of their own passages, from
+  `/teacher/passages` (re-uploading updates matching cards instead of duplicating them). A "+" menu adds everything.
+  - **Homework tab:** per assignment and student, three checks (first try, corrections, vocabulary), an integrity
+    badge (green / amber / red with reasons) and **Require retake**.
+  - **Passages tab:** first-try heatmap with a blank-after-auto-finish state, tooltips (first answer, time on the
+    question, answer order, proof paragraph, reason), time and integrity per student, and the top 3 "mistake
+    magnets" (same wrong answer chosen by many).
+  - **Mistakes tab:** question type × cause matrix, including wrong-paragraph vs misread.
+  - **Students tab and student page:** flagged-attempt count, flashcard speed, the event timeline of each test,
+    seconds per question and answer order.
+  - "Delete" on a passage, lesson or deck archives it: attempts, decks and review history are kept.
 - **Admins** (`ADMIN_EMAILS`): upload passages and listening lessons (JSON) for everyone, and the old kind of Anki
   deck shared with every student regardless of assignment (`/teacher/decks`).
 - Optional Telegram link and reminders.
@@ -41,6 +60,12 @@ started: the vocabulary list and teacher analytics.
   `prisma migrate deploy`) — never run `prisma migrate dev` locally, since the local `.env` points at the live
   database (see Known issues).
 - All data, including deck images and sounds, lives in Postgres; there is no file storage.
+- Test telemetry costs no extra requests: it is buffered in the browser (sessionStorage backup) and sent inside the
+  one Submit request (or the `/api/attempt-terminate` beacon when the tab closes). The server recomputes every
+  count it flags on, and times the test by its own clock from "Start test".
+- Integrity flags are signals for the teacher, never automatic penalties beyond the auto-submit itself; the right
+  answer is still never shown, and an auto-finished student still does the corrections.
+- Content is archived, never hard-deleted, once students may have work on it.
 - No paid AI: card meanings come from the project glossary and dictionaryapi.dev.
 - Minimal UI: home folders and a top bar (the Telegram-style side list was dropped). Must work on phones.
 
@@ -58,17 +83,26 @@ started: the vocabulary list and teacher analytics.
 - **Telegram reminders** don't run on a schedule.
 - **"Check question N" not working (student report):** no bug was reproduced. The button now always explains what's
   missing; this still needs confirming with students.
-- **Local development:** the local `.env` points to the live database. A migration this session wrote
-  (`prisma/migrations/20261111140000_deck_links_and_vocab_gate`) was therefore never run with `prisma migrate dev`
-  against it; it was hand-written in the same style as Prisma's own output and goes live at the next
-  `prisma migrate deploy` on Netlify. Check it applies cleanly there before trusting this deploy.
+- **Local development:** the local `.env` points to the live database. Work on 2026-11-12 used a throwaway local
+  PostgreSQL instead (`DATABASE_URL=… npx prisma migrate dev`, then `npm run db:seed`), where the new migration
+  `20261112160139_homework_integrity_and_analytics` was generated and applied. It has not yet run on Neon: it goes
+  live at the next Netlify deploy. It adds a CHECK that every assignment has exactly one of passage/lesson; a row
+  breaking that would stop the deploy (the old version keeps running).
+- **Proctoring is a deterrent, not a guarantee.** It runs in the student's browser: a determined student can use a
+  second device, or a modified browser that never reports leaving. The pace and "Prove it" flags are there for the
+  second device; nothing detects a modified browser. Fullscreen is not available on iPhones.
+- **Strict lock and phones:** a notification pulled down or the screen locking hides the tab and submits the test
+  under STRICT. Teachers who expect phone use may prefer WARN_ONCE.
+- **Listening telemetry** (pauses, seeks, speed) relies on YouTube's postMessage channel; if YouTube changes it, the
+  counts stay at zero and nothing else breaks.
+- **Homework vocabulary requirement** for a passage means "nothing left to study today in the passage's deck",
+  checked when the student studies or finishes; a deck added after the passage was finished is only checked the next
+  time the student studies it. Homework assigned before 2026-11-12 keeps no vocabulary requirement.
 - **Deck media storage:** capped per deck (20 MB) and not duplicated on re-upload, but not deduplicated by content
   hash across different decks — two decks with the same sound file each store their own copy. Fixing that means
   keying `/api/media` URLs by content hash instead of by deck ID, which touches every card's already-stored HTML;
   worth a dedicated pass, not a drive-by change.
-- **Deleting a passage** still hard-deletes its deck and every student's cards and review history on it, cascading
-  from the database schema. Archiving instead needs an `archived` flag and a filter added everywhere passages are
-  listed — left for later, see PLAN.md §3.
+- **Archived content** has no "restore" button yet: set `archivedAt` back to null in the database.
 - **Lesson vocabulary cards** can no longer honour a student's own "show Uzbek" setting, since the cards are shared
   by the whole class rather than personal: the Uzbek line is shown to everyone or no one, per lesson.
 
@@ -80,6 +114,8 @@ started: the vocabulary list and teacher analytics.
 4. Control teacher sign-up (an invite code) before sharing widely.
 5. If wanted: send Telegram reminders from a Netlify scheduled function.
 6. When it becomes commercial: an always-on server in Europe, for speed and larger uploads.
-7. From PLAN.md: the vocabulary list (plain-text word + meaning per card, sortable A–Z or by deck) and teacher
-   analytics (time online, time per question, answer order) are not started.
-8. From PLAN.md §3: archive passages instead of deleting them; content-hash media dedup across decks.
+7. From PLAN.md: the vocabulary list (plain-text word + meaning per card, sortable A–Z or by deck) is not started;
+   of the teacher analytics, time online per session is not started (time per question and answer order are done).
+8. From PLAN.md §3: content-hash media dedup across decks; a "restore" for archived content.
+9. After the next deploy: try the test lock on a real Android phone and an iPhone (fullscreen and visibility), and
+   decide the default lock per class (STRICT is the default today).

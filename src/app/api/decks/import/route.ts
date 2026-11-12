@@ -19,7 +19,7 @@ export async function POST(request: Request) {
   const passageId = form.get("passageId");
   let passage: { id: string; title: string } | undefined;
   if (typeof passageId === "string" && passageId) {
-    const found = await db.passage.findFirst({ where: { id: passageId, ownerId: user.id }, select: { id: true, title: true } });
+    const found = await db.passage.findFirst({ where: { id: passageId, ownerId: user.id, archivedAt: null }, select: { id: true, title: true } });
     if (!found) return Response.json({ error: "Choose one of your own passages." }, { status: 400 });
     passage = found;
   } else if (!isAdmin(user.email)) {

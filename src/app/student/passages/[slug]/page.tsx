@@ -5,6 +5,7 @@ import { PageSkeleton } from "@/components/ui";
 import { requireStudent } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { answerKey, publicGroups, type QuestionGroup } from "@/lib/passage-format";
+import { proctoringFor } from "@/lib/assignments";
 import { latestAttempt, passageVisibleTo, viewOf } from "@/lib/passages";
 import { PassagePractice } from "./passage-practice";
 
@@ -20,11 +21,16 @@ async function PassageContent(props: PageProps<"/student/passages/[slug]">) {
     (await latestAttempt(user.id, passage.id)) ??
     (await db.passageAttempt.create({ data: { userId: user.id, passageId: passage.id, total: answerKey(groups).length }, include: { answers: true } }));
 
+  const policy = await proctoringFor(user.id, { passageId: passage.id });
+  // The questions are sent only once the test has started: before that, the gate is all there is to see.
+  const started = !!attempt.testStartedAt || !!attempt.firstSubmittedAt;
+
   return (
     <PassagePractice
       passage={{ id: passage.id, title: passage.title, timeLimit: passage.timeLimit, paragraphs: passage.paragraphs }}
-      groups={publicGroups(groups)}
+      groups={started ? publicGroups(groups) : null}
       initial={viewOf(attempt, groups)}
+      policy={policy}
     />
   );
 }

@@ -32,7 +32,7 @@ Demo accounts (local only, password `lingify-demo`):
 |---|---|
 | `teacher@lingify.test` | Teacher of **IELTS Morning Group** (join code `DEMO01`). Admin if listed in `ADMIN_EMAILS` |
 | `student@lingify.test` | Student with two finished passages, all corrected, and some flashcard history |
-| `jasur@lingify.test` | Student stuck on one question after three tries |
+| `jasur@lingify.test` | Student stuck on one question after three tries; his Aral Sea test was auto-finished (left the tab) and his flashcards were clicked through too fast, to show the integrity flags |
 | `malika@lingify.test` | Student who has not started |
 
 `npm run db:seed` deletes and recreates every `@lingify.test` account. `npm run db:seed -- --content` reloads only the
@@ -67,7 +67,8 @@ System fonts only, so nothing is downloaded before the first page shows.
 
 - **First try.** It is timed (20 minutes by default, set per passage) and submitted automatically when time runs out.
   This try alone gives the score and estimated band. The passage and questions sit side by side, with the question
-  numbers in a bar along the bottom.
+  numbers in a bar along the bottom. It starts behind a gate and runs under the test lock (below); the questions are
+  sent to the browser only when the student presses Start, and the clock runs on the server from that moment.
 - **After submitting.** The passage stays open. Each answer field and its number in the bottom bar turn green (correct)
   or red (wrong). The correct answer is never shown for a red question, and explanations appear only once the student
   finds the answer themselves.
@@ -87,7 +88,46 @@ System fonts only, so nothing is downloaded before the first page shows.
   wrong answer is a *comprehension error*.
 
 The rules live in `src/lib/passages.ts`. Answers are checked on the server and never sent to the browser
-(`publicGroups` in `src/lib/passage-format.ts`).
+(`publicGroups` in `src/lib/passage-format.ts`). Checks and tags lock the attempt row while they run, so two quick
+clicks (or two tabs) can never lose a try.
+
+### Test lock (Reading and Listening first tries)
+
+Each assignment has a **test lock** rule, chosen when assigning (default: strict):
+
+| Rule | Leaving the tab, switching windows or exiting fullscreen |
+|---|---|
+| **Strict** | Submits the first try at once |
+| **One warning** | The first time: a 5-second warning that covers the test ("Return to fullscreen"). Not back in time, or a second time: submitted |
+| **Practice** | Only recorded for the teacher |
+
+- **Fullscreen.** "Enter fullscreen & start" puts the page in fullscreen on desktop and Android. iPhones have no
+  fullscreen for web pages, so there the lock is leaving the tab or the app alone. If a browser refuses fullscreen
+  (or never answers), the test runs with the visibility lock and the teacher sees "Fullscreen refused".
+- **What counts as leaving:** a hidden tab, another window or app focused, fullscreen exited, or leaving the page
+  (closing, reloading, the back button, an in-app link). Focus moving into the Listening video is not leaving. A
+  dropped connection is not leaving: nothing in the lock looks at the network.
+- **Guards during the first try:** copy, cut and the context menu are blocked on the test; paste into answers is
+  blocked (recorded under Practice); Ctrl/Cmd+F is blocked in Reading; developer-tools keys are blocked. All are
+  recorded with the time and question.
+- **When the test is finished for the student**, whatever they answered is graded at once (blank answers count as
+  wrong), fullscreen ends, and a banner explains why. They still do every "Prove it" correction to finish the
+  homework.
+- **Weak connections.** Answers, telemetry and events are kept in sessionStorage. A submission that cannot reach
+  the server is shown as "Submitting…" and sent again every 5 seconds; a closing tab sends it with
+  `navigator.sendBeacon` to `/api/attempt-terminate`. Every route is idempotent: the first submission to arrive wins.
+- **Telemetry**, sent inside the one Submit request (no requests during the test): seconds per question (only while
+  the tab is visible), the time of each first answer, how often answers changed, and for Listening the video's
+  pauses, seeks and speed changes.
+- **Flags for the teacher** (`src/lib/telemetry.ts`, recomputed on the server from the raw times):
+  - auto-finished (tab, window, fullscreen), with the time and how many questions were answered;
+  - answer key suspected: 5 or more first answers within 15 seconds, or band 7.5+ in under 3.5 minutes;
+  - unrealistic speed: band 8+ in under a quarter of the expected time (72 s per question);
+  - can't locate their answers: 4 "Prove it" highlights in a row in the wrong paragraph;
+  - amber (check): a warning used, pastes, 3+ answers under 4 seconds, or a reading first try under 8 minutes.
+
+  These are signals for a conversation, not proof. The lock runs in the student's browser, so a second device or a
+  modified browser can get past it.
 
 ### Passage JSON format
 
@@ -129,8 +169,10 @@ Each file becomes a lesson page:
 - **First submission.** It gives the score and an estimated listening band (IELTS Listening conversion table).
 - **Corrections.** Wrong answers turn red and are never corrected for the student: they replay the video and try a new
   answer. Answers already tried are refused.
-- **Key words.** **Add to my flashcards** puts the key words into the student's own deck, with the word blanked out in
-  its example sentence.
+- **Key words first.** The key words are shown before the questions; "I've read these words" unlocks the test gate.
+  They also become the lesson's shared deck, with each word blanked out in its example sentence.
+- **Test lock.** The first try is proctored like a reading passage (see "Test lock"), with no time limit; the video's
+  own fullscreen button is turned off during it.
 
 **Keeping it light:**
 
@@ -157,7 +199,10 @@ Each file becomes a lesson page:
   - Front: the whole sentence from the passage with the chunk replaced by `[...]`.
   - Back: the chunk in its sentence, a short learner definition and, if the student keeps Uzbek on, an Uzbek translation.
 
-  Cards go to the student's own deck, **My IELTS chunks**, and can be undone from the notification.
+  Cards go to the passage's deck (only this student sees their own), and can be undone from the notification.
+- **Study speed.** Each answer records how long the card was on screen before it was rated (`ReviewLog.durationMs`,
+  capped at a minute). Teachers see the median per student; reviews with a median under 1.2 s, or new cards rated
+  Easy in under 2 s more than 85% of the time, show as "clicked through too fast".
 
 ### Progress and teacher views
 
@@ -165,17 +210,36 @@ Each file becomes a lesson page:
   headings"), the tag breakdown, mistakes by question type, location vs comprehension errors, and first-try scores.
 - **Class → Students.** One row per student: passages done, band (last 3), flashcards in 7 days, streak and last active.
   A **Stuck students** box lists anyone with a question still red after 3 or more tries.
+- **Class → Students** also shows each student's flagged first tries and flashcard speed.
+- **Class → Homework.** Per assignment, one row per student with three checks:
+  1. **First try**: not started / in progress / submitted (score, band);
+  2. **Corrections**: every red answer corrected (and, for a passage, proved and tagged); wrong-paragraph proofs are
+     counted;
+  3. **Vocabulary**: today's due cards in the passage's or lesson's deck (done / due), the deck's known and learning
+     share, cards made from highlights, and study speed.
+
+  Then an integrity badge (green clean, amber check, red auto-finished or flagged, with the reasons) and **Require
+  retake**, which sets the attempt aside (kept, but out of every score) and gives the student a fresh, locked test.
+  Homework is **done** when the first try is in, every answer is corrected, and, if the assignment asks for it, the
+  vocabulary is cleared.
 - **Class → Passages.** For each assigned passage, a heatmap with students against questions:
   - green: right the first time
   - amber: corrected (the number is how many tries)
   - red: still wrong
+  - grey stripes: left blank because the test was auto-finished
 
-  Each column header shows the percentage of the class that got that question wrong on the first try, so you can see
-  which question to go through in class. Assigning is done here too, to the whole class or to chosen students, with an
-  optional due date and note.
-- **Class → Mistakes.** The same breakdown as a student's Progress page, for the whole class.
-- **Student page.** Every answer given to each question, the sentence highlighted as proof (with a wrong-paragraph
-  warning), and the reason the student chose.
+  Hovering a cell shows the first answer, seconds on the question, its place in the answer order, the proof's
+  paragraph and the reason. Each column header shows the percentage of the class that got that question wrong on the
+  first try, and each row the time and integrity badge. **Mistake magnets** lists the 3 questions where most students
+  chose the same wrong answer. Assigning is done here too, to the whole class or to chosen students, with an optional
+  due date, note, test lock rule and vocabulary requirement.
+- **Class → Mistakes.** The same breakdown as a student's Progress page, for the whole class, plus a question type ×
+  cause matrix (the four reasons, wrong paragraph, misread).
+- **Student page.** Every answer given to each question, seconds on it and answer order, the sentence highlighted as
+  proof (with a wrong-paragraph warning), the reason the student chose, the test's integrity badge and event
+  timeline, and Listening attempts with video use.
+- **Deleting** a passage, lesson or deck archives it: it leaves every list, homework and deck, but students' attempts
+  and review history are kept.
 
 ## Installable app and offline use
 
@@ -252,7 +316,7 @@ running.
 | Command | What it does |
 |---|---|
 | `npm run db:deploy` | Applies database migrations on a server |
-| `npm test` | Unit tests: Anki scheduler, passage format and grading, .apkg import, card templates, dates |
+| `npm test` | Unit tests: Anki scheduler, passage format and grading, .apkg import, card templates, dates, integrity rules. With `TEST_DATABASE_URL` set to a throwaway database (migrations applied), also the proctored-submission tests against PostgreSQL |
 | `npm run lint` | ESLint |
 | `npm run telegram:remind` | Telegram reminders (`-- --weekly` for teacher summaries, `-- --dry-run` to preview) |
 | `npm run telegram:bot` | Telegram bot in long-polling mode, for local development |
@@ -282,3 +346,5 @@ The scripts run with `tsx --conditions=react-server` so the app's `server-only` 
   dictionary's first meaning, which is not always the sense used in the passage.
 - **Offline.** Passage questions and new cards from highlights need a connection.
 - **Uzbek translations** come from the project glossary and should be checked by an Uzbek-speaking teacher.
+- **The test lock** runs in the browser: it deters and records, it does not make cheating impossible. iPhones get no
+  fullscreen. Under the strict rule, a phone's screen locking or a notification pulled down submits the test.

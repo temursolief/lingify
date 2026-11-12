@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "My passages" };
 async function PassagesContent() {
   const teacher = await requireTeacher();
   const passages = await db.passage.findMany({
-    where: { ownerId: teacher.id },
+    where: { ownerId: teacher.id, archivedAt: null },
     orderBy: { createdAt: "desc" },
     // The stored counts stand in for the passage text and questions, which this list does not need to load.
     select: {

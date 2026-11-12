@@ -26,12 +26,12 @@ async function PassagesContent() {
   const now = new Date();
   const [assigned, attempts, summary] = await Promise.all([
     db.assignmentRecipient.findMany({
-      where: { studentId: user.id, assignment: { passageId: { not: null } } },
+      where: { studentId: user.id, assignment: { passageId: { not: null }, passage: { archivedAt: null } } },
       include: { assignment: { include: { passage: { select: { id: true, slug: true, title: true, timeLimit: true } } } } },
       orderBy: [{ completedAt: { sort: "asc", nulls: "first" } }, { assignment: { dueAt: { sort: "asc", nulls: "last" } } }],
     }),
     db.passageAttempt.findMany({
-      where: { userId: user.id },
+      where: { userId: user.id, invalidatedAt: null },
       orderBy: { startedAt: "desc" },
       select: { passageId: true, firstSubmittedAt: true, completedAt: true, firstCorrect: true, total: true, band: true, answers: { where: { correct: false }, select: { number: true } } },
     }),

@@ -95,7 +95,7 @@ export function OfflineApp() {
     setClock(a.at.getTime());
     writes.current = writes.current
       .then(async () => {
-        await updateQueue((q) => ({ ...q, reviews: [...q.reviews, { cardId: a.cardId, rating: a.rating, at: a.at.toISOString() }] }));
+        await updateQueue((q) => ({ ...q, reviews: [...q.reviews, { cardId: a.cardId, rating: a.rating, at: a.at.toISOString(), durationMs: a.durationMs }] }));
         const latest = (await loadPack()) ?? pack;
         const next = { ...latest, decks: latest.decks.map((d) => (d.id === deckId ? { ...d, cards: queue.cards, newLeft: queue.newLeft, reviewsLeft: queue.reviewsLeft } : d)) };
         await savePack(next, (await loadEtag()) ?? null);

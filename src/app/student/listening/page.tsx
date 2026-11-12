@@ -14,12 +14,12 @@ async function LibraryContent() {
   const user = await requireStudent();
   const [assigned, attempts] = await Promise.all([
     db.assignmentRecipient.findMany({
-      where: { studentId: user.id, assignment: { lessonId: { not: null } } },
+      where: { studentId: user.id, assignment: { lessonId: { not: null }, lesson: { archivedAt: null } } },
       include: { assignment: { include: { lesson: { select: { id: true, slug: true, title: true, videoId: true, total: true, wordCount: true } } } } },
       orderBy: [{ completedAt: { sort: "asc", nulls: "first" } }, { assignment: { dueAt: { sort: "asc", nulls: "last" } } }],
     }),
     db.listeningAttempt.findMany({
-      where: { userId: user.id },
+      where: { userId: user.id, invalidatedAt: null },
       orderBy: { startedAt: "desc" },
       select: { lessonId: true, firstSubmittedAt: true, completedAt: true, firstCorrect: true, band: true, answers: true },
     }),

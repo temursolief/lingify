@@ -7,7 +7,9 @@ import { applyReviews } from "@/lib/decks";
 const MAX_AGE_MS = 30 * 86_400_000;
 
 const schema = z.object({
-  reviews: z.array(z.object({ cardId: z.string(), rating: z.number().int().min(1).max(4), at: z.iso.datetime() })).max(2000),
+  reviews: z
+    .array(z.object({ cardId: z.string(), rating: z.number().int().min(1).max(4), at: z.iso.datetime(), durationMs: z.number().int().min(0).max(60_000).optional() }))
+    .max(2000),
 });
 
 /** A sane timestamp from the device: never in the future, never older than a month. */
@@ -24,7 +26,7 @@ export async function POST(request: Request) {
   if (!session || session.role !== "STUDENT") return new Response(null, { status: 401 });
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return new Response(null, { status: 400 });
-  const reviews = parsed.data.reviews.map((r) => ({ cardId: r.cardId, rating: r.rating as Rating, at: clamp(r.at) }));
+  const reviews = parsed.data.reviews.map((r) => ({ cardId: r.cardId, rating: r.rating as Rating, at: clamp(r.at), durationMs: r.durationMs }));
   try {
     return Response.json({ applied: await applyReviews(session.userId, reviews) });
   } catch (error) {

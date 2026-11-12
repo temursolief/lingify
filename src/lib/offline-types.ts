@@ -30,6 +30,7 @@ export type OfflinePack = {
 };
 
 /** Flashcard answers given offline, sent to the server when the connection is back. */
-export type OfflineQueue = { reviews: { cardId: string; rating: number; at: string }[] };
+/** `durationMs`: card shown → rating pressed (capped at a minute), so teachers can tell study from clicking through. */
+export type OfflineQueue = { reviews: { cardId: string; rating: number; at: string; durationMs?: number }[] };
 
 export const emptyQueue = (): OfflineQueue => ({ reviews: [] });

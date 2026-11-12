@@ -8,8 +8,8 @@ export type Section = { href: string; label: string; subtitle: string; badge?: n
 /** A student's four sections with what is waiting in each: the folders on the home page. */
 export async function studentSections(userId: string): Promise<Section[]> {
   const [assignedPassages, assignedLessons, due, summary] = await Promise.all([
-    db.assignmentRecipient.count({ where: { studentId: userId, completedAt: null, assignment: { passageId: { not: null } } } }),
-    db.assignmentRecipient.count({ where: { studentId: userId, completedAt: null, assignment: { lessonId: { not: null } } } }),
+    db.assignmentRecipient.count({ where: { studentId: userId, completedAt: null, assignment: { passageId: { not: null }, passage: { archivedAt: null } } } }),
+    db.assignmentRecipient.count({ where: { studentId: userId, completedAt: null, assignment: { lessonId: { not: null }, lesson: { archivedAt: null } } } }),
     dueToday(userId),
     studentSummary(userId),
   ]);

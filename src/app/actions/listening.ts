@@ -5,9 +5,10 @@ import { refresh } from "next/cache";
 import { z } from "zod";
 import { requireAdmin, requireStudent } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { ensureLessonDeck, lessonVisibleTo, markVocabSeen, retryListening, submitListening, viewOf, type ListeningView } from "@/lib/listening";
+import { beginListeningTest, ensureLessonDeck, lessonVisibleTo, markVocabSeen, retryListening, viewOf, type ListeningView } from "@/lib/listening";
 import { parseListeningJson } from "@/lib/listening-format";
-import { answerKey, youtubeId } from "@/lib/passage-format";
+import { answerKey, publicGroups, youtubeId, type PublicGroup, type QuestionGroup } from "@/lib/passage-format";
+import { submitLessonFor, type LessonSubmission } from "@/lib/submissions";
 import type { FormState } from "./teacher";
 
 async function view(userId: string, attemptId: string): Promise<ListeningView> {
@@ -15,13 +16,21 @@ async function view(userId: string, attemptId: string): Promise<ListeningView> {
   return viewOf(a, a.lesson.total);
 }
 
-const submitSchema = z.object({ attemptId: z.string(), answers: z.record(z.string(), z.string().max(120)) });
-
-export async function submitLesson(input: z.infer<typeof submitSchema>): Promise<ListeningView> {
+/** The first submission, from the button or the proctor. */
+export async function submitLesson(input: LessonSubmission): Promise<ListeningView> {
   const user = await requireStudent();
-  const { attemptId, answers } = submitSchema.parse(input);
-  await submitListening(user.id, attemptId, answers);
-  return view(user.id, attemptId);
+  await submitLessonFor(user.id, input);
+  return view(user.id, input.attemptId);
+}
+
+/** "Start test" (after the fullscreen gate): only now do the questions (without answers) go to the browser. */
+export async function startListeningTest(attemptId: string): Promise<{ view: ListeningView; groups: PublicGroup[] }> {
+  const user = await requireStudent();
+  if (typeof attemptId !== "string") throw new Error("Attempt not found");
+  const attempt = await db.listeningAttempt.findFirst({ where: { id: attemptId, userId: user.id, lesson: lessonVisibleTo(user.id) }, select: { lesson: { select: { questions: true } } } });
+  if (!attempt) throw new Error("Attempt not found");
+  await beginListeningTest(user.id, attemptId);
+  return { view: await view(user.id, attemptId), groups: publicGroups(attempt.lesson.questions as QuestionGroup[]) };
 }
 
 const retrySchema = z.object({ attemptId: z.string(), number: z.number().int(), answer: z.string().max(120) });
@@ -61,7 +70,7 @@ export async function uploadLesson(raw: string): Promise<FormState> {
   const parsed = parseListeningJson(raw);
   if (!parsed.ok) return { error: "Not saved. Fix these points and upload again:", errors: parsed.errors };
   const { title, video, questionGroups, vocabulary } = parsed.data;
-  const same = await db.listeningLesson.findFirst({ where: { title: { equals: title, mode: "insensitive" } }, select: { id: true } });
+  const same = await db.listeningLesson.findFirst({ where: { archivedAt: null, title: { equals: title, mode: "insensitive" } }, select: { id: true } });
   if (same) return { error: `There is already a lesson called “${title}”. Delete it first if you want to replace it.` };
   const total = answerKey(questionGroups).length;
   const lesson = await db.listeningLesson.create({
@@ -71,8 +80,14 @@ export async function uploadLesson(raw: string): Promise<FormState> {
   return { ok: `“${title}” saved: ${total} questions, ${vocabulary.length} key words.` };
 }
 
+/** Archived, not deleted: students' attempts and the lesson's vocabulary deck with its review history are kept. */
 export async function deleteLesson(lessonId: string) {
   await requireAdmin();
-  await db.listeningLesson.delete({ where: { id: lessonId } }).catch(() => undefined);
+  if (typeof lessonId !== "string") return;
+  const now = new Date();
+  await db.$transaction([
+    db.listeningLesson.updateMany({ where: { id: lessonId, archivedAt: null }, data: { archivedAt: now } }),
+    db.deck.updateMany({ where: { lessonId, archivedAt: null }, data: { archivedAt: now } }),
+  ]);
   refresh();
 }
