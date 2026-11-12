@@ -3,8 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useActionState, useState, useTransition } from "react";
 import { deleteLesson, uploadLesson } from "@/app/actions/listening";
-import { assignLesson, assignPassage, createClass, deleteAssignment, deleteDeck, deletePassage, removeStudent, uploadPassage, type FormState } from "@/app/actions/teacher";
+import { assignLesson, assignPassage, createClass, deleteAssignment, deleteDeck, deletePassage, removeStudent, resetAttemptForRetake, uploadPassage, type FormState } from "@/app/actions/teacher";
 import { Button } from "@/components/ui";
+import { POLICY_LABEL, type ProctoringPolicy } from "@/lib/telemetry";
 
 const inputClass = "rounded-md border border-line bg-surface px-3 py-2 focus:border-accent focus:outline-none";
 
@@ -31,6 +32,23 @@ export function CreateClassForm() {
       <Button type="submit" disabled={pending}>Create</Button>
       <Feedback state={state} />
     </form>
+  );
+}
+
+/** The proctoring rule for the first try and the vocabulary requirement, shared by both assign forms. */
+function HomeworkRules({ vocabLabel }: { vocabLabel: string }) {
+  return (
+    <div className="flex w-full flex-wrap items-end gap-x-4 gap-y-2 text-sm">
+      <label>
+        <span className="mb-1 block text-muted">Test lock (first try)</span>
+        <select name="proctoringPolicy" defaultValue="STRICT" className={inputClass}>
+          {(["STRICT", "WARN_ONCE", "NONE"] as ProctoringPolicy[]).map((p) => <option key={p} value={p}>{POLICY_LABEL[p]}</option>)}
+        </select>
+      </label>
+      <label className="inline-flex items-center gap-1.5 pb-2">
+        <input type="checkbox" name="requireVocabFirst" defaultChecked className="accent-[var(--accent)]" /> {vocabLabel}
+      </label>
+    </div>
   );
 }
 
@@ -87,6 +105,7 @@ export function AssignPassageForm({
         <span className="mb-1 block text-muted">Note (optional)</span>
         <input name="note" maxLength={200} className={`${inputClass} w-full`} placeholder="Focus on the headings" />
       </label>
+      <HomeworkRules vocabLabel="Done only after today's cards in the passage's deck are studied" />
       <Button type="submit" disabled={pending}>Assign</Button>
       <Feedback state={state} />
     </form>
@@ -139,6 +158,7 @@ export function AssignLessonForm({
         <span className="mb-1 block text-muted">Note (optional)</span>
         <input name="note" maxLength={200} className={`${inputClass} w-full`} placeholder="Listen twice before answering" />
       </label>
+      <HomeworkRules vocabLabel="Done only after the key words are read" />
       <Button type="submit" disabled={pending}>Assign</Button>
       <Feedback state={state} />
     </form>
@@ -248,9 +268,26 @@ function ConfirmButton({ label, confirmText, onConfirm }: { label: string; confi
 }
 
 export const DeleteAssignmentButton = ({ id }: { id: string }) => <ConfirmButton label="Remove" confirmText="Remove this assignment?" onConfirm={() => deleteAssignment(id)} />;
-export const DeletePassageButton = ({ id }: { id: string }) => <ConfirmButton label="Delete" confirmText="Delete passage and its results?" onConfirm={() => deletePassage(id)} />;
-export const DeleteLessonButton = ({ id }: { id: string }) => <ConfirmButton label="Delete" confirmText="Delete lesson and students' results?" onConfirm={() => deleteLesson(id)} />;
-export const DeleteDeckButton = ({ id }: { id: string }) => <ConfirmButton label="Delete" confirmText="Delete deck for every student?" onConfirm={() => deleteDeck(id)} />;
+// "Delete" archives: students' attempts and review history are kept, but the item leaves every list.
+export const DeletePassageButton = ({ id }: { id: string }) => <ConfirmButton label="Delete" confirmText="Remove passage from lists and homework?" onConfirm={() => deletePassage(id)} />;
+export const DeleteLessonButton = ({ id }: { id: string }) => <ConfirmButton label="Delete" confirmText="Remove lesson from lists and homework?" onConfirm={() => deleteLesson(id)} />;
+export const DeleteDeckButton = ({ id }: { id: string }) => <ConfirmButton label="Delete" confirmText="Remove deck for every student?" onConfirm={() => deleteDeck(id)} />;
+
+/** "Require retake": the student's first try is set aside and they take the test again, proctored. */
+export function RetakeButton({ kind, attemptId, name }: { kind: "passage" | "lesson"; attemptId: string; name: string }) {
+  const [message, setMessage] = useState<string | null>(null);
+  if (message) return <span className="text-xs text-muted">{message}</span>;
+  return (
+    <ConfirmButton
+      label="Require retake"
+      confirmText={`${name} takes it again?`}
+      onConfirm={async () => {
+        const r = await resetAttemptForRetake({ kind, attemptId });
+        setMessage(r.ok ?? r.error ?? null);
+      }}
+    />
+  );
+}
 export const RemoveStudentButton = ({ classId, studentId, name }: { classId: string; studentId: string; name: string }) => (
   <ConfirmButton label="Remove from class" confirmText={`Remove ${name}?`} onConfirm={() => removeStudent(classId, studentId)} />
 );

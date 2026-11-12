@@ -3,8 +3,9 @@
 import { z } from "zod";
 import { requireStudent } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { answerKey, type QuestionGroup } from "@/lib/passage-format";
-import { latestAttempt, passageVisibleTo, retryQuestion, submitFirst, tagQuestion, viewOf, type AttemptView } from "@/lib/passages";
+import { answerKey, publicGroups, type PublicGroup, type QuestionGroup } from "@/lib/passage-format";
+import { beginTest, latestAttempt, passageVisibleTo, retryQuestion, tagQuestion, viewOf, type AttemptView } from "@/lib/passages";
+import { submitPassageFor, type PassageSubmission } from "@/lib/submissions";
 
 const evidence = z.object({ paragraph: z.number().int().min(0).max(25), start: z.number().int().min(0), end: z.number().int().min(0), text: z.string().max(1500) });
 
@@ -32,6 +33,18 @@ export async function startAttempt(passageId: string): Promise<AttemptView> {
   return currentView(user.id, passageId);
 }
 
+/**
+ * "Start test" (after the fullscreen gate): the timer starts on the server's clock, and only now do the questions
+ * (without answers) go to the browser.
+ */
+export async function startTest(input: { attemptId: string; passageId: string }): Promise<{ view: AttemptView; groups: PublicGroup[] }> {
+  const user = await requireStudent();
+  const { attemptId, passageId } = z.object({ attemptId: z.string(), passageId: z.string() }).parse(input);
+  const passage = await visiblePassage(user.id, passageId);
+  await beginTest(user.id, attemptId);
+  return { view: await currentView(user.id, passageId), groups: publicGroups(passage.groups as QuestionGroup[]) };
+}
+
 /** A fresh attempt after finishing one, to practise the passage again. */
 export async function restartAttempt(passageId: string): Promise<AttemptView> {
   const user = await requireStudent();
@@ -40,19 +53,10 @@ export async function restartAttempt(passageId: string): Promise<AttemptView> {
   return currentView(user.id, passageId);
 }
 
-const submitSchema = z.object({
-  attemptId: z.string(),
-  passageId: z.string(),
-  answers: z.record(z.string(), z.string().max(120)),
-  evidence: z.record(z.string(), evidence),
-  seconds: z.number().int().min(0).max(4 * 3600),
-});
-
-export async function submitPassage(input: z.infer<typeof submitSchema>): Promise<AttemptView> {
+/** The first submission, from the button, the timer or the proctor. */
+export async function submitPassage(input: PassageSubmission): Promise<AttemptView> {
   const user = await requireStudent();
-  const { attemptId, passageId, answers, evidence, seconds } = submitSchema.parse(input);
-  const toNumbers = <T,>(r: Record<string, T>) => Object.fromEntries(Object.entries(r).map(([k, v]) => [Number(k), v]));
-  await submitFirst(user.id, attemptId, toNumbers(answers), toNumbers(evidence), seconds);
+  const passageId = await submitPassageFor(user.id, input);
   return currentView(user.id, passageId);
 }
 

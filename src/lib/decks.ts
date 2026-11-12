@@ -1,6 +1,7 @@
 import "server-only";
 import { Prisma, type CardQueue } from "@/generated/prisma/client";
 import { answer, newSchedule, OPTIONS, type Rating, type Schedule } from "./anki";
+import { settleAfterReviews } from "./assignments";
 import { db } from "./db";
 import { lessonVisibleTo } from "./listening";
 import { store, type OfflineCard } from "./offline-types";
@@ -25,6 +26,7 @@ const deckFields = { id: true, name: true, css: true, ownerId: true, passageId: 
 /** Decks this student may study: their own, plus the ones linked to a passage or lesson a teacher assigned them. */
 function visibleDeckWhere(userId: string): Prisma.DeckWhereInput {
   return {
+    archivedAt: null,
     OR: [
       { ownerId: userId },
       { ownerId: null, passageId: null, lessonId: null },
@@ -169,19 +171,21 @@ export async function studyQueue(
   return { cards, ...limits, moreDue: Math.max(0, Math.min(limits.reviewsLeft, reviewCount) - shown.length), dueBy: reviewsUntil.toISOString() };
 }
 
-export type Review = { cardId: string; rating: Rating; at: Date };
+/** `durationMs`: card shown → rating pressed, capped at a minute; 0 when the device did not measure it. */
+export type Review = { cardId: string; rating: Rating; at: Date; durationMs?: number };
 
 /**
  * Saves a batch of answers in the order they were given: the ones a browser queued while studying, online or not.
  * `at` is when the student answered. An answer already saved (the browser sends again when a reply was lost) is
- * skipped, and so is one for a card the student may not use or that was deleted since.
+ * skipped, and so is one for a card the student may not use or that was deleted since. Answers on a passage's deck
+ * may complete the vocabulary part of that passage's homework.
  */
 export async function applyReviews(userId: string, reviews: Review[]): Promise<number> {
   if (!reviews.length) return 0;
   const ids = [...new Set(reviews.map((r) => r.cardId))];
   const oldest = new Date(Math.min(...reviews.map((r) => r.at.getTime())));
   const [cards, states, logs] = await Promise.all([
-    db.card.findMany({ where: { id: { in: ids }, deck: visibleDeckWhere(userId), ...visibleCardWhere(userId) }, select: { id: true } }),
+    db.card.findMany({ where: { id: { in: ids }, deck: visibleDeckWhere(userId), ...visibleCardWhere(userId) }, select: { id: true, deck: { select: { passageId: true } } } }),
     db.cardState.findMany({ where: { userId, cardId: { in: ids } }, select: { cardId: true, ...scheduleFields } }),
     db.reviewLog.findMany({ where: { userId, cardId: { in: ids }, at: { gte: oldest } }, select: { cardId: true, at: true } }),
   ]);
@@ -199,7 +203,15 @@ export async function applyReviews(userId: string, reviews: Review[]): Promise<n
     const next = answer(before, r.rating, r.at);
     schedules.set(r.cardId, next);
     changed.add(r.cardId);
-    newLogs.push({ userId, cardId: r.cardId, rating: r.rating, queue: before.queue, interval: next.interval, at: r.at });
+    newLogs.push({
+      userId,
+      cardId: r.cardId,
+      rating: r.rating,
+      queue: before.queue,
+      interval: next.interval,
+      durationMs: Math.max(0, Math.min(60_000, Math.round(r.durationMs ?? 0))),
+      at: r.at,
+    });
   }
   if (!newLogs.length) return 0;
 
@@ -212,6 +224,8 @@ export async function applyReviews(userId: string, reviews: Review[]): Promise<n
     db.reviewLog.createMany({ data: newLogs }),
     db.user.update({ where: { id: userId }, data: { lastActiveAt: new Date() } }),
   ]);
+  const passageIds = [...new Set(cards.filter((c) => changed.has(c.id) && c.deck.passageId).map((c) => c.deck.passageId!))];
+  await settleAfterReviews(userId, passageIds);
   return newLogs.length;
 }
 

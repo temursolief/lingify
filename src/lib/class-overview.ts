@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { db } from "./db";
-import { STUCK_TRIES } from "./insights";
+import { reviewHealth, STUCK_TRIES, type ReviewHealth } from "./insights";
 import { addDays, dayKey, dayOf, streakFrom } from "./time";
 
 export const teacherClass = cache((classId: string, teacherId: string) => db.class.findFirst({ where: { id: classId, teacherId } }));
@@ -17,6 +17,10 @@ export type StudentRow = {
   cardsThisWeek: number;
   streak: number;
   stuck: number;
+  /** first tries flagged (auto-finished, answer key, pace, locating mismatch) that still count */
+  flagged: number;
+  /** flashcard study speed over the last 7 days */
+  review: ReviewHealth | null;
 };
 
 const avgBand = (bands: number[]) => (bands.length ? Math.round((bands.reduce((a, b) => a + b, 0) / bands.length) * 2) / 2 : null);
@@ -35,11 +39,11 @@ export async function studentSummaries(userIds: string[]): Promise<Map<string, S
   const users = { in: userIds };
   const stuckAnswer = { correct: false, tries: { gte: STUCK_TRIES } };
   const [attempts, cards, days, stuck] = await Promise.all([
-    db.passageAttempt.findMany({ where: { userId: users, firstSubmittedAt: { not: null } }, orderBy: { firstSubmittedAt: "desc" }, select: { userId: true, band: true, completedAt: true } }),
+    db.passageAttempt.findMany({ where: { userId: users, invalidatedAt: null, firstSubmittedAt: { not: null } }, orderBy: { firstSubmittedAt: "desc" }, select: { userId: true, band: true, completedAt: true } }),
     db.reviewLog.groupBy({ by: ["userId"], where: { userId: users, at: { gte: weekAgo } }, _count: true }),
     db.activityTime.findMany({ where: { userId: users, seconds: { gte: 60 } }, select: { userId: true, day: true } }),
     db.passageAttempt.findMany({
-      where: { userId: users, completedAt: null, answers: { some: stuckAnswer } },
+      where: { userId: users, invalidatedAt: null, completedAt: null, answers: { some: stuckAnswer } },
       select: { userId: true, _count: { select: { answers: { where: stuckAnswer } } } },
     }),
   ]);
@@ -60,14 +64,24 @@ export async function studentSummaries(userIds: string[]): Promise<Map<string, S
 /** One student's numbers. Cached for the request: the sidebar and the page ask for the same thing. */
 export const studentSummary = cache(async (userId: string): Promise<Summary> => (await studentSummaries([userId])).get(userId)!);
 
+/** The class list for the teacher: each student's numbers, plus how many first tries were flagged and flashcard speed. */
 export async function classOverview(classId: string): Promise<StudentRow[]> {
   const enrollments = await db.enrollment.findMany({
     where: { classId },
     select: { user: { select: { id: true, name: true, email: true, lastActiveAt: true } } },
     orderBy: { user: { name: "asc" } },
   });
-  const summaries = await studentSummaries(enrollments.map((e) => e.user.id));
-  return enrollments.map(({ user }) => ({ ...user, ...summaries.get(user.id)! }));
+  const ids = enrollments.map((e) => e.user.id);
+  const flaggedWhere = { userId: { in: ids }, invalidatedAt: null, integrityFlagged: true };
+  const [summaries, flaggedPassages, flaggedLessons, health] = await Promise.all([
+    studentSummaries(ids),
+    db.passageAttempt.groupBy({ by: ["userId"], where: flaggedWhere, _count: true }),
+    db.listeningAttempt.groupBy({ by: ["userId"], where: flaggedWhere, _count: true }),
+    reviewHealth(ids),
+  ]);
+  const flagged = (id: string) =>
+    (flaggedPassages.find((f) => f.userId === id)?._count ?? 0) + (flaggedLessons.find((f) => f.userId === id)?._count ?? 0);
+  return enrollments.map(({ user }) => ({ ...user, ...summaries.get(user.id)!, flagged: flagged(user.id), review: health.get(user.id) ?? null }));
 }
 
 /** Per class: how many students were active in the last days, and how many are stuck on a question. Two queries. */
@@ -79,7 +93,7 @@ export async function classActivity(classIds: string[], days = 7): Promise<Map<s
   const [active, stuck] = await Promise.all([
     db.enrollment.groupBy({ by: ["classId"], where: { ...inClasses, user: { lastActiveAt: { gte: since } } }, _count: true }),
     db.enrollment.findMany({
-      where: { ...inClasses, user: { attempts: { some: { completedAt: null, answers: { some: { correct: false, tries: { gte: STUCK_TRIES } } } } } } },
+      where: { ...inClasses, user: { attempts: { some: { invalidatedAt: null, completedAt: null, answers: { some: { correct: false, tries: { gte: STUCK_TRIES } } } } } } },
       select: { classId: true },
     }),
   ]);

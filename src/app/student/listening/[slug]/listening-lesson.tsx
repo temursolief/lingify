@@ -1,14 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useTransition, type ReactNode } from "react";
-import { markVocabularySeen, recheckAnswer, restartLesson, submitLesson } from "@/app/actions/listening";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
+import { markVocabularySeen, recheckAnswer, restartLesson, startListeningTest, submitLesson } from "@/app/actions/listening";
 import { ActivityTracker } from "@/components/activity-tracker";
+import { IntegrityBanner } from "@/components/integrity-banner";
 import { LiteVideo } from "@/components/lite-video";
 import { NotesText } from "@/components/notes-text";
+import { PreTestGateModal } from "@/components/pre-test-gate-modal";
+import { ProctorWarningOverlay, SubmittingOverlay } from "@/components/test-proctor";
 import { Button, cx } from "@/components/ui";
 import type { ListeningView } from "@/lib/listening";
 import { GROUP_LABEL, paragraphLetter, type PublicGroup } from "@/lib/passage-format";
+import type { LessonSubmission } from "@/lib/submissions";
+import type { IntegrityEvent, ProctoringPolicy, SubmissionReason } from "@/lib/telemetry";
+import { clearDraft, loadDraft, saveDraft } from "@/lib/test-draft";
+import { useQuestionTelemetry } from "@/lib/use-question-telemetry";
+import { exitFullscreen, useTestProctor } from "@/lib/use-test-proctor";
 
 type Vocab = { word: string; meaning: string; uz?: string; example?: string };
 type QState = ListeningView["questions"][number];
@@ -17,21 +25,142 @@ type QState = ListeningView["questions"][number];
  * A Listening Comprehension lesson: the video and its key words on the left, the questions on the right, question
  * numbers along the bottom. On a phone it is one column: the video stays at the top while the questions scroll. The first submission gives the score. Red answers are never corrected for the student:
  * they replay the video and try a new answer until it turns green.
+ *
+ * The first try is proctored like a reading passage (`useTestProctor`), after the key-word gate and a Start gate;
+ * the questions come from the server only at Start. Focus moving into the video frame is not leaving the test.
  */
-export function ListeningLesson({ lesson, groups, vocabulary, initial }: { lesson: { id: string; title: string; videoId: string }; groups: PublicGroup[]; vocabulary: Vocab[]; initial: ListeningView }) {
+export function ListeningLesson({
+  lesson,
+  groups: initialGroups,
+  vocabulary,
+  initial,
+  policy,
+}: {
+  lesson: { id: string; title: string; videoId: string };
+  groups: PublicGroup[] | null;
+  vocabulary: Vocab[];
+  initial: ListeningView;
+  policy: ProctoringPolicy;
+}) {
   const [view, setView] = useState(initial);
+  const [groups, setGroups] = useState(initialGroups);
   const [answers, setAnswers] = useState<Record<number, string>>(() => Object.fromEntries(Object.entries(initial.questions).map(([n, q]) => [n, q.answer])));
   const [errors, setErrors] = useState<Record<number, string>>({});
   const [active, setActive] = useState<number | null>(null);
   const [pending, start] = useTransition();
-  const numbers = useMemo(() => groups.flatMap((g) => g.questions.map((q) => q.number)), [groups]);
+  const [startedAtMs, setStartedAtMs] = useState<number | null>(null);
+  const [startError, setStartError] = useState("");
+  const [sending, setSending] = useState<"idle" | "sending" | "failed">("idle");
+  const numbers = useMemo(() => (groups ?? []).flatMap((g) => g.questions.map((q) => q.number)), [groups]);
   const states = view.questions;
   const red = Object.values(states).filter((q) => !q.correct).length;
   // A lesson with no key words has nothing to gate on.
   const gated = vocabulary.length > 0 && !view.vocabRead;
+  const firstTry = !view.submitted;
+  const testOn = firstTry && startedAtMs !== null;
+  const rootRef = useRef<HTMLDivElement>(null);
+  const activeRef = useRef<number | null>(null);
+  const answersRef = useRef(answers);
+  const finishing = useRef(false);
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
 
-  const set = (n: number, v: string) => setAnswers((a) => ({ ...a, [n]: v }));
-  const submit = () => start(async () => setView(await submitLesson({ attemptId: view.id, answers: Object.fromEntries(Object.entries(answers)) })));
+  const telemetry = useQuestionTelemetry({ attemptId: view.id, running: testOn, startedAtMs });
+  const eventsRef = useRef<() => IntegrityEvent[]>(() => []);
+  const payload = useCallback(
+    (reason: SubmissionReason): LessonSubmission => ({
+      attemptId: view.id,
+      answers: Object.fromEntries(Object.entries(answersRef.current).map(([k, v]) => [k, v ?? ""])),
+      meta: { reason, events: eventsRef.current(), telemetry: telemetry.snapshot(true) },
+    }),
+    [view.id, telemetry],
+  );
+  /** The first submission, whatever ended the test; kept on the device and sent again until the server has it. */
+  const send = useCallback((body: LessonSubmission) => {
+    if (finishing.current) return;
+    finishing.current = true;
+    saveDraft(body.attemptId, { pending: body });
+    setSending("sending");
+    const go = () =>
+      submitLesson(body).then(
+        (v) => {
+          clearDraft(body.attemptId);
+          setView(v);
+          setSending("idle");
+        },
+        () => {
+          setSending("failed");
+          setTimeout(go, 5000);
+        },
+      );
+    void go();
+  }, []);
+  const finish = useCallback((reason: SubmissionReason) => send(payload(reason)), [send, payload]);
+  const beacon = useCallback(
+    (reason: SubmissionReason) => navigator.sendBeacon?.("/api/attempt-terminate", new Blob([JSON.stringify({ kind: "lesson", ...payload(reason) })], { type: "application/json" })),
+    [payload],
+  );
+  const proctor = useTestProctor({
+    attemptId: view.id,
+    policy,
+    kind: "listening",
+    enabled: testOn,
+    rootRef,
+    elapsedMs: telemetry.elapsedMs,
+    activeQuestion: () => activeRef.current,
+    onFinish: finish,
+    beacon,
+  });
+  useEffect(() => {
+    eventsRef.current = proctor.events;
+  }, [proctor.events]);
+
+  // Opened again after a started test was never submitted: under a lock, leaving ended it, so it is submitted now.
+  const resumedOnce = useRef(false);
+  useEffect(() => {
+    if (resumedOnce.current || view.submitted || !initial.started) return;
+    resumedOnce.current = true;
+    const draft = loadDraft(view.id);
+    if (draft.pending) send(draft.pending as LessonSubmission);
+    else if (policy !== "NONE") {
+      send({ attemptId: view.id, answers: Object.fromEntries(Object.entries(draft.answers ?? {}).map(([k, v]) => [k, String(v ?? "")])), meta: { reason: "TAB_HIDDEN", events: draft.events ?? [], telemetry: telemetry.snapshot(true) } });
+    }
+  }, [initial.started, policy, send, telemetry, view.id, view.submitted]);
+
+  const begin = () => {
+    setStartError("");
+    void proctor.start(); // first: fullscreen needs the click
+    const saved = loadDraft(view.id).answers;
+    if (saved) setAnswers((a) => ({ ...a, ...saved }));
+    setStartedAtMs(Date.now());
+    start(async () => {
+      try {
+        const r = await startListeningTest(view.id);
+        setView(r.view);
+        setGroups(r.groups);
+      } catch {
+        setStartedAtMs(null);
+        exitFullscreen();
+        setStartError("No connection: the questions could not be loaded. Try again when you are online.");
+      }
+    });
+  };
+
+  const focus = (n: number) => {
+    setActive(n);
+    activeRef.current = n;
+    telemetry.focusQuestion(n);
+  };
+  const set = (n: number, v: string) => {
+    setAnswers((a) => {
+      const next = { ...a, [n]: v };
+      if (!view.submitted) saveDraft(view.id, { answers: next });
+      return next;
+    });
+    if (firstTry) telemetry.answered(n, v);
+  };
+  const submit = () => finish("NORMAL");
   const recheck = (n: number) =>
     start(async () => {
       const r = await recheckAnswer({ attemptId: view.id, number: n, answer: answers[n] ?? "" });
@@ -41,6 +170,8 @@ export function ListeningLesson({ lesson, groups, vocabulary, initial }: { lesso
   const again = () =>
     start(async () => {
       setView(await restartLesson(lesson.id));
+      finishing.current = false;
+      setStartedAtMs(null);
       setAnswers({});
       setErrors({});
     });
@@ -57,7 +188,7 @@ export function ListeningLesson({ lesson, groups, vocabulary, initial }: { lesso
       value={answers[n] ?? ""}
       disabled={locked(n)}
       onChange={(e) => set(n, e.target.value)}
-      onFocus={() => setActive(n)}
+      onFocus={() => focus(n)}
       autoComplete="off"
       spellCheck={false}
       aria-label={`Answer ${n}`}
@@ -83,7 +214,7 @@ export function ListeningLesson({ lesson, groups, vocabulary, initial }: { lesso
               disabled={locked(n) || triedWrong}
               onClick={() => {
                 set(n, o.value);
-                setActive(n);
+                focus(n);
               }}
               className={cx(
                 "rounded-md px-3 py-1.5 text-left text-sm ring-1 ring-inset transition-colors",
@@ -190,8 +321,31 @@ export function ListeningLesson({ lesson, groups, vocabulary, initial }: { lesso
     }
   };
 
+  if (!gated && firstTry && (startedAtMs === null || !groups)) {
+    return (
+      <>
+        <PreTestGateModal
+          kind="listening"
+          title={lesson.title}
+          policy={policy}
+          resuming={initial.started && policy === "NONE"}
+          pending={pending || sending !== "idle" || (initial.started && policy !== "NONE")}
+          startLabel="no time limit"
+          points={[
+            "Watch the video and answer the IELTS Listening questions. Pause and replay as often as you need.",
+            "This first try gives your score. After you submit, wrong answers turn red: listen again and correct them yourself.",
+          ]}
+          onStart={begin}
+        />
+        {startError && <p className="mx-auto mt-3 max-w-xl text-center text-sm text-bad">{startError}</p>}
+        {sending !== "idle" && <SubmittingOverlay failed={sending === "failed"} />}
+      </>
+    );
+  }
+
   return (
-    <div className="pane-fill flex flex-col">
+    // During the first try the test covers the whole screen, so no link in the app is one click away.
+    <div ref={rootRef} className={cx("flex flex-col", testOn ? "fixed inset-0 z-40 bg-page" : "pane-fill")}>
       {!view.completed && <ActivityTracker activity="IELTS" />}
       <div className="pane-x flex min-h-14 shrink-0 items-center gap-3 border-b border-line bg-bar py-2 md:gap-4">
         <div className="min-w-0 flex-1">
@@ -221,7 +375,7 @@ export function ListeningLesson({ lesson, groups, vocabulary, initial }: { lesso
           <div className="sticky top-0 z-10 order-1 bg-surface px-2 py-2 shadow-bubble md:static md:p-0 md:shadow-none">
             {/* No taller than about a third of the screen, so the questions stay in view on a phone held sideways. */}
             <div className="mx-auto max-w-[min(100%,56dvh)] md:max-w-none">
-              <LiteVideo id={lesson.videoId} title={lesson.title} />
+              <LiteVideo id={lesson.videoId} title={lesson.title} onEvent={testOn ? telemetry.videoEvent : undefined} allowFullscreen={!testOn} />
             </div>
           </div>
           <p className="order-2 px-4 pt-3 text-sm text-muted md:p-0">
@@ -250,6 +404,7 @@ export function ListeningLesson({ lesson, groups, vocabulary, initial }: { lesso
             <p className="text-muted">Read the key words on the left, then press “I&apos;ve read these words” to see the questions.</p>
           ) : (
             <>
+              {view.submitted && <IntegrityBanner kind="listening" reason={view.reason} firstCorrect={view.firstCorrect} total={view.total} band={view.band} />}
               {view.completed && (
                 <div className="mb-6 rounded-xl bg-good-soft p-4 text-good">
                   <p className="font-semibold">Lesson complete</p>
@@ -266,7 +421,7 @@ export function ListeningLesson({ lesson, groups, vocabulary, initial }: { lesso
                 </div>
               )}
               <div className="space-y-8">
-                {groups.map((g, gi) => (
+                {(groups ?? []).map((g, gi) => (
                   <section key={gi}>
                     <h2 className="font-semibold">
                       Questions {g.questions[0].number}
@@ -309,6 +464,8 @@ export function ListeningLesson({ lesson, groups, vocabulary, initial }: { lesso
           )}
         </nav>
       )}
+      {proctor.warning && <ProctorWarningOverlay warning={proctor.warning} fullscreen={proctor.needsFullscreen} onResume={proctor.resume} />}
+      {sending !== "idle" && <SubmittingOverlay failed={sending === "failed"} />}
     </div>
   );
 }

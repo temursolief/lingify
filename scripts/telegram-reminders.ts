@@ -14,7 +14,7 @@ async function reminderFor(userId: string) {
   const [due, open] = await Promise.all([
     dueToday(userId),
     db.assignmentRecipient.findMany({
-      where: { studentId: userId, completedAt: null, assignment: { passageId: { not: null } } },
+      where: { studentId: userId, completedAt: null, assignment: { passageId: { not: null }, passage: { archivedAt: null } } },
       include: { assignment: { include: { passage: { select: { title: true } } } } },
     }),
   ]);
@@ -49,9 +49,9 @@ async function summariseForTeachers() {
       const rows = await Promise.all(
         cls.enrollments.map(async ({ user }) => {
           const [attempts, cards, stuck] = await Promise.all([
-            db.passageAttempt.findMany({ where: { userId: user.id, firstSubmittedAt: { gte: since } }, select: { band: true } }),
+            db.passageAttempt.findMany({ where: { userId: user.id, invalidatedAt: null, firstSubmittedAt: { gte: since } }, select: { band: true } }),
             db.reviewLog.count({ where: { userId: user.id, at: { gte: since } } }),
-            db.questionAnswer.count({ where: { correct: false, tries: { gte: STUCK_TRIES }, attempt: { userId: user.id, completedAt: null } } }),
+            db.questionAnswer.count({ where: { correct: false, tries: { gte: STUCK_TRIES }, attempt: { userId: user.id, invalidatedAt: null, completedAt: null } } }),
           ]);
           const bands = attempts.map((a) => a.band!).filter((b) => b !== null);
           return { name: user.name, passages: attempts.length, cards, stuck, band: bands.length ? Math.round((bands.reduce((a, b) => a + b, 0) / bands.length) * 2) / 2 : null };

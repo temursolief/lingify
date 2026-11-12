@@ -35,7 +35,7 @@ export function OnlineStudy({ deck, queue, startedAt }: { deck: { id: string; na
 
   const onAnswer = useCallback((a: Answered) => {
     studied.current = true;
-    void recordReview({ cardId: a.cardId, rating: a.rating, at: a.at.toISOString() }).then((sent) => setUnsent(!sent));
+    void recordReview({ cardId: a.cardId, rating: a.rating, at: a.at.toISOString(), durationMs: a.durationMs }).then((sent) => setUnsent(!sent));
   }, []);
 
   /** Out of cards: make sure the server has every answer, then ask it what is left for today. */

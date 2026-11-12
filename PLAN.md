@@ -71,8 +71,8 @@ alive but hidden (React `<Activity>`), so the YouTube player keeps playing.
     That needs media URLs keyed by hash instead of by deck ID, which means rewriting the `/api/media` route and the
     HTML already baked into every existing card — a real migration, not attempted without discussing it first.
   - **Deleting a passage** today deletes the deck, students' own cards and their review history. Archive instead.
-    — **not done.** `deletePassage` (`src/app/actions/teacher.ts`) still hard-deletes, cascading to its deck. Needs
-    an `archived` flag and a filter everywhere passages are listed; left for a dedicated pass.
+    — **done 2026-11-12** (§7): `archivedAt` on `Passage`, `ListeningLesson` and `Deck`; "Delete" sets it, and the
+    visibility helpers and every list filter on it. No "restore" button yet.
   - **Old cards:** existing "My IELTS chunks" cards stay where they are. — true: unaffected.
 
 ## 4. Students see only what is assigned; flashcards follow — done
@@ -93,7 +93,11 @@ alive but hidden (React `<Activity>`), so the YouTube player keeps playing.
   - **Students with no class** see an empty app and need a "Join a class" message.
   - **Personal deck:** "My IELTS chunks" stays visible; it is the student's own.
 
-## 5. Teacher analytics: time online, time per question, answer order
+## 5. Teacher analytics: time online, time per question, answer order — mostly done (§7)
+
+_Done 2026-11-12 as part of §7:_ time per question and answer order, recorded in the browser and sent inside the
+Submit request (`AttemptTelemetry` on the attempt). _Not done:_ time online per session (first/last seen on
+`ActivityTime`), and the separate "correcting" heartbeat activity.
 
 **The riskiest change.** The heartbeat (`src/app/api/heartbeat/route.ts`) already sends a request every 30 s from
 each active student: 2 database writes, and it keeps Neon awake.
@@ -139,4 +143,51 @@ there is no clean word to sort by.
 3. Listening deck and passage decks (1 and 3) together: both create decks linked to content. — done (3 with the
    storage dedup and passage-archiving side effects deliberately left; see above).
 4. Vocabulary list (6). — not started.
-5. Analytics (5). — not started.
+5. Analytics (5). — mostly done in §7; sessions / time online not started.
+6. Homework verification and test integrity (7). — done 2026-11-12.
+
+## 7. Homework verification, test integrity and deep analytics — done 2026-11-12
+
+**Goal:** teachers can trust that Reading, Listening and flashcard homework was done by the student, alone, and see
+how each first try went. **Cost:** one extra request per test ("Start test", which also brings the questions), no
+requests during it; one more column write per flashcard answer.
+
+- **Schema** (`20261112160139_homework_integrity_and_analytics`): `ProctoringPolicy` and `SubmissionReason` enums;
+  `Assignment.proctoringPolicy` (default STRICT) and `requireVocabFirst`; `AssignmentRecipient.firstSubmitAt`,
+  `vocabCompletedAt`, `integrityFlagged`; on both attempt models `testStartedAt`, `submissionReason`,
+  `integrityFlagged`, `integrityReasons`, `integrityEvents`, `telemetry`, `invalidatedAt`; `ReviewLog.durationMs`;
+  `archivedAt` on `Passage`, `ListeningLesson`, `Deck`; a CHECK that an assignment has exactly one content.
+- **Test lock** (`src/lib/use-test-proctor.ts`, `src/components/pre-test-gate-modal.tsx`, `test-proctor.tsx`,
+  `integrity-banner.tsx`): see README → "Test lock". Leaving the page is also caught through in-app links and the
+  back button (Next.js keeps the page alive but hidden). A fullscreen request that never answers falls back to the
+  visibility lock after 2 s.
+- **Telemetry** (`src/lib/telemetry.ts` shared rules, `src/lib/use-question-telemetry.ts` collector,
+  `src/lib/test-draft.ts` sessionStorage backup): per-question seconds, first-answer times, change counts, video
+  pauses/seeks/speed changes. Validated with Zod on the server, which recomputes answer order, rapid guesses and
+  bursts from the raw times.
+- **Flags:** auto-finish (tab, window, fullscreen); `ANSWER_KEY_SUSPECTED` (≥ 5 first answers in 15 s, or band ≥ 7.5
+  in < 3.5 min); `UNREALISTIC_SPEED_HIGH_SCORE` (band ≥ 8 in < 25% of 72 s per question); `LOCATING_SKILL_MISMATCH`
+  (4 wrong-paragraph proofs in a row during "Prove it"); amber for one warning used, pastes, ≥ 3 answers under 4 s,
+  or a reading first try under 8 minutes. Flashcards: "clicked through" when the 7-day median is under 1.2 s per
+  card or > 85% of new cards are rated Easy in under 2 s (at least 10 timed reviews).
+- **Homework:** done = first try submitted + every red corrected (and tagged, for passages) + the vocabulary part if
+  the assignment asks for it (lesson: key words read; passage: nothing left to study today in its deck).
+  `settleHomework` in `src/lib/assignments.ts` is the one place that decides.
+- **Teacher views:** Homework tab, richer heatmap and mistake magnets, type × cause matrix, integrity on the students
+  tab and student page, "Require retake" (`resetAttemptForRetake`: the old attempt is kept with `invalidatedAt` and
+  left out of every score; the new one is never a practice run).
+- **Bundled fixes from the review:** retries and tags lock the attempt row (`SELECT … FOR UPDATE`) so concurrent
+  checks never lose a try; listening first submissions save only once (conditional update); `passage-practice.tsx`
+  split into `useAttempt`, `useHighlights`, `useTestProctor`, `useQuestionTelemetry` and five small components;
+  `assignPassage`/`assignLesson` share one code path.
+- **Deliberate differences from the brief:**
+  - Homework is not blocked on `evidenceOk`: a correct answer whose proof is in another paragraph cannot be
+    retried, so requiring it could make homework impossible to finish. Wrong-paragraph proofs are shown to the
+    teacher instead (Homework tab, heatmap, `LOCATING_SKILL_MISMATCH`).
+  - Homework assigned before this change keeps `requireVocabFirst = false`, so nobody's finished work reopens.
+  - A passage assigned twice with different rules uses the strictest rule; a required retake is never practice.
+  - Questions are withheld until "Start test", so the time before Start cannot be used to read them.
+  - Extra event types beyond the brief: `COPY`, `FIND_KEY`, `NO_FULLSCREEN`.
+- **Tests:** `tests/telemetry.test.ts` (rules); `tests/proctor-lifecycle.test.ts` against a real database when
+  `TEST_DATABASE_URL` is set (auto-finish grades once and opens corrections, for Reading and Listening; concurrent
+  retries never lose a try).

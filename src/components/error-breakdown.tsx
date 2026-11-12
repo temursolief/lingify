@@ -76,6 +76,44 @@ export function ErrorBreakdownView({ data, who = "you" }: { data: ErrorBreakdown
         </ul>
       </Card>
 
+      <Card className="p-0">
+        <p className="px-4 pt-4 font-semibold">Skill bottlenecks: question type × cause</p>
+        <p className="px-4 text-sm text-muted">
+          First-try mistakes by IELTS question type, against the reason given after correcting them and where the proof was found.
+        </p>
+        <div className="overflow-x-auto px-4 pt-3 pb-4">
+          <table className="w-full min-w-[600px] text-sm">
+            <thead className="border-b border-line text-muted">
+              <tr>
+                <th className="py-1.5 pr-3 text-left font-normal">Question type</th>
+                {(Object.keys(TAG) as (keyof typeof TAG)[]).map((t) => (
+                  <th key={t} className="px-2 py-1.5 text-right font-normal">{TAG[t].title.split(" / ")[0]}</th>
+                ))}
+                <th className="px-2 py-1.5 text-right font-normal" title="Proof highlighted in a different paragraph from the answer">Wrong place</th>
+                <th className="py-1.5 pl-2 text-right font-normal" title="Proof in the right paragraph, but the sentence was misread">Misread</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-line tabular-nums">
+              {data.byType.map((row) => {
+                const top = Math.max(...(Object.keys(TAG) as (keyof typeof TAG)[]).map((t) => row.tags[t] ?? 0));
+                return (
+                  <tr key={row.type}>
+                    <td className="py-1.5 pr-3">{row.label} <span className="text-muted">· {row.mistakes}</span></td>
+                    {(Object.keys(TAG) as (keyof typeof TAG)[]).map((t) => (
+                      <td key={t} className={`px-2 py-1.5 text-right ${row.tags[t] && row.tags[t] === top ? "font-semibold" : "text-muted"}`} style={row.tags[t] && row.tags[t] === top ? { color: TAG[t].color } : undefined}>
+                        {row.tags[t] ?? 0}
+                      </td>
+                    ))}
+                    <td className="px-2 py-1.5 text-right">{row.wrongParagraph}</td>
+                    <td className="py-1.5 pl-2 text-right">{row.rightParagraph}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
       {data.location + data.comprehension > 0 && (
         <Card>
           <p className="font-semibold">Where {who === "you" ? "you" : "they"} looked</p>
