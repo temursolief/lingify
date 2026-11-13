@@ -64,6 +64,8 @@ model User {
   uzbekGlosses   Boolean   @default(true)
   telegramCode   String?   @unique
   telegramChatId String?   @unique
+  /// the IELTS band the student is working towards: the end of their band path
+  targetBand     Float     @default(7)
 
   classesTaught Class[]               @relation("TeacherClasses")
   enrollments   Enrollment[]
@@ -80,14 +82,16 @@ model User {
 }
 
 model Class {
-  id          String       @id @default(cuid())
-  name        String
-  joinCode    String       @unique
-  teacherId   String
-  teacher     User         @relation("TeacherClasses", fields: [teacherId], references: [id], onDelete: Cascade)
-  createdAt   DateTime     @default(now())
-  enrollments Enrollment[]
-  assignments Assignment[]
+  id            String       @id @default(cuid())
+  name          String
+  joinCode      String       @unique
+  teacherId     String
+  teacher       User         @relation("TeacherClasses", fields: [teacherId], references: [id], onDelete: Cascade)
+  createdAt     DateTime     @default(now())
+  /// the optional weekly XP league inside the class; the shared class goal stays on either way
+  leagueEnabled Boolean      @default(true)
+  enrollments   Enrollment[]
+  assignments   Assignment[]
 
   @@index([teacherId])
 }

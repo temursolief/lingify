@@ -11,8 +11,8 @@ async function SettingsContent() {
   const user = await requireTeacher();
   return (
     <>
-      <PageHeader title="Settings" subtitle={user.email} action={<LogoutButton />} />
-      <div className="mx-auto max-w-2xl space-y-4">
+      <PageHeader kicker="Account" title="Settings" subtitle={user.email} action={<LogoutButton />} />
+      <div className="max-w-2xl space-y-4">
         <TelegramCard user={user} role="TEACHER" />
       </div>
     </>

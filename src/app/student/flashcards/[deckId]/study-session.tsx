@@ -17,20 +17,26 @@ export type Refill = StudyQueue | "unsent" | null;
 
 /** Styling for cards made from passages; imported decks bring their own CSS from Anki. */
 const CHUNK_CSS = `
-.card { font-family: Charter, Georgia, serif; font-size: 22px; line-height: 1.5; text-align: center; color: #0f1419; }
-.cloze { font-weight: 700; color: #3390ec; }
-.chunk { font-family: system-ui, sans-serif; font-weight: 600; font-size: 20px; margin-top: 8px; }
-.meaning { font-family: system-ui, sans-serif; font-size: 17px; color: #0f1419; margin-top: 6px; }
-.uz { font-family: system-ui, sans-serif; font-size: 16px; color: #6b7378; margin-top: 4px; }
-hr { border: 0; border-top: 1px solid #e4e6e9; margin: 16px 0; }`;
+.card { font-family: Charter, Georgia, serif; font-size: 22px; line-height: 1.5; text-align: left; color: #e9e9ed; }
+.cloze { font-weight: 600; color: #b5abfc; }
+.chunk { font-family: Inter, system-ui, sans-serif; font-weight: 500; font-size: 28px; margin-top: 8px; letter-spacing: -0.01em; }
+.meaning { font-family: Inter, system-ui, sans-serif; font-size: 17px; color: #e9e9ed; margin-top: 6px; }
+.uz { font-family: Inter, system-ui, sans-serif; font-size: 14px; color: #d2cefd; margin-top: 6px; }
+hr { border: 0; border-top: 1px solid rgba(233,233,237,0.14); margin: 16px 0; }`;
 
 const BASE_CSS = `
 html, body { margin: 0; padding: 0; background: transparent; }
 body { padding: 8px 4px; }
 img { max-width: 100%; height: auto; }
-.card { font-family: system-ui, sans-serif; font-size: 20px; text-align: center; color: #0f1419; }
-.cloze { font-weight: 700; color: #3390ec; }
-audio { margin: 6px auto; display: block; }`;
+.card { font-family: Inter, system-ui, sans-serif; font-size: 20px; text-align: center; color: #e9e9ed; }
+.cloze { font-weight: 600; color: #b5abfc; }
+a { color: #b5abfc; }
+audio { margin: 6px auto; display: block; color-scheme: dark; }`;
+
+/** Imported Anki decks often paint black text on white: on the dark card that would vanish, so the ground and ink win. */
+const DARK_OVERRIDE = `
+html, body, .card { background: transparent !important; color: #e9e9ed !important; }
+.nightMode, .night_mode { background: transparent !important; }`;
 
 /** A card face in a sandboxed frame: the deck's own CSS applies, and no script inside a card can run. */
 function CardFrame({ html, css }: { html: string; css: string }) {
@@ -51,7 +57,7 @@ function CardFrame({ html, css }: { html: string; css: string }) {
       }}
       className="w-full border-0"
       style={{ height }}
-      srcDoc={`<!doctype html><html><head><meta charset="utf-8"><style>${BASE_CSS}${css}</style></head><body><div class="card">${html}</div></body></html>`}
+      srcDoc={`<!doctype html><html><head><meta charset="utf-8"><style>${BASE_CSS}${css}${DARK_OVERRIDE}</style></head><body><div class="card">${html}</div></body></html>`}
     />
   );
 }
@@ -176,12 +182,12 @@ export function StudySession({
       />
       {card ? (
         <div className="mx-auto max-w-2xl">
-          <div className="rounded-xl bg-surface px-4 py-5 shadow-bubble sm:px-6 sm:py-6">
+          <div className="rounded-xl bg-surface px-4 py-5 shadow-lifted sm:px-7 sm:py-7">
             <CardFrame key={`${card.id}-${shown}`} html={shown ? card.back : card.front} css={css} />
           </div>
-          <div className="mt-4 grid grid-cols-4 gap-2 sm:flex sm:justify-center">
+          <div className="mt-4 grid grid-cols-4 gap-2">
             {!shown ? (
-              <Button className="col-span-4 sm:min-w-48" onClick={reveal}>Show answer</Button>
+              <Button className="col-span-4 min-h-12" onClick={reveal}>Show answer</Button>
             ) : (
               RATINGS.map((r) => (
                 <button
@@ -189,12 +195,12 @@ export function StudySession({
                   type="button"
                   onClick={() => rate(r)}
                   className={cx(
-                    "rounded-md px-1 py-2 text-center font-medium text-white transition-opacity active:opacity-80 sm:min-w-24 sm:px-3",
-                    r === 1 ? "bg-bad" : r === 2 ? "bg-[#8e99a4]" : r === 3 ? "bg-good" : "bg-accent",
+                    "flex min-h-13 flex-col items-center justify-center gap-0.5 rounded-md border border-line px-1 py-2 text-center text-ink transition-colors hover:border-accent active:bg-accent-soft",
+                    r === 1 && "hover:border-bad",
                   )}
                 >
-                  <span className="block text-xs font-normal opacity-90">{intervalLabel(card.schedule, r, at)}</span>
-                  {RATING_LABEL[r]}
+                  <span className="text-sm font-medium">{RATING_LABEL[r]}</span>
+                  <span className="text-[11px] text-muted">{intervalLabel(card.schedule, r, at)}</span>
                 </button>
               ))
             )}

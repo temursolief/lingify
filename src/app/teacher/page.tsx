@@ -1,56 +1,111 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { Folder, FolderGrid, FoldersSkeleton, NewFolder } from "@/components/folder";
-import { PageHeader } from "@/components/ui";
+import Link from "next/link";
+import { BookOpenText, Headphones, Plus, SealCheck } from "@/components/icons";
+import { accentOutline, Card, PageHeader, PageSkeleton, ProgressBar, quietOutline, SectionTitle } from "@/components/ui";
 import { requireTeacher } from "@/lib/auth";
-import { classActivity } from "@/lib/class-overview";
-import { db } from "@/lib/db";
+import { dueLabel, teacherToday, type Attention } from "@/lib/teacher-today";
+import { formatLongDay } from "@/lib/time";
+import { NudgeButton, RetakeNowButton } from "./today-actions";
 
-export const metadata: Metadata = { title: "Classes" };
+export const metadata: Metadata = { title: "Today" };
 
-const COLORS = ["var(--series-1)", "var(--series-3)", "var(--series-2)", "var(--series-5)", "var(--series-4)", "var(--series-6)"];
+const DOT: Record<Attention["tone"], string> = {
+  bad: "oklch(0.7 0.13 25)",
+  warn: "oklch(0.8 0.11 80)",
+  accent: "var(--accent)",
+  muted: "var(--color-neutral-500)",
+};
 
-/** One folder per class, newest first, with who is stuck; the last folder makes a new class. */
-async function TeacherHomeContent() {
+function Fix({ item }: { item: Attention }) {
+  const a = item.action;
+  if (a.kind === "retake") return <RetakeNowButton kind={a.attemptKind} attemptId={a.attemptId} name={a.name} />;
+  if (a.kind === "nudge") return <NudgeButton studentId={a.studentId} name={a.name} linked={a.linked} />;
+  return (
+    <Link href={a.href} className={accentOutline}>
+      {a.label}
+    </Link>
+  );
+}
+
+async function TodayContent() {
   const teacher = await requireTeacher();
-  const classes = await db.class.findMany({
-    where: { teacherId: teacher.id },
-    select: { id: true, name: true, _count: { select: { enrollments: true } } },
-    orderBy: { createdAt: "desc" },
-  });
-  const activity = await classActivity(classes.map((c) => c.id));
+  const { items, dueSoon, classes, students } = await teacherToday(teacher.id);
+  const firstClass = dueSoon[0]?.classId;
   return (
     <>
       <PageHeader
-        title="Classes"
-        subtitle={classes.length ? `${classes.length} class${classes.length === 1 ? "" : "es"}` : "Create your first class: students join it with a code"}
+        title={items.length ? `${items.length} thing${items.length === 1 ? "" : "s"} need${items.length === 1 ? "s" : ""} you` : "Nothing needs you right now"}
+        subtitle={`${formatLongDay(new Date())} · ${classes} class${classes === 1 ? "" : "es"} · ${students} student${students === 1 ? "" : "s"}`}
+        action={
+          <Link href={firstClass ? `/teacher/classes/${firstClass}?tab=homework` : "/teacher/classes"} className={`${accentOutline} px-4 py-2 text-sm font-medium`}>
+            <Plus size={16} aria-hidden />
+            Assign homework
+          </Link>
+        }
       />
-      <FolderGrid>
-        {classes.map((c, i) => {
-          const { active, stuck } = activity.get(c.id)!;
-          const students = c._count.enrollments;
-          return (
-            <Folder
-              key={c.id}
-              href={`/teacher/classes/${c.id}`}
-              label={c.name}
-              color={COLORS[i % COLORS.length]}
-              badge={stuck}
-              subtitle={stuck ? `${stuck} stuck` : `${students} student${students === 1 ? "" : "s"}`}
-              peek={`${active} active this week`}
-            />
-          );
-        })}
-        <NewFolder href="/teacher/new" label="New class" />
-      </FolderGrid>
+      <div className="flex flex-col gap-5">
+        {items.length ? (
+          <div className="flex flex-col gap-2">
+            {items.map((item) => (
+              <div key={item.id} className="flex flex-wrap items-center gap-3 rounded-lg bg-surface p-3.5">
+                <span aria-hidden className="h-2 w-2 shrink-0 rounded-full" style={{ background: DOT[item.tone] }} />
+                <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-0.5">
+                  <span className="font-medium">{item.title}</span>
+                  {item.meta && <span className="text-xs text-muted">{item.meta}</span>}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  <Fix item={item} />
+                  <Link href={item.href} className={quietOutline}>
+                    Open
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <Card className="flex items-center gap-3">
+            <SealCheck size={26} weight="fill" className="text-good" aria-hidden />
+            <span className="text-[13px] text-soft">No one is stuck, nothing was flagged and everyone has been active. A good moment to assign the next passage.</span>
+          </Card>
+        )}
+
+        {dueSoon.length > 0 && (
+          <div className="flex flex-col gap-2.5">
+            <SectionTitle title="Homework coming due" />
+            <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))]">
+              {dueSoon.map((d) => {
+                const I = d.kind === "reading" ? BookOpenText : Headphones;
+                return (
+                  <Link
+                    key={d.id}
+                    href={`/teacher/classes/${d.classId}?tab=homework&a=${d.id}`}
+                    className="flex flex-col gap-2 rounded-lg border border-line p-3.5 text-ink no-underline hover:border-[var(--color-accent-600)] hover:no-underline"
+                  >
+                    <span className="flex items-center gap-1.5 text-xs text-muted">
+                      <I size={14} aria-hidden />
+                      {d.className} · due {dueLabel(d.dueAt)}
+                    </span>
+                    <span className="font-medium">{d.title}</span>
+                    <ProgressBar value={d.total ? d.done / d.total : 0} label={`${d.title} completion`} />
+                    <span className="text-xs text-soft">
+                      {d.done} of {d.total} complete
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
     </>
   );
 }
 
-export default function TeacherHome() {
+export default function TeacherToday() {
   return (
-    <Suspense fallback={<FoldersSkeleton />}>
-      <TeacherHomeContent />
+    <Suspense fallback={<PageSkeleton />}>
+      <TodayContent />
     </Suspense>
   );
 }

@@ -13,9 +13,9 @@ export function JoinClassForm() {
         placeholder="Class code"
         aria-label="Class code"
         autoComplete="off"
-        className="w-36 rounded-lg border border-line bg-surface px-3 py-2 uppercase placeholder:normal-case focus:border-[#86b7fe] focus:outline-none focus:ring-4 focus:ring-accent/25"
+        className="min-h-9 w-36 rounded-md border border-line bg-page px-3 py-1.5 tracking-widest uppercase caret-accent placeholder:tracking-normal placeholder:normal-case hover:border-[color-mix(in_srgb,var(--ink)_40%,transparent)] focus:border-accent focus:outline-none"
       />
-      <Button type="submit" variant="secondary" disabled={pending}>Join class</Button>
+      <Button type="submit" disabled={pending}>Join class</Button>
       {state?.error && <p className="w-full text-sm text-bad">{state.error}</p>}
       {state?.ok && <p className="w-full text-sm text-good">{state.ok}</p>}
     </form>

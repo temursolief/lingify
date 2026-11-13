@@ -40,7 +40,7 @@ export const getSession = cache(async () => decryptSession((await cookies()).get
 export const currentUser = cache((userId: string) =>
   db.user.findUnique({
     where: { id: userId },
-    select: { id: true, email: true, name: true, role: true, uzbekGlosses: true, telegramCode: true, telegramChatId: true },
+    select: { id: true, email: true, name: true, role: true, uzbekGlosses: true, telegramCode: true, telegramChatId: true, targetBand: true },
   }),
 );
 

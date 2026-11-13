@@ -193,15 +193,15 @@ function Row({ active, label, subtitle, badge, color, onClick }: { active: boole
       data-close-menu
       onClick={onClick}
       aria-current={active ? "page" : undefined}
-      className={cx("flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors", active ? "bg-accent text-white" : "hover:bg-hover")}
+      className={cx("flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors", active ? "bg-accent-soft text-[var(--color-accent-200)]" : "hover:bg-hover")}
     >
       <Avatar label={label} color={color} />
       <span className="min-w-0 flex-1">
         <span className="block truncate font-medium">{label}</span>
-        <span className={cx("block truncate text-sm", active ? "text-white/80" : "text-muted")}>{subtitle}</span>
+        <span className={cx("block truncate text-sm", active ? "text-soft" : "text-muted")}>{subtitle}</span>
       </span>
       {!!badge && (
-        <span className={cx("min-w-6 rounded-full px-1.5 text-center text-[13px] leading-6 font-medium", active ? "bg-white text-accent" : "bg-accent text-white")}>{badge}</span>
+        <span className={cx("min-w-6 rounded-full px-1.5 text-center text-[13px] leading-6 font-medium", "bg-accent text-page")}>{badge}</span>
       )}
     </button>
   );

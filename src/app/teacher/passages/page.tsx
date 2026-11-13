@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Card, PageHeader, PageSkeleton } from "@/components/ui";
 import { requireTeacher } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { LibraryTabs } from "../library-tabs";
 import { DeletePassageButton, UploadDeckForm, UploadPassageForm } from "../teacher-forms";
 
 export const metadata: Metadata = { title: "My passages" };
@@ -26,8 +27,9 @@ async function PassagesContent() {
   });
   return (
     <>
-      <PageHeader title="My passages" subtitle="Upload IELTS passages as JSON, then assign them from a class" action={<Link href="/teacher/passages/format" className="text-sm">Format guide</Link>} />
-      <div className="mx-auto max-w-3xl space-y-4">
+      <PageHeader kicker="Library" title="My passages" subtitle="Upload IELTS passages as JSON, then assign them from a class" action={<Link href="/teacher/passages/format" className="text-sm">Format guide</Link>} />
+      <LibraryTabs current="passages" />
+      <div className="max-w-3xl space-y-4">
         <Card>
           <p className="font-semibold">Upload a passage</p>
           <p className="mt-1 mb-3 text-sm text-muted">

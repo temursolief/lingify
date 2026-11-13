@@ -8,6 +8,7 @@ import type { ProctoringPolicy } from "@/generated/prisma/client";
 import { teacherClass } from "@/lib/class-overview";
 import { db } from "@/lib/db";
 import { parsePassageJson } from "@/lib/passage-format";
+import { appUrl, sendMessage } from "@/lib/telegram";
 import { endOfDayOn } from "@/lib/time";
 
 export type FormState = { error?: string; errors?: string[]; ok?: string } | undefined;
@@ -190,4 +191,31 @@ export async function deleteDeck(deckId: string) {
   await requireAdmin();
   await db.deck.updateMany({ where: { id: deckId, ownerId: null, passageId: null, lessonId: null, archivedAt: null }, data: { archivedAt: new Date() } });
   refresh();
+}
+
+/** Turns the class's weekly XP league on or off. The shared class goal stays either way. */
+export async function setLeague(classId: string, on: boolean) {
+  const cls = await ownClass(classId);
+  await db.class.update({ where: { id: cls.id }, data: { leagueEnabled: z.boolean().parse(on) } });
+  refresh();
+}
+
+/**
+ * A friendly Telegram nudge from the teacher to one of their students: open homework is waiting. Only for a student
+ * in one of this teacher's classes, and only if they linked Telegram; nothing else is sent anywhere.
+ */
+export async function nudgeStudent(studentId: string): Promise<{ ok?: string; error?: string }> {
+  const teacher = await requireTeacher();
+  const student = await db.user.findFirst({
+    where: { id: z.string().parse(studentId), enrollments: { some: { class: { teacherId: teacher.id } } } },
+    select: { name: true, telegramChatId: true },
+  });
+  if (!student) return { error: "This student is not in one of your classes." };
+  if (!student.telegramChatId) return { error: `${student.name.split(/\s+/)[0]} has not linked Telegram yet.` };
+  const sent = await sendMessage(
+    student.telegramChatId,
+    // Sent as Telegram HTML: the teacher's name is escaped.
+    `${teacher.name.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]!)} is thinking of you: your Lingify homework is waiting. One small step today keeps your streak going.\n${appUrl("/student")}`,
+  );
+  return sent ? { ok: "Nudge sent on Telegram" } : { error: "Telegram did not take the message. Try again later." };
 }

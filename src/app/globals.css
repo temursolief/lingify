@@ -1,45 +1,73 @@
 @import "tailwindcss";
 
 /*
- * Telegram-style look: white list column, soft grey content area, white rounded "bubbles", one blue accent.
- * System fonts only, so nothing is downloaded before the first page shows.
+ * Nocturne: a quiet, compact dark interface. A blue-grey ground, Inter at medium weight, soft 8px radii and one
+ * blurple accent used as a line and a glow rather than a flood. Colours come from tonal ramps (100 light → 900 dark);
+ * the short names below (--ink, --surface, --accent…) are what the components use.
  */
 :root {
-  color-scheme: light;
-  --page: #f1f2f4;
-  --bar: #ffffff;
-  --paper: #f4f4f5;
-  --surface: #ffffff;
-  --ink: #0f1419;
-  --muted: #6b7378;
-  --nav: #6b7378;
-  --line: #e4e6e9;
-  --hover: #f4f4f5;
-  --accent: #3390ec;
-  --accent-hover: #2b82d9;
-  --accent-ink: #ffffff;
-  --accent-soft: #e9f3fd;
-  --good: #2e8b3e;
-  --good-soft: #e3f4e5;
-  --warn: #a35c00;
-  --warn-soft: #fff1dc;
-  --bad: #d93a3a;
-  --bad-soft: #fde8e8;
-  --learning: #fff3c4;
-  --series-1: #2a78d6;
-  --series-2: #eb6834;
-  --series-3: #1baf7a;
-  --series-4: #eda100;
-  --series-5: #e87ba4;
-  --series-6: #008300;
-  --grid: #eceef0;
+  color-scheme: dark;
+
+  --color-neutral-100: #f3f5fe;
+  --color-neutral-200: #e4e7f5;
+  --color-neutral-300: #cfd3e5;
+  --color-neutral-400: #b2b6ca;
+  --color-neutral-500: #9397ab;
+  --color-neutral-600: #75798c;
+  --color-neutral-700: #595d6c;
+  --color-neutral-800: #3f424d;
+  --color-neutral-900: #292b31;
+  --color-accent-100: #f5f4ff;
+  --color-accent-200: #e7e5fe;
+  --color-accent-300: #d2cefd;
+  --color-accent-400: #b5abfc;
+  --color-accent-500: #968ae0;
+  --color-accent-600: #796cbf;
+  --color-accent-700: #5d5294;
+  --color-accent-800: #423a6a;
+  --color-accent-900: #2b2741;
+  /* Saturated deep indigo for the one "presence" band per screen (class goal, mock test). */
+  --section: #262a60;
+  --section-ghost: #4c5397;
+
+  --page: #161826;
+  --bar: #161826;
+  --paper: #161826;
+  --surface: #232532;
+  --raised: #2a2c3a;
+  --ink: #e9e9ed;
+  --soft: var(--color-neutral-300);
+  --muted: var(--color-neutral-400);
+  --faint: var(--color-neutral-500);
+  --nav: var(--color-neutral-300);
+  --line: color-mix(in srgb, #e9e9ed 14%, transparent);
+  --hover: color-mix(in srgb, #e9e9ed 6%, transparent);
+  --accent: #9184d9;
+  --accent-hover: var(--color-accent-400);
+  --accent-ink: var(--color-accent-300);
+  --accent-soft: color-mix(in srgb, #9184d9 14%, transparent);
+  --good: oklch(0.84 0.09 160);
+  --good-soft: oklch(0.32 0.05 160);
+  --warn: oklch(0.88 0.09 82);
+  --warn-soft: oklch(0.36 0.05 80);
+  --bad: oklch(0.8 0.1 25);
+  --bad-soft: oklch(0.32 0.06 25);
+  --flame: oklch(0.8 0.12 60);
+  --learning: color-mix(in srgb, #9184d9 30%, transparent);
+  --series-1: #9184d9;
+  --series-2: oklch(0.75 0.12 45);
+  --series-3: oklch(0.75 0.1 160);
+  --series-4: oklch(0.82 0.11 85);
+  --series-5: oklch(0.75 0.11 350);
+  --series-6: oklch(0.72 0.1 220);
+  --grid: var(--color-neutral-800);
   /* Space around the open section: tighter on a phone. */
   --pane: 1rem;
 }
 
-@media (min-width: 40rem) {
+@media (min-width: 48rem) {
   :root {
-    --pane: 1.5rem;
+    --pane: 2.25rem;
   }
 }
 
@@ -81,19 +109,29 @@
   --color-bad-soft: var(--bad-soft);
   --color-learning: var(--learning);
   --color-grid: var(--grid);
-  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --color-raised: var(--raised);
+  --color-soft: var(--soft);
+  --color-faint: var(--faint);
+  --color-flame: var(--flame);
+  --color-section: var(--section);
+  --color-section-ghost: var(--section-ghost);
+  --font-sans: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
   /* Reading text: serif faces already installed on Windows and macOS. */
   --font-serif: Charter, "Iowan Old Style", Georgia, Cambria, "Times New Roman", serif;
 }
 
-/* Telegram proportions: 10-12px corners, soft "message" shadow. */
+/* Nocturne proportions: 8px controls, 14px panels; elevation is a hairline edge plus ambient darkness. Headings stay at 500. */
 @theme {
-  --radius-md: 0.625rem;
-  --radius-lg: 0.75rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.625rem;
   --radius-xl: 0.875rem;
-  --radius-2xl: 1rem;
-  --font-weight-semibold: 600;
-  --shadow-bubble: 0 1px 2px rgba(16, 35, 47, 0.12);
+  --radius-2xl: 0.875rem;
+  --font-weight-semibold: 500;
+  --font-weight-bold: 600;
+  --shadow-bubble: none;
+  --shadow-edge: 0 0 0 1px #3f424d;
+  --shadow-lifted: 0 0 0 1px #595d6c, 0 6px 18px rgba(0, 0, 0, 0.55);
+  --shadow-float: 0 0 0 1px #75798c, 0 16px 40px rgba(0, 0, 0, 0.65);
 }
 
 @layer base {
@@ -129,13 +167,27 @@
 
   body {
     color: var(--ink);
-    font-size: 15px;
-    line-height: 1.45;
+    font-size: 14px;
+    line-height: 1.5;
+    font-feature-settings: "cv11", "ss01";
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    text-wrap: pretty;
   }
 
   a {
-    color: var(--accent);
+    color: var(--color-accent-400);
     text-decoration: none;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--accent) 30%, transparent);
   }
 
   a:hover {
@@ -146,4 +198,25 @@
     outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
+
+  /* Form controls follow the dark ground instead of the browser's white defaults. */
+  input,
+  select,
+  textarea {
+    color-scheme: dark;
+  }
+}
+
+/* A small uppercase label above a heading, in the accent: "PRACTICE", "NEXT UP". */
+@utility kicker {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent-400);
+}
+
+/* Rules fade to transparent at their ends instead of stopping cleanly. */
+@utility rule-fade {
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--line) 48px, var(--line) calc(100% - 48px), transparent);
 }

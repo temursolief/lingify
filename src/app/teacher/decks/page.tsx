@@ -5,6 +5,7 @@ import { OPTIONS } from "@/lib/anki";
 import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formatDay } from "@/lib/time";
+import { LibraryTabs } from "../library-tabs";
 import { DeleteDeckButton, UploadDeckForm } from "../teacher-forms";
 
 export const metadata: Metadata = { title: "Anki decks" };
@@ -18,8 +19,9 @@ async function DecksContent() {
   });
   return (
     <>
-      <PageHeader title="Anki decks" subtitle="Decks uploaded here appear for every student" />
-      <div className="mx-auto max-w-3xl space-y-4">
+      <PageHeader kicker="Library" title="Anki decks" subtitle="Decks uploaded here appear for every student" />
+      <LibraryTabs current="decks" />
+      <div className="max-w-3xl space-y-4">
         <Card>
           <p className="font-semibold">Upload a deck</p>
           <p className="mt-1 mb-3 text-sm text-muted">

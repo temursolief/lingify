@@ -12,7 +12,7 @@ export default function ListeningFormatPage() {
   return (
     <>
       <PageHeader title="Listening format" subtitle="How to prepare a listening lesson JSON file" action={<Link href="/teacher/listening" className="text-sm">Listening</Link>} />
-      <div className="mx-auto max-w-3xl space-y-4 text-[15px]">
+      <div className="max-w-3xl space-y-4 text-[15px]">
         <Card>
           <p className="font-semibold">The file</p>
           <ul className="mt-2 list-disc space-y-1.5 pl-5">

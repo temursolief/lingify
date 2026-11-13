@@ -34,6 +34,11 @@ export function startOfDay(date: Date): Date {
   return fromZone(dayOf(date));
 }
 
+/** Midnight that starts a calendar day given as a `dayOf` value (UTC midnight), in the app time zone. */
+export function startOfDayValue(day: Date): Date {
+  return fromZone(day);
+}
+
 /** The last millisecond of the calendar day of `date` in the app time zone. */
 export function endOfDay(date: Date): Date {
   return new Date(fromZone(addDays(dayOf(date), 1)).getTime() - 1);
@@ -45,6 +50,16 @@ export function endOfDayOn(ymd: string): Date | null {
   const day = new Date(`${ymd}T00:00:00.000Z`);
   if (Number.isNaN(day.getTime()) || dayKey(day) !== ymd) return null;
   return new Date(fromZone(addDays(day, 1)).getTime() - 60_000);
+}
+
+/** The hour (0–23) on the clock in the app time zone, for "Good morning". */
+export function hourOf(date: Date): number {
+  return Number(new Intl.DateTimeFormat("en-GB", { timeZone: TIME_ZONE, hour: "numeric", hourCycle: "h23" }).format(date));
+}
+
+/** A long date as people say it, in the app time zone: "Thursday, 13 November". */
+export function formatLongDay(date: Date): string {
+  return date.toLocaleDateString("en-GB", { timeZone: TIME_ZONE, weekday: "long", day: "numeric", month: "long" });
 }
 
 /** A date as students and teachers read it, in the app time zone: "Mon, 9 Nov". */

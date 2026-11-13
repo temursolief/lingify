@@ -31,8 +31,8 @@ async function LibraryContent() {
 
   return (
     <>
-      <PageHeader title="Listening" subtitle="Watch a video lesson, answer the IELTS Listening questions and learn its key words" />
-      <div className="mx-auto max-w-3xl">
+      <PageHeader kicker="Practice · Listening" title="Listening" subtitle="Watch a video lesson, answer the IELTS Listening questions and learn its key words" />
+      <div className="max-w-3xl">
         {lessons.length === 0 ? (
           <Card className="py-8 text-center text-muted">Nothing assigned yet. Ask your teacher.</Card>
         ) : (

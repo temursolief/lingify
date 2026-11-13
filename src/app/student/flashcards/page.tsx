@@ -17,8 +17,8 @@ async function FlashcardsContent() {
   const rows = decks.map((deck) => ({ deck, counts: summaries.get(deck.id) ?? { new: 0, learn: 0, due: 0, total: 0 } }));
   return (
     <>
-      <PageHeader title="Flashcards" subtitle={`Anki scheduling · ${OPTIONS.newPerDay} new cards a day · every card returns within ${OPTIONS.maxInterval} days`} />
-      <div className="mx-auto max-w-2xl">
+      <PageHeader kicker="Words" title="Words you’ve met in real passages" subtitle={`Anki scheduling · ${OPTIONS.newPerDay} new cards a day · every card returns within ${OPTIONS.maxInterval} days · +2 XP per card when you take your time`} />
+      <div className="max-w-2xl">
         <div className="overflow-hidden rounded-xl bg-surface shadow-bubble">
           <div className="grid grid-cols-[minmax(0,1fr)_3rem_3rem_3rem] sm:grid-cols-[minmax(0,1fr)_4rem_4rem_4rem] gap-2 border-b border-line px-4 py-2 text-sm text-muted">
             <span>Deck</span>
@@ -54,7 +54,7 @@ async function FlashcardsContent() {
             ))}
           </ul>
         </div>
-        <p className="mt-3 px-1 text-sm text-muted">
+        <p className="mt-3 px-1 text-xs text-faint">
           Make your own cards by highlighting a phrase in any passage. The sentence becomes the front, with the phrase blanked out.
         </p>
       </div>

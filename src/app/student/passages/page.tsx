@@ -57,8 +57,8 @@ async function PassagesContent() {
 
   return (
     <>
-      <PageHeader title="Passages" subtitle={summary.band ? `Estimated band ${summary.band} from your last passages` : "IELTS Academic Reading practice"} />
-      <div className="mx-auto max-w-3xl space-y-6">
+      <PageHeader kicker="Practice · Reading" title="Passages" subtitle={summary.band ? `Estimated band ${summary.band} from your last passages` : "IELTS Academic Reading practice"} />
+      <div className="max-w-3xl space-y-6">
         <section>
           <h2 className="mb-2 px-1 text-sm font-medium text-muted">From your teacher</h2>
           {assigned.length === 0 ? (

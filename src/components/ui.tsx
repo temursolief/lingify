@@ -5,17 +5,21 @@ function cx(...classes: (string | false | null | undefined)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
-/** Telegram-style buttons: one filled blue action, everything else a quiet blue text button. */
+/**
+ * Nocturne buttons: the primary action is an accent outline (never a fill), the secondary a quiet divider outline,
+ * the ghost a bare accent word. Hover tints and pressed states come from the accent.
+ */
 const buttonStyles = {
-  primary: "bg-accent text-accent-ink hover:bg-accent-hover",
-  secondary: "bg-accent-soft text-accent hover:bg-[#dcebfb]",
-  ghost: "bg-transparent text-muted hover:bg-hover hover:text-ink",
+  primary:
+    "border border-accent bg-transparent text-accent-ink hover:bg-[color-mix(in_srgb,var(--accent)_14%,transparent)] active:bg-[color-mix(in_srgb,var(--accent)_24%,transparent)]",
+  secondary: "border border-line bg-transparent text-ink hover:bg-hover active:bg-[color-mix(in_srgb,var(--ink)_12%,transparent)]",
+  ghost: "bg-transparent text-[var(--color-accent-400)] hover:bg-accent-soft",
 };
 
 type Variant = keyof typeof buttonStyles;
 
 const buttonBase =
-  "inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-[15px] font-medium leading-5 no-underline hover:no-underline transition-colors disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium leading-5 no-underline hover:no-underline transition-colors disabled:pointer-events-none disabled:opacity-45";
 
 export function Button({ variant = "primary", className, ...props }: ComponentProps<"button"> & { variant?: Variant }) {
   return <button className={cx(buttonBase, buttonStyles[variant], className)} {...props} />;
@@ -25,85 +29,108 @@ export function ButtonLink({ variant = "primary", className, ...props }: Compone
   return <Link className={cx(buttonBase, buttonStyles[variant], className)} {...props} />;
 }
 
-/** A white rounded "bubble" on the grey content area. */
-export function Card({ className, ...props }: ComponentProps<"div">) {
-  return <div className={cx("rounded-xl bg-surface p-4 shadow-bubble", className)} {...props} />;
+/** A surface-filled panel on the dark ground. `lift`: the hairline edge used for panels that stand apart. */
+export function Card({ className, lift, ...props }: ComponentProps<"div"> & { lift?: boolean }) {
+  return <div className={cx("rounded-xl bg-surface p-4", lift && "shadow-edge", className)} {...props} />;
 }
 
+/** Small labels tinted from the ramps: dark fill, light text. */
 const badgeTones = {
-  neutral: "bg-grid text-muted",
-  accent: "bg-accent-soft text-accent",
+  neutral: "bg-[var(--color-neutral-800)] text-[var(--color-neutral-200)]",
+  accent: "bg-[var(--color-accent-800)] text-[var(--color-accent-100)]",
   good: "bg-good-soft text-good",
   warn: "bg-warn-soft text-warn",
   bad: "bg-bad-soft text-bad",
 };
 
-export function Badge({ tone = "neutral", children, className }: { tone?: keyof typeof badgeTones; children: ReactNode; className?: string }) {
+export type Tone = keyof typeof badgeTones;
+
+export function Badge({ tone = "neutral", children, className }: { tone?: Tone; children: ReactNode; className?: string }) {
   return (
-    <span className={cx("inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap", badgeTones[tone], className)}>
+    <span className={cx("inline-flex items-center rounded-[6px] px-2 py-0.5 text-[11px] whitespace-nowrap", badgeTones[tone], className)}>
       {children}
     </span>
   );
 }
 
-export function ProgressBar({ value, tone = "accent", label }: { value: number; tone?: "accent" | "good" | "warn"; label?: string }) {
+export function ProgressBar({ value, tone = "accent", label, className }: { value: number; tone?: "accent" | "good" | "warn"; label?: string; className?: string }) {
   const pct = Math.max(0, Math.min(1, value)) * 100;
-  const fill = { accent: "bg-accent", good: "bg-good", warn: "bg-[#f0a020]" }[tone];
+  const fill = { accent: "bg-accent", good: "bg-good", warn: "bg-warn" }[tone];
   return (
-    <div className="h-1.5 w-full overflow-hidden rounded-full bg-grid" role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100} aria-label={label}>
-      <div className={cx("h-full rounded-full transition-all", fill)} style={{ width: `${pct}%` }} />
+    <div
+      className={cx("h-1 w-full overflow-hidden rounded-full bg-grid", className)}
+      role="progressbar"
+      aria-valuenow={Math.round(pct)}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label={label}
+    >
+      <div className={cx("h-full rounded-full transition-[width] duration-500", fill)} style={{ width: `${pct}%` }} />
     </div>
   );
 }
 
-export function Stat({ label, value, hint }: { label: string; value: ReactNode; hint?: ReactNode }) {
+export function Stat({ label, value, hint, className }: { label: string; value: ReactNode; hint?: ReactNode; className?: string }) {
   return (
-    <div className="rounded-xl bg-surface p-3 shadow-bubble">
-      <div className="text-sm text-muted">{label}</div>
-      <div className="text-2xl font-semibold tabular-nums">{value}</div>
-      {hint && <div className="text-sm text-muted">{hint}</div>}
+    <div className={cx("flex flex-col gap-1 rounded-lg bg-surface p-3.5", className)}>
+      <div className="text-xs text-muted">{label}</div>
+      <div className="text-2xl font-medium tabular-nums">{value}</div>
+      {hint && <div className="text-[11px] text-muted">{hint}</div>}
     </div>
   );
 }
 
 /**
- * The bar across the top of the open pane, like a Telegram chat header: title, one muted line under it,
- * and at most one action on the right. It sticks while the page scrolls.
+ * The top of a screen: an accent kicker, a large flush-left heading and one muted line, with at most one action on
+ * the right. Left-aligned and asymmetric, as Nocturne lays things out.
  */
-export function PageHeader({ title, subtitle, action }: { title: string; subtitle?: ReactNode; action?: ReactNode }) {
+export function PageHeader({ title, subtitle, action, kicker }: { title: ReactNode; subtitle?: ReactNode; action?: ReactNode; kicker?: ReactNode }) {
   return (
-    <div className="pane-bleed pane-x sticky top-0 z-10 mb-(--pane) flex min-h-14 items-center justify-between gap-3 border-b border-line bg-bar py-2">
-      <div className="min-w-0">
-        <h1 className="truncate text-base leading-tight font-semibold">{title}</h1>
-        {subtitle && <p className="truncate text-sm text-muted">{subtitle}</p>}
+    <div className="mb-5 flex flex-wrap items-end gap-3">
+      <div className="mr-auto flex min-w-0 flex-col gap-1">
+        {kicker && <span className="kicker">{kicker}</span>}
+        <h1 className="text-2xl leading-tight sm:text-[30px]">{title}</h1>
+        {subtitle && <p className="text-[13px] text-muted">{subtitle}</p>}
       </div>
       {action && <div className="shrink-0">{action}</div>}
     </div>
   );
 }
 
-/** Telegram folder tabs: plain words, the current one in blue with a rounded underline. */
+/** A segmented control of links: the current one tinted with the accent. Scrolls sideways if it does not fit. */
 export function Tabs({ items, current }: { items: { key: string; label: ReactNode; href: string }[]; current: string }) {
   return (
-    <nav className="pane-bleed mb-(--pane) flex gap-1 overflow-x-auto border-b border-line bg-bar px-1 sm:px-4">
-      {items.map((t) => {
-        const active = t.key === current;
-        return (
-          <Link
-            key={t.key}
-            href={t.href}
-            aria-current={active ? "page" : undefined}
-            className={cx(
-              "relative px-3 py-2.5 text-[15px] font-medium whitespace-nowrap no-underline hover:no-underline",
-              active ? "text-accent" : "text-muted hover:text-ink",
-            )}
-          >
-            {t.label}
-            {active && <span className="absolute inset-x-2 bottom-0 h-[3px] rounded-t-full bg-accent" />}
-          </Link>
-        );
-      })}
+    <nav className="mb-5 flex max-w-full overflow-x-auto">
+      <div className="flex shrink-0 overflow-hidden rounded-md border border-line">
+        {items.map((t) => {
+          const active = t.key === current;
+          return (
+            <Link
+              key={t.key}
+              href={t.href}
+              aria-current={active ? "page" : undefined}
+              className={cx(
+                "px-3.5 py-1.5 text-[13px] whitespace-nowrap no-underline hover:no-underline",
+                active ? "bg-[color-mix(in_srgb,var(--accent)_18%,transparent)] text-[var(--color-accent-200)]" : "text-soft hover:bg-hover",
+              )}
+            >
+              {t.label}
+            </Link>
+          );
+        })}
+      </div>
     </nav>
+  );
+}
+
+/** A heading for a block on a screen, with a muted note beside it. */
+export function SectionTitle({ title, note, action }: { title: ReactNode; note?: ReactNode; action?: ReactNode }) {
+  return (
+    <div className="flex items-baseline gap-2">
+      <h3 className="text-lg">{title}</h3>
+      {note && <span className="text-xs text-muted">{note}</span>}
+      {action && <span className="ml-auto">{action}</span>}
+    </div>
   );
 }
 
@@ -114,7 +141,7 @@ export function Field({ label, error, className, ...props }: ComponentProps<"inp
         <input
           placeholder=" "
           className={cx(
-            "peer block h-[3.25rem] w-full rounded-md border bg-surface px-3 pt-5 pb-1.5 text-ink transition focus:outline-none",
+            "peer block h-[3.25rem] w-full rounded-md border bg-surface px-3 pt-5 pb-1.5 text-ink caret-accent transition hover:border-[color-mix(in_srgb,var(--ink)_40%,transparent)] focus:outline-none",
             error ? "border-bad" : "border-line focus:border-accent",
           )}
           {...props}
@@ -135,8 +162,9 @@ export function Skeleton({ className }: { className?: string }) {
 export function PageSkeleton() {
   return (
     <div className="space-y-4" aria-busy="true" aria-label="Loading">
-      <div className="pane-bleed pane-x mb-(--pane) flex h-14 items-center border-b border-line bg-bar">
-        <Skeleton className="h-4 w-40" />
+      <div className="mb-5 space-y-2">
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="h-8 w-64" />
       </div>
       <Skeleton className="h-24 rounded-xl" />
       <Skeleton className="h-48 rounded-xl" />
@@ -152,5 +180,11 @@ export function EmptyState({ title, children }: { title: string; children?: Reac
     </div>
   );
 }
+
+/** Small outlined actions for rows (Nudge, Open, Require retake): the accent one is the suggested fix. */
+const outline =
+  "inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-[13px] whitespace-nowrap no-underline transition-colors hover:no-underline disabled:cursor-not-allowed disabled:opacity-45";
+export const accentOutline = cx(outline, "border-accent text-[var(--color-accent-300)] hover:bg-accent-soft");
+export const quietOutline = cx(outline, "border-line text-ink hover:bg-hover");
 
 export { cx };
