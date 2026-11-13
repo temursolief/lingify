@@ -1,68 +1,123 @@
 @import "tailwindcss";
 
 /*
- * Nocturne: a quiet, compact dark interface. A blue-grey ground, Inter at medium weight, soft 8px radii and one
- * blurple accent used as a line and a glow rather than a flood. Colours come from tonal ramps (100 light → 900 dark);
- * the short names below (--ink, --surface, --accent…) are what the components use.
+ * Warfront: a light field-map interface. Warm paper ground, cream panels edged in tan, slate ink, one signal red for
+ * actions, olive for success and brass for rewards. Headings set in Barlow Condensed, body in Barlow.
+ *
+ * The ramps run from the strongest contrast with the ground (100) to the faintest tint (900), so a component written
+ * as "100 for text, 800 for a quiet fill" reads right on paper here and on the dark slate inside `.band` below.
  */
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
-  --color-neutral-100: #f3f5fe;
-  --color-neutral-200: #e4e7f5;
-  --color-neutral-300: #cfd3e5;
-  --color-neutral-400: #b2b6ca;
-  --color-neutral-500: #9397ab;
-  --color-neutral-600: #75798c;
-  --color-neutral-700: #595d6c;
-  --color-neutral-800: #3f424d;
-  --color-neutral-900: #292b31;
-  --color-accent-100: #f5f4ff;
-  --color-accent-200: #e7e5fe;
-  --color-accent-300: #d2cefd;
-  --color-accent-400: #b5abfc;
-  --color-accent-500: #968ae0;
-  --color-accent-600: #796cbf;
-  --color-accent-700: #5d5294;
-  --color-accent-800: #423a6a;
-  --color-accent-900: #2b2741;
-  /* Saturated deep indigo for the one "presence" band per screen (class goal, mock test). */
-  --section: #262a60;
-  --section-ghost: #4c5397;
+  --color-neutral-100: #1f2a2e;
+  --color-neutral-200: #2e3a3e;
+  --color-neutral-300: #4a5658;
+  --color-neutral-400: #5a5a4e;
+  --color-neutral-500: #6b6a5e;
+  --color-neutral-600: #8c8775;
+  --color-neutral-700: #b9ae92;
+  --color-neutral-800: #e4dcc8;
+  --color-neutral-900: #f1ebdd;
+  --color-accent-100: #5e1e12;
+  --color-accent-200: #7a2717;
+  --color-accent-300: #8e2c1c;
+  --color-accent-400: #a3341f;
+  --color-accent-500: #c2402a;
+  --color-accent-600: #e07a5f;
+  --color-accent-700: #eaa58f;
+  --color-accent-800: #f4ddd6;
+  --color-accent-900: #faefeb;
+  /* The one dark "presence" band per screen (class goal, mock test): the map header's slate. */
+  --section: #1e2a2c;
+  --section-ghost: #3a4648;
 
-  --page: #161826;
-  --bar: #161826;
-  --paper: #161826;
-  --surface: #232532;
-  --raised: #2a2c3a;
-  --ink: #e9e9ed;
+  --page: #efe9db;
+  --bar: #1e2a2c;
+  --paper: #fbf8f1;
+  --surface: #fbf8f1;
+  --raised: #ffffff;
+  --ink: #1f2a2e;
   --soft: var(--color-neutral-300);
-  --muted: var(--color-neutral-400);
-  --faint: var(--color-neutral-500);
+  --muted: var(--color-neutral-500);
+  --faint: var(--color-neutral-600);
   --nav: var(--color-neutral-300);
-  --line: color-mix(in srgb, #e9e9ed 14%, transparent);
-  --hover: color-mix(in srgb, #e9e9ed 6%, transparent);
-  --accent: #9184d9;
-  --accent-hover: var(--color-accent-400);
-  --accent-ink: var(--color-accent-300);
-  --accent-soft: color-mix(in srgb, #9184d9 14%, transparent);
-  --good: oklch(0.84 0.09 160);
-  --good-soft: oklch(0.32 0.05 160);
-  --warn: oklch(0.88 0.09 82);
-  --warn-soft: oklch(0.36 0.05 80);
-  --bad: oklch(0.8 0.1 25);
-  --bad-soft: oklch(0.32 0.06 25);
-  --flame: oklch(0.8 0.12 60);
-  --learning: color-mix(in srgb, #9184d9 30%, transparent);
-  --series-1: #9184d9;
-  --series-2: oklch(0.75 0.12 45);
-  --series-3: oklch(0.75 0.1 160);
-  --series-4: oklch(0.82 0.11 85);
-  --series-5: oklch(0.75 0.11 350);
-  --series-6: oklch(0.72 0.1 220);
-  --grid: var(--color-neutral-800);
+  --line: #d9cfb8;
+  --hover: color-mix(in srgb, #8c7b55 12%, transparent);
+  --accent: #c2402a;
+  --accent-hover: #a3341f;
+  --accent-ink: #a3341f;
+  --accent-soft: color-mix(in srgb, #c2402a 12%, transparent);
+  --accent-shade: #8e2c1c;
+  --good: #3f5626;
+  --good-soft: #e3ead5;
+  --warn: #8a5f12;
+  --warn-soft: #f3e6c6;
+  --bad: #a3341f;
+  --bad-soft: #f4ddd6;
+  --flame: #c0632f;
+  --brass: #b7862f;
+  --gold: #d9a441;
+  --olive: #5e7a3a;
+  --navy: #23395b;
+  --learning: color-mix(in srgb, #c2402a 22%, transparent);
+  --series-1: #c2402a;
+  --series-2: #23395b;
+  --series-3: #5e7a3a;
+  --series-4: #b7862f;
+  --series-5: #6b4e8a;
+  --series-6: #2f7f86;
+  --grid: #e4dcc8;
   /* Space around the open section: tighter on a phone. */
   --pane: 1rem;
+}
+
+/*
+ * Dark slate areas (the sidebar, the phone header, section bands): the text tokens and ramps flip to light-on-dark
+ * inside them, so the same components work on either ground.
+ */
+@layer base {
+  .band,
+  .bg-section {
+    color-scheme: dark;
+    --ink: #f3eee2;
+    --soft: #d6d2c4;
+    --muted: #a9b0a6;
+    --faint: #8a938c;
+    --nav: #d6d2c4;
+    --line: color-mix(in srgb, #f3eee2 16%, transparent);
+    --hover: color-mix(in srgb, #f3eee2 8%, transparent);
+    --surface: #2a3739;
+    --raised: #33413f;
+    --grid: #3a4648;
+    --accent-ink: #f1a28d;
+    --accent-soft: color-mix(in srgb, #e07a5f 18%, transparent);
+    --good: #9dbf6b;
+    --good-soft: #33432a;
+    --warn: #e8c477;
+    --warn-soft: #4a3e22;
+    --bad: #f1a28d;
+    --bad-soft: #4d2a22;
+    --color-neutral-100: #fbf8f1;
+    --color-neutral-200: #f3eee2;
+    --color-neutral-300: #d6d2c4;
+    --color-neutral-400: #b9b6a8;
+    --color-neutral-500: #a9b0a6;
+    --color-neutral-600: #7f8883;
+    --color-neutral-700: #5a6466;
+    --color-neutral-800: #3a4648;
+    --color-neutral-900: #2a3739;
+    --color-accent-100: #fdeee9;
+    --color-accent-200: #f9d3c7;
+    --color-accent-300: #f1a28d;
+    --color-accent-400: #e88a71;
+    --color-accent-500: #e07a5f;
+    --color-accent-600: #c2402a;
+    --color-accent-700: #8e2c1c;
+    --color-accent-800: #5e2418;
+    --color-accent-900: #3a1d16;
+    color: var(--ink);
+  }
 }
 
 @media (min-width: 48rem) {
@@ -115,23 +170,30 @@
   --color-flame: var(--flame);
   --color-section: var(--section);
   --color-section-ghost: var(--section-ghost);
-  --font-sans: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --color-accent-shade: var(--accent-shade);
+  --color-brass: var(--brass);
+  --color-gold: var(--gold);
+  --color-olive: var(--olive);
+  --color-navy: var(--navy);
+  --font-sans: var(--font-barlow), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  /* Headings, labels and numbers: the field-manual condensed face. */
+  --font-display: var(--font-barlow-condensed), var(--font-barlow), system-ui, sans-serif;
   /* Reading text: serif faces already installed on Windows and macOS. */
   --font-serif: Charter, "Iowan Old Style", Georgia, Cambria, "Times New Roman", serif;
 }
 
-/* Nocturne proportions: 8px controls, 14px panels; elevation is a hairline edge plus ambient darkness. Headings stay at 500. */
+/* Warfront proportions: 6-8px corners, panels edged by a tan hairline, raised things lifted by a warm shadow. */
 @theme {
-  --radius-md: 0.5rem;
-  --radius-lg: 0.625rem;
-  --radius-xl: 0.875rem;
-  --radius-2xl: 0.875rem;
-  --font-weight-semibold: 500;
-  --font-weight-bold: 600;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.5rem;
+  --radius-2xl: 0.625rem;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
   --shadow-bubble: none;
-  --shadow-edge: 0 0 0 1px #3f424d;
-  --shadow-lifted: 0 0 0 1px #595d6c, 0 6px 18px rgba(0, 0, 0, 0.55);
-  --shadow-float: 0 0 0 1px #75798c, 0 16px 40px rgba(0, 0, 0, 0.65);
+  --shadow-edge: 0 0 0 1px #d9cfb8;
+  --shadow-lifted: 0 0 0 1px #d9cfb8, 0 6px 16px rgba(76, 60, 30, 0.12);
+  --shadow-float: 0 0 0 1px #c9bfa6, 0 14px 34px rgba(76, 60, 30, 0.2);
 }
 
 @layer base {
@@ -167,27 +229,38 @@
 
   body {
     color: var(--ink);
-    font-size: 14px;
+    font-size: 15px;
     line-height: 1.5;
-    font-feature-settings: "cv11", "ss01";
+    font-weight: 500;
   }
 
   h1,
   h2,
   h3,
   h4 {
-    font-weight: 500;
-    letter-spacing: -0.015em;
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: 0.005em;
+    line-height: 1.15;
     text-wrap: pretty;
   }
 
   a {
-    color: var(--color-accent-400);
+    color: var(--navy);
     text-decoration: none;
   }
 
+  a:hover {
+    color: var(--accent);
+  }
+
+  .band a,
+  .bg-section a {
+    color: var(--color-accent-300);
+  }
+
   ::selection {
-    background: color-mix(in srgb, var(--accent) 30%, transparent);
+    background: color-mix(in srgb, var(--gold) 45%, transparent);
   }
 
   a:hover {
@@ -199,20 +272,27 @@
     outline-offset: 2px;
   }
 
-  /* Form controls follow the dark ground instead of the browser's white defaults. */
-  input,
-  select,
-  textarea {
-    color-scheme: dark;
+  ::placeholder {
+    color: #9a9583;
   }
 }
 
 /* A small uppercase label above a heading, in the accent: "PRACTICE", "NEXT UP". */
 @utility kicker {
-  font-size: 11px;
-  letter-spacing: 0.1em;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-accent-400);
+}
+
+/* A condensed uppercase label: block titles ("THIS WEEK'S FRONT"), stat labels, tags. */
+@utility caps {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 /* Rules fade to transparent at their ends instead of stopping cleanly. */

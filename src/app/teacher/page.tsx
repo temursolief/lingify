@@ -11,8 +11,8 @@ import { NudgeButton, RetakeNowButton } from "./today-actions";
 export const metadata: Metadata = { title: "Today" };
 
 const DOT: Record<Attention["tone"], string> = {
-  bad: "oklch(0.7 0.13 25)",
-  warn: "oklch(0.8 0.11 80)",
+  bad: "var(--bad)",
+  warn: "var(--brass)",
   accent: "var(--accent)",
   muted: "var(--color-neutral-500)",
 };

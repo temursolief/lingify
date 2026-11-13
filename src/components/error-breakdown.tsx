@@ -2,10 +2,10 @@ import type { ErrorBreakdown } from "@/lib/insights";
 import { Card } from "./ui";
 
 const TAG = {
-  VOCAB: { title: "Vocab / Synonym", hint: "didn't know a word or missed the paraphrase", color: "oklch(0.72 0.09 235)" },
-  DISTRACTOR: { title: "Trap / Distractor", hint: "fell for a word-match trick", color: "#9184d9" },
-  LOGIC: { title: "Logic / NG vs False", hint: "over-inferred or misread the logic", color: "oklch(0.74 0.09 165)" },
-  CARELESS: { title: "Speed / Careless", hint: "skimmed too fast or misread", color: "oklch(0.8 0.1 70)" },
+  VOCAB: { title: "Vocab / Synonym", hint: "didn't know a word or missed the paraphrase", color: "var(--navy)" },
+  DISTRACTOR: { title: "Trap / Distractor", hint: "fell for a word-match trick", color: "var(--accent)" },
+  LOGIC: { title: "Logic / NG vs False", hint: "over-inferred or misread the logic", color: "var(--olive)" },
+  CARELESS: { title: "Speed / Careless", hint: "skimmed too fast or misread", color: "var(--brass)" },
 } as const;
 
 const pct = (n: number, d: number) => (d ? Math.round((n / d) * 100) : 0);

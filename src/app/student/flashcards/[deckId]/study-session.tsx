@@ -17,25 +17,25 @@ export type Refill = StudyQueue | "unsent" | null;
 
 /** Styling for cards made from passages; imported decks bring their own CSS from Anki. */
 const CHUNK_CSS = `
-.card { font-family: Charter, Georgia, serif; font-size: 22px; line-height: 1.5; text-align: left; color: #e9e9ed; }
-.cloze { font-weight: 600; color: #b5abfc; }
-.chunk { font-family: Inter, system-ui, sans-serif; font-weight: 500; font-size: 28px; margin-top: 8px; letter-spacing: -0.01em; }
-.meaning { font-family: Inter, system-ui, sans-serif; font-size: 17px; color: #e9e9ed; margin-top: 6px; }
-.uz { font-family: Inter, system-ui, sans-serif; font-size: 14px; color: #d2cefd; margin-top: 6px; }
-hr { border: 0; border-top: 1px solid rgba(233,233,237,0.14); margin: 16px 0; }`;
+.card { font-family: Charter, Georgia, serif; font-size: 22px; line-height: 1.5; text-align: left; color: #1f2a2e; }
+.cloze { font-weight: 700; color: #a3341f; }
+.chunk { font-family: 'Barlow Condensed', Barlow, system-ui, sans-serif; font-weight: 700; font-size: 30px; margin-top: 8px; }
+.meaning { font-family: Barlow, system-ui, sans-serif; font-size: 17px; color: #1f2a2e; margin-top: 6px; }
+.uz { font-family: Barlow, system-ui, sans-serif; font-size: 14px; color: #23395b; margin-top: 6px; }
+hr { border: 0; border-top: 1px solid #d9cfb8; margin: 16px 0; }`;
 
 const BASE_CSS = `
 html, body { margin: 0; padding: 0; background: transparent; }
 body { padding: 8px 4px; }
 img { max-width: 100%; height: auto; }
-.card { font-family: Inter, system-ui, sans-serif; font-size: 20px; text-align: center; color: #e9e9ed; }
-.cloze { font-weight: 600; color: #b5abfc; }
-a { color: #b5abfc; }
-audio { margin: 6px auto; display: block; color-scheme: dark; }`;
+.card { font-family: Barlow, system-ui, sans-serif; font-size: 20px; text-align: center; color: #1f2a2e; }
+.cloze { font-weight: 700; color: #a3341f; }
+a { color: #23395b; }
+audio { margin: 6px auto; display: block; }`;
 
-/** Imported Anki decks often paint black text on white: on the dark card that would vanish, so the ground and ink win. */
-const DARK_OVERRIDE = `
-html, body, .card { background: transparent !important; color: #e9e9ed !important; }
+/** Imported Anki decks paint their own ground and ink (often a night mode): the cream card and slate ink win. */
+const CARD_OVERRIDE = `
+html, body, .card { background: transparent !important; color: #1f2a2e !important; }
 .nightMode, .night_mode { background: transparent !important; }`;
 
 /** A card face in a sandboxed frame: the deck's own CSS applies, and no script inside a card can run. */
@@ -57,7 +57,7 @@ function CardFrame({ html, css }: { html: string; css: string }) {
       }}
       className="w-full border-0"
       style={{ height }}
-      srcDoc={`<!doctype html><html><head><meta charset="utf-8"><style>${BASE_CSS}${css}${DARK_OVERRIDE}</style></head><body><div class="card">${html}</div></body></html>`}
+      srcDoc={`<!doctype html><html><head><meta charset="utf-8"><style>${BASE_CSS}${css}${CARD_OVERRIDE}</style></head><body><div class="card">${html}</div></body></html>`}
     />
   );
 }

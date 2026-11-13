@@ -341,7 +341,7 @@ function HeatCellView({ cell: c, answered }: { cell: HeatCell | null; answered: 
           : c.firstCorrect
             ? "bg-good"
             : c.unansweredAuto && !c.correct
-              ? "bg-[repeating-linear-gradient(135deg,#b8bec2_0_3px,#e4e6e9_3px_6px)] text-ink"
+              ? "bg-[repeating-linear-gradient(135deg,#c9bfa6_0_3px,#efe9db_3px_6px)] text-ink"
               : c.correct
                 ? "bg-warn"
                 : "bg-bad",

@@ -6,20 +6,21 @@ function cx(...classes: (string | false | null | undefined)[]) {
 }
 
 /**
- * Nocturne buttons: the primary action is an accent outline (never a fill), the secondary a quiet divider outline,
- * the ghost a bare accent word. Hover tints and pressed states come from the accent.
+ * Warfront buttons: the primary action is a solid signal-red block with a darker pressed edge along the bottom (it
+ * sinks when pressed), the secondary a cream block edged in tan, the ghost a bare red word.
  */
 const buttonStyles = {
   primary:
-    "border border-accent bg-transparent text-accent-ink hover:bg-[color-mix(in_srgb,var(--accent)_14%,transparent)] active:bg-[color-mix(in_srgb,var(--accent)_24%,transparent)]",
-  secondary: "border border-line bg-transparent text-ink hover:bg-hover active:bg-[color-mix(in_srgb,var(--ink)_12%,transparent)]",
-  ghost: "bg-transparent text-[var(--color-accent-400)] hover:bg-accent-soft",
+    "bg-accent text-white shadow-[inset_0_-3px_0_var(--accent-shade)] hover:bg-accent-hover hover:text-white active:translate-y-px active:shadow-[inset_0_-1px_0_var(--accent-shade)]",
+  secondary:
+    "border border-line bg-surface text-ink shadow-[inset_0_-2px_0_var(--line)] hover:bg-[color-mix(in_srgb,var(--surface)_80%,var(--line))] hover:text-ink active:translate-y-px active:shadow-none",
+  ghost: "bg-transparent text-accent-ink hover:bg-accent-soft hover:text-accent-ink",
 };
 
 type Variant = keyof typeof buttonStyles;
 
 const buttonBase =
-  "inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium leading-5 no-underline hover:no-underline transition-colors disabled:pointer-events-none disabled:opacity-45";
+  "caps inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-[15px] leading-5 no-underline hover:no-underline transition-colors disabled:pointer-events-none disabled:opacity-45";
 
 export function Button({ variant = "primary", className, ...props }: ComponentProps<"button"> & { variant?: Variant }) {
   return <button className={cx(buttonBase, buttonStyles[variant], className)} {...props} />;
@@ -29,12 +30,12 @@ export function ButtonLink({ variant = "primary", className, ...props }: Compone
   return <Link className={cx(buttonBase, buttonStyles[variant], className)} {...props} />;
 }
 
-/** A surface-filled panel on the dark ground. `lift`: the hairline edge used for panels that stand apart. */
+/** A cream panel edged in tan on the paper ground. `lift`: a soft warm shadow for panels that stand apart. */
 export function Card({ className, lift, ...props }: ComponentProps<"div"> & { lift?: boolean }) {
-  return <div className={cx("rounded-xl bg-surface p-4", lift && "shadow-edge", className)} {...props} />;
+  return <div className={cx("rounded-xl border border-line bg-surface p-4", lift && "shadow-lifted", className)} {...props} />;
 }
 
-/** Small labels tinted from the ramps: dark fill, light text. */
+/** Small condensed tags tinted from the ramps: a faint fill with strong text. */
 const badgeTones = {
   neutral: "bg-[var(--color-neutral-800)] text-[var(--color-neutral-200)]",
   accent: "bg-[var(--color-accent-800)] text-[var(--color-accent-100)]",
@@ -47,7 +48,7 @@ export type Tone = keyof typeof badgeTones;
 
 export function Badge({ tone = "neutral", children, className }: { tone?: Tone; children: ReactNode; className?: string }) {
   return (
-    <span className={cx("inline-flex items-center rounded-[6px] px-2 py-0.5 text-[11px] whitespace-nowrap", badgeTones[tone], className)}>
+    <span className={cx("caps inline-flex items-center rounded-[4px] px-2 py-0.5 text-[11px] tracking-[0.08em] whitespace-nowrap", badgeTones[tone], className)}>
       {children}
     </span>
   );
@@ -58,39 +59,39 @@ export function ProgressBar({ value, tone = "accent", label, className }: { valu
   const fill = { accent: "bg-accent", good: "bg-good", warn: "bg-warn" }[tone];
   return (
     <div
-      className={cx("h-1 w-full overflow-hidden rounded-full bg-grid", className)}
+      className={cx("h-1.5 w-full overflow-hidden rounded-[2px] bg-grid", className)}
       role="progressbar"
       aria-valuenow={Math.round(pct)}
       aria-valuemin={0}
       aria-valuemax={100}
       aria-label={label}
     >
-      <div className={cx("h-full rounded-full transition-[width] duration-500", fill)} style={{ width: `${pct}%` }} />
+      <div className={cx("h-full rounded-[2px] transition-[width] duration-500", fill)} style={{ width: `${pct}%` }} />
     </div>
   );
 }
 
 export function Stat({ label, value, hint, className }: { label: string; value: ReactNode; hint?: ReactNode; className?: string }) {
   return (
-    <div className={cx("flex flex-col gap-1 rounded-lg bg-surface p-3.5", className)}>
-      <div className="text-xs text-muted">{label}</div>
-      <div className="text-2xl font-medium tabular-nums">{value}</div>
+    <div className={cx("flex flex-col gap-1 rounded-lg border border-line bg-surface p-3.5", className)}>
+      <div className="caps text-[11px] text-muted">{label}</div>
+      <div className="font-display text-[28px] leading-none font-bold tabular-nums">{value}</div>
       {hint && <div className="text-[11px] text-muted">{hint}</div>}
     </div>
   );
 }
 
 /**
- * The top of a screen: an accent kicker, a large flush-left heading and one muted line, with at most one action on
- * the right. Left-aligned and asymmetric, as Nocturne lays things out.
+ * The top of a screen: a red kicker, a large condensed flush-left heading and one muted line, with at most one action
+ * on the right.
  */
 export function PageHeader({ title, subtitle, action, kicker }: { title: ReactNode; subtitle?: ReactNode; action?: ReactNode; kicker?: ReactNode }) {
   return (
     <div className="mb-5 flex flex-wrap items-end gap-3">
       <div className="mr-auto flex min-w-0 flex-col gap-1">
         {kicker && <span className="kicker">{kicker}</span>}
-        <h1 className="text-2xl leading-tight sm:text-[30px]">{title}</h1>
-        {subtitle && <p className="text-[13px] text-muted">{subtitle}</p>}
+        <h1 className="text-[28px] leading-tight sm:text-[34px]">{title}</h1>
+        {subtitle && <p className="text-sm text-muted">{subtitle}</p>}
       </div>
       {action && <div className="shrink-0">{action}</div>}
     </div>
@@ -101,7 +102,7 @@ export function PageHeader({ title, subtitle, action, kicker }: { title: ReactNo
 export function Tabs({ items, current }: { items: { key: string; label: ReactNode; href: string }[]; current: string }) {
   return (
     <nav className="mb-5 flex max-w-full overflow-x-auto">
-      <div className="flex shrink-0 overflow-hidden rounded-md border border-line">
+      <div className="flex shrink-0 overflow-hidden rounded-md border border-line bg-surface">
         {items.map((t) => {
           const active = t.key === current;
           return (
@@ -110,8 +111,8 @@ export function Tabs({ items, current }: { items: { key: string; label: ReactNod
               href={t.href}
               aria-current={active ? "page" : undefined}
               className={cx(
-                "px-3.5 py-1.5 text-[13px] whitespace-nowrap no-underline hover:no-underline",
-                active ? "bg-[color-mix(in_srgb,var(--accent)_18%,transparent)] text-[var(--color-accent-200)]" : "text-soft hover:bg-hover",
+                "caps px-3.5 py-1.5 text-[13px] whitespace-nowrap no-underline hover:no-underline",
+                active ? "bg-ink text-page hover:text-page" : "text-soft hover:bg-hover hover:text-ink",
               )}
             >
               {t.label}
@@ -127,7 +128,7 @@ export function Tabs({ items, current }: { items: { key: string; label: ReactNod
 export function SectionTitle({ title, note, action }: { title: ReactNode; note?: ReactNode; action?: ReactNode }) {
   return (
     <div className="flex items-baseline gap-2">
-      <h3 className="text-lg">{title}</h3>
+      <h3 className="caps text-[17px]">{title}</h3>
       {note && <span className="text-xs text-muted">{note}</span>}
       {action && <span className="ml-auto">{action}</span>}
     </div>
@@ -184,7 +185,7 @@ export function EmptyState({ title, children }: { title: string; children?: Reac
 /** Small outlined actions for rows (Nudge, Open, Require retake): the accent one is the suggested fix. */
 const outline =
   "inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-[13px] whitespace-nowrap no-underline transition-colors hover:no-underline disabled:cursor-not-allowed disabled:opacity-45";
-export const accentOutline = cx(outline, "border-accent text-[var(--color-accent-300)] hover:bg-accent-soft");
-export const quietOutline = cx(outline, "border-line text-ink hover:bg-hover");
+export const accentOutline = cx(outline, "border-accent bg-surface font-semibold text-accent-ink hover:bg-accent-soft hover:text-accent-ink");
+export const quietOutline = cx(outline, "border-line bg-surface text-ink hover:bg-hover hover:text-ink");
 
 export { cx };

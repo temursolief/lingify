@@ -59,9 +59,9 @@ function Badge({ badges, k, tab }: { badges: Promise<NavBadges>; k: string; tab?
   const n = use(badges)[k];
   if (!n) return null;
   return tab ? (
-    <span className="absolute -top-0.5 left-1/2 ml-1.5 min-w-4 rounded-full bg-accent px-1 text-center text-[10px] leading-4 font-medium text-page tabular-nums">{n > 99 ? "99+" : n}</span>
+    <span className="absolute -top-0.5 left-1/2 ml-1.5 min-w-4 rounded-full bg-accent px-1 text-center text-[10px] leading-4 font-semibold text-white tabular-nums">{n > 99 ? "99+" : n}</span>
   ) : (
-    <span className="text-[11px] text-[var(--color-accent-300)] tabular-nums">{n}</span>
+    <span className="min-w-5 rounded-[4px] bg-accent px-1.5 text-center text-[11px] leading-[18px] font-semibold text-white tabular-nums">{n}</span>
   );
 }
 
@@ -70,7 +70,7 @@ function Person({ person }: { person: Promise<NavPerson> }) {
   return (
     <>
       <span className="kicker">{p.kicker}</span>
-      <span className="truncate text-[15px] font-medium">{p.name}</span>
+      <span className="truncate font-display text-[17px] font-bold">{p.name}</span>
     </>
   );
 }
@@ -78,10 +78,10 @@ function Person({ person }: { person: Promise<NavPerson> }) {
 function Brand() {
   return (
     <span className="flex items-center gap-2">
-      <span aria-hidden className="grid h-[22px] w-[22px] place-items-center rounded-[6px] border-[1.5px] border-accent text-xs font-semibold text-[var(--color-accent-400)]">
+      <span aria-hidden className="grid h-[26px] w-[26px] place-items-center rounded-[5px] bg-accent font-display text-[15px] font-bold text-white shadow-[inset_0_-2px_0_var(--accent-shade)]">
         L
       </span>
-      <span className="font-medium">Lingify</span>
+      <span className="font-display text-[19px] font-bold tracking-[0.08em] uppercase">Lingify</span>
     </span>
   );
 }
@@ -96,8 +96,8 @@ function SideLinks({ items, current, badges }: { items: NavItem[]; current: stri
         href={item.href}
         aria-current={active ? "page" : undefined}
         className={cx(
-          "flex items-center gap-2.5 rounded-md px-2.5 py-2 no-underline transition-colors hover:no-underline",
-          active ? "bg-[color-mix(in_srgb,var(--accent)_14%,transparent)] text-[var(--color-accent-200)]" : "text-soft hover:bg-hover",
+          "flex items-center gap-2.5 rounded-md border-l-[3px] px-2.5 py-2 font-semibold no-underline transition-colors hover:no-underline",
+          active ? "border-gold bg-hover text-white hover:text-white" : "border-transparent text-soft hover:bg-hover hover:text-ink",
         )}
       >
         <I size={18} weight={active ? "fill" : "regular"} aria-hidden />
@@ -119,10 +119,13 @@ function TabLinks({ items, current, badges }: { items: NavItem[]; current: strin
         key={item.key}
         href={item.href}
         aria-current={active ? "page" : undefined}
-        className={cx("relative flex min-h-12 flex-1 flex-col items-center justify-center gap-0.5 no-underline hover:no-underline", active ? "text-[var(--color-accent-300)]" : "text-muted")}
+        className={cx(
+          "relative flex min-h-12 flex-1 flex-col items-center justify-center gap-0.5 border-t-[3px] no-underline hover:no-underline",
+          active ? "border-accent text-accent hover:text-accent" : "border-transparent text-muted hover:text-ink",
+        )}
       >
         <I size={22} weight={active ? "fill" : "regular"} aria-hidden />
-        <span className="text-[11px]">{item.label}</span>
+        <span className="caps text-[11px]">{item.label}</span>
         <Suspense fallback={null}>
           <Badge badges={badges} k={item.key} tab />
         </Suspense>
@@ -137,8 +140,8 @@ function SettingsLink({ href, active }: { href: string; active: boolean }) {
       href={href}
       aria-current={active ? "page" : undefined}
       className={cx(
-        "flex items-center gap-2.5 rounded-md px-2.5 py-2 no-underline hover:no-underline",
-        active ? "bg-[color-mix(in_srgb,var(--accent)_14%,transparent)] text-[var(--color-accent-200)]" : "text-muted hover:bg-hover hover:text-ink",
+        "flex items-center gap-2.5 rounded-md border-l-[3px] px-2.5 py-2 font-semibold no-underline hover:no-underline",
+        active ? "border-gold bg-hover text-white hover:text-white" : "border-transparent text-muted hover:bg-hover hover:text-ink",
       )}
     >
       <GearSix size={18} aria-hidden />
@@ -164,9 +167,9 @@ function ActiveSettings({ settingsHref }: Frame) {
 
 function TopBar({ home, settingsHref, deep }: { home: string; settingsHref: string; deep: string | null }) {
   return (
-    <header className={cx("flex h-12 shrink-0 items-center gap-1 border-b border-line px-2", !deep && "md:hidden")}>
+    <header className={cx("band flex h-12 shrink-0 items-center gap-1 border-b-[3px] border-accent bg-bar px-2", !deep && "md:hidden")}>
       {deep ? (
-        <Link href={deep} aria-label="Back" className="flex h-10 items-center gap-1.5 rounded-md px-2 text-[var(--color-accent-400)] no-underline hover:bg-accent-soft hover:no-underline">
+        <Link href={deep} aria-label="Back" className="flex h-10 items-center gap-1.5 rounded-md px-2 font-semibold text-accent-ink no-underline hover:bg-accent-soft hover:no-underline">
           <ArrowLeft size={18} aria-hidden />
           <span className="text-sm">Back</span>
         </Link>
@@ -192,7 +195,7 @@ function ActiveTopBar({ home, items, settingsHref }: Frame) {
 }
 
 /**
- * The signed-in frame. On a laptop: a 220px sidebar (who you are, then the sections with their counts) beside the
+ * The signed-in frame, Warfront style: dark slate bars edged with a red rule around the paper page. On a laptop: a 220px sidebar (who you are, then the sections with their counts) beside the
  * open screen. On a phone or narrow tablet: the sections move to tabs along the bottom, within thumb reach, and a slim
  * bar on top carries the back arrow. Detail pages (a passage, a deck) keep their tab lit and get a back arrow.
  */
@@ -215,7 +218,7 @@ export function NavShell({
   return (
     <div className="flex h-dvh overflow-hidden bg-page">
       {/* sidebar, laptop and up */}
-      <nav aria-label="Sections" className="hidden w-[220px] shrink-0 flex-col gap-1 border-r border-line px-3 py-5 md:flex">
+      <nav aria-label="Sections" className="band hidden w-[220px] shrink-0 flex-col gap-1 border-r-[3px] border-accent bg-bar px-3 py-5 md:flex">
         <Link href={home} className="mb-4 px-2.5 text-ink no-underline hover:no-underline">
           <Brand />
         </Link>
@@ -251,7 +254,7 @@ export function NavShell({
         {/* bottom tabs, phone and narrow tablet */}
         <nav
           aria-label="Sections"
-          className="flex shrink-0 justify-around border-t border-line bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] px-1 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur md:hidden"
+          className="flex shrink-0 justify-around border-t border-line bg-surface px-1 pb-[max(0.5rem,env(safe-area-inset-bottom))] md:hidden"
         >
           <Suspense fallback={<TabLinks items={items} current={null} badges={badges} />}>
             <ActiveTabs {...frame} />

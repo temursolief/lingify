@@ -34,7 +34,7 @@ export function ShellFrame({
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden lg:grid lg:grid-cols-[clamp(240px,28vw,320px)_minmax(0,1fr)]">
-      <header className="flex h-12 shrink-0 items-center gap-1 border-b border-line bg-bar px-2 lg:hidden">
+      <header className="band flex h-12 shrink-0 items-center gap-1 border-b-[3px] border-accent bg-bar px-2 lg:hidden">
         <button
           type="button"
           aria-label="Open menu"
@@ -49,7 +49,7 @@ export function ShellFrame({
         <span className="text-lg font-semibold">{brand}</span>
       </header>
 
-      {open && <button type="button" aria-label="Close menu" onClick={() => setOpen(false)} className="fixed inset-0 z-30 cursor-default bg-black/30 lg:hidden" />}
+      {open && <button type="button" aria-label="Close menu" onClick={() => setOpen(false)} className="fixed inset-0 z-30 cursor-default bg-[#1e2a2c]/40 lg:hidden" />}
 
       <aside
         // Choosing a row closes the drawer: the section opens underneath it.
@@ -57,7 +57,7 @@ export function ShellFrame({
           if ((e.target as HTMLElement).closest("a, [data-close-menu]")) setOpen(false);
         }}
         className={cx(
-          "fixed inset-y-0 left-0 z-40 flex w-[min(20rem,86vw)] flex-col border-r border-line bg-bar transition-[translate,visibility] duration-200",
+          "band fixed inset-y-0 left-0 z-40 flex w-[min(20rem,86vw)] flex-col border-r-[3px] border-accent bg-bar transition-[translate,visibility] duration-200",
           "lg:visible lg:static lg:z-auto lg:w-auto lg:min-h-0 lg:translate-x-0 lg:transition-none",
           open ? "translate-x-0 shadow-xl lg:shadow-none" : "invisible -translate-x-full",
         )}
