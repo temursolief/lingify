@@ -98,24 +98,31 @@ export async function refreshXp(userIds: string[]) {
     dirty.map((u) => u.id),
     startOfDayValue(earliest),
   );
-  await db.$transaction(async (tx) => {
-    const locked = await tx.$queryRaw<{ id: string; xpDirtyFrom: Date | null; xpDirtySeq: number }[]>`
-      SELECT "id", "xpDirtyFrom", "xpDirtySeq" FROM "User" WHERE "id" IN (${Prisma.join(dirty.map((u) => u.id))}) ORDER BY "id" FOR UPDATE`;
-    const now = new Map(locked.map((u) => [u.id, u]));
-    for (const u of dirty) {
-      const current = now.get(u.id);
-      // Another page recounted them while we were reading (cleared), or a change arrived since (dirty again, from a
-      // day we may not have read): leave it to the next read.
-      if (!current?.xpDirtyFrom || current.xpDirtySeq !== u.xpDirtySeq) continue;
-      const from = fromDay.get(u.id)!;
-      const rows = [...totalsByDay(events.get(u.id) ?? [], dayOf)]
-        .map(([key, t]) => ({ userId: u.id, day: new Date(`${key}T00:00:00.000Z`), ...t }))
-        .filter((r) => r.day >= from);
-      await tx.xpDay.deleteMany({ where: { userId: u.id, day: { gte: from } } });
+  await db.$transaction(
+    async (tx) => {
+      const locked = await tx.$queryRaw<{ id: string; xpDirtyFrom: Date | null; xpDirtySeq: number }[]>`
+        SELECT "id", "xpDirtyFrom", "xpDirtySeq" FROM "User" WHERE "id" IN (${Prisma.join(dirty.map((u) => u.id))}) ORDER BY "id" FOR UPDATE`;
+      const now = new Map(locked.map((u) => [u.id, u]));
+      // Skip anyone another page recounted while we were reading (cleared), or who changed since (dirty again, maybe
+      // from a day we did not read): the next read handles them.
+      const ready = dirty.filter((u) => {
+        const current = now.get(u.id);
+        return !!current?.xpDirtyFrom && current.xpDirtySeq === u.xpDirtySeq;
+      });
+      if (!ready.length) return;
+      const rows = ready.flatMap((u) => {
+        const from = fromDay.get(u.id)!;
+        return [...totalsByDay(events.get(u.id) ?? [], dayOf)]
+          .map(([key, t]) => ({ userId: u.id, day: new Date(`${key}T00:00:00.000Z`), ...t }))
+          .filter((r) => r.day >= from);
+      });
+      // A fixed four round trips however many students: the database may be far away.
+      await tx.xpDay.deleteMany({ where: { OR: ready.map((u) => ({ userId: u.id, day: { gte: fromDay.get(u.id)! } })) } });
       if (rows.length) await tx.xpDay.createMany({ data: rows });
-      await tx.user.update({ where: { id: u.id }, data: { xpDirtyFrom: null } });
-    }
-  });
+      await tx.user.updateMany({ where: { id: { in: ready.map((u) => u.id) } }, data: { xpDirtyFrom: null } });
+    },
+    { maxWait: 10_000, timeout: 20_000 },
+  );
 }
 
 export type Game = {

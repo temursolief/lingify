@@ -8,7 +8,7 @@ import "dotenv/config";
 import { db } from "../src/lib/db";
 import { refreshXp } from "../src/lib/gamification";
 
-const BATCH = 50;
+const BATCH = 25;
 
 async function main() {
   const students = await db.user.findMany({ where: { role: "STUDENT" }, select: { id: true }, orderBy: { id: "asc" } });
