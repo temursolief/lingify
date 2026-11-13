@@ -20,7 +20,8 @@ async function LibraryContent() {
     }),
     db.listeningAttempt.findMany({
       where: { userId: user.id, invalidatedAt: null },
-      orderBy: { startedAt: "desc" },
+      // The latest practice with results first: each visit starts a fresh one, which should not hide them.
+      orderBy: [{ firstSubmittedAt: { sort: "desc", nulls: "last" } }, { startedAt: "desc" }],
       select: { lessonId: true, firstSubmittedAt: true, completedAt: true, firstCorrect: true, band: true, answers: true },
     }),
   ]);

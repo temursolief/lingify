@@ -381,27 +381,29 @@ export function ListeningLesson({
           <p className="order-2 px-4 pt-3 text-sm text-muted md:p-0">
             Pause, rewind and replay as often as you need.{view.submitted && red ? " For each red answer, find that part of the video and listen again." : ""}
           </p>
-          {gated && (
-            <section className="order-4 mx-4 mb-6 rounded-xl bg-paper p-4 md:m-0">
-              <p className="font-semibold">Key words</p>
+          {gated ? (
+            <section className="order-4 mx-4 mb-6 rounded-xl bg-raised p-4 md:m-0">
+              <p className="font-medium">Key words</p>
               <p className="mt-1 text-sm text-muted">Read these before the questions: they appear in the video and in what you&apos;ll answer.</p>
-              <ul className="mt-2 space-y-2.5">
-                {vocabulary.map((v) => (
-                  <li key={v.word}>
-                    <p><b>{v.word}</b> <span className="text-muted">· {v.meaning}</span></p>
-                    {v.uz && <p className="text-sm text-muted">O‘zbekcha: {v.uz}</p>}
-                    {v.example && <p className="font-serif text-sm text-muted italic">“{v.example}”</p>}
-                  </li>
-                ))}
-              </ul>
+              <VocabList vocabulary={vocabulary} />
               <Button className="mt-3" onClick={readVocab} disabled={pending}>I&apos;ve read these words</Button>
             </section>
+          ) : (
+            vocabulary.length > 0 && (
+              // Kept on screen for the whole practice; folded during the timed first try so the video and questions lead.
+              <details key={testOn ? "test" : "open"} open={!testOn} className="group order-4 mx-4 mb-6 rounded-xl bg-raised p-4 md:m-0">
+                <summary className="cursor-pointer font-medium select-none">
+                  Key words <span className="text-sm font-normal text-muted">· {vocabulary.length}</span>
+                </summary>
+                <VocabList vocabulary={vocabulary} />
+              </details>
+            )
           )}
         </div>
 
         <div className="pane-x order-3 py-5 md:min-h-0 md:overflow-y-auto md:py-6">
           {gated ? (
-            <p className="text-muted">Read the key words on the left, then press “I&apos;ve read these words” to see the questions.</p>
+            <p className="text-muted">Read the key words, then press “I&apos;ve read these words” to see the questions.</p>
           ) : (
             <>
               {view.submitted && <IntegrityBanner kind="listening" reason={view.reason} firstCorrect={view.firstCorrect} total={view.total} band={view.band} />}
@@ -479,5 +481,21 @@ function Footer({ n, state, changed, error, pending, onCheck }: { n: number; sta
       {error && <p className="mt-1 text-bad">{error}</p>}
       <Button className="mt-2 px-3 py-1.5 text-sm" disabled={pending || !changed} onClick={onCheck}>Check question {n}</Button>
     </div>
+  );
+}
+
+function VocabList({ vocabulary }: { vocabulary: Vocab[] }) {
+  return (
+    <ul className="mt-2 space-y-2.5">
+      {vocabulary.map((v) => (
+        <li key={v.word}>
+          <p>
+            <b className="font-medium">{v.word}</b> <span className="text-muted">· {v.meaning}</span>
+          </p>
+          {v.uz && <p className="text-sm text-[var(--color-accent-300)]">O‘zbekcha: {v.uz}</p>}
+          {v.example && <p className="font-serif text-sm text-muted italic">“{v.example}”</p>}
+        </li>
+      ))}
+    </ul>
   );
 }

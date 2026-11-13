@@ -93,13 +93,18 @@ export async function ensureLessonDeck(lesson: { id: string; title: string; voca
   return deck;
 }
 
+/**
+ * Opening a lesson starts a fresh practice every time: an attempt whose first try was already submitted is never
+ * reopened, so the student meets the key words and the questions anew. That attempt is kept as it was, and the
+ * teacher still sees it (and every other try) with its results. An attempt not yet submitted, untouched or with a
+ * test under way, is picked up again instead, so leaving mid-test cannot be used to get a clean slate.
+ */
 export async function lessonAndAttempt(userId: string, slug: string) {
   const lesson = await db.listeningLesson.findFirst({ where: { slug, ...lessonVisibleTo(userId) } });
   if (!lesson) return null;
   await ensureLessonDeck(lesson);
-  const attempt =
-    (await db.listeningAttempt.findFirst({ where: { userId, lessonId: lesson.id, invalidatedAt: null }, orderBy: { startedAt: "desc" } })) ??
-    (await db.listeningAttempt.create({ data: { userId, lessonId: lesson.id } }));
+  const open = await db.listeningAttempt.findFirst({ where: { userId, lessonId: lesson.id, invalidatedAt: null, firstSubmittedAt: null }, orderBy: { startedAt: "desc" } });
+  const attempt = open ?? (await db.listeningAttempt.create({ data: { userId, lessonId: lesson.id } }));
   return { lesson, attempt };
 }
 

@@ -338,7 +338,8 @@ export async function homeworkMatrix(classId: string, assignmentId: string) {
         badge: a?.firstSubmittedAt ? attemptBadge("reading", { ...a, seconds: a.firstSeconds }) : null,
       };
     }
-    const a = lessonAttempts.find((x) => x.userId === r.studentId);
+    // Each visit to a lesson starts a fresh practice: show the latest one with results, not an empty new one.
+    const a = lessonAttempts.find((x) => x.userId === r.studentId && x.firstSubmittedAt) ?? lessonAttempts.find((x) => x.userId === r.studentId);
     const answers = Object.values((a?.answers ?? {}) as Record<string, { correct: boolean }>);
     const stage = !a ? "none" : a.completedAt ? "corrected" : a.firstSubmittedAt ? "submitted" : a.testStartedAt ? "started" : a.vocabSeenAt || !assignment.lesson?.wordCount ? "vocab" : "none";
     const seconds = a?.firstSubmittedAt && a.testStartedAt ? Math.round((a.firstSubmittedAt.getTime() - a.testStartedAt.getTime()) / 1000) : null;

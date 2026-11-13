@@ -57,9 +57,10 @@ export const studentHomework = cache(async (userId: string): Promise<HomeworkIte
       distinct: ["passageId"],
       select: { passageId: true, firstSubmittedAt: true, completedAt: true, firstCorrect: true, total: true, band: true, _count: { select: { answers: { where: { correct: false } } } } },
     }),
+    // The latest practice with results first: opening a lesson again starts an empty one that should not hide them.
     db.listeningAttempt.findMany({
       where: { userId, lessonId: { in: lessonIds }, invalidatedAt: null },
-      orderBy: { startedAt: "desc" },
+      orderBy: [{ firstSubmittedAt: { sort: "desc", nulls: "last" } }, { startedAt: "desc" }],
       distinct: ["lessonId"],
       select: { lessonId: true, firstSubmittedAt: true, completedAt: true, firstCorrect: true, band: true, answers: true },
     }),
