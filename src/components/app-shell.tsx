@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 import { currentUser, getSession } from "@/lib/auth";
+import { fortressOf } from "@/lib/fortress";
+import { studentGame } from "@/lib/gamification";
 import { NavShell, type NavBadges, type NavItem, type NavPerson } from "./nav-shell";
 import { OfflineBanner } from "./offline-banner";
 
@@ -20,7 +22,16 @@ const TEACHER_NAV: NavItem[] = [
 async function person(kicker: (role: string) => string): Promise<NavPerson> {
   const session = await getSession();
   const user = session ? await currentUser(session.userId) : null;
-  return { name: user?.name ?? "", kicker: user ? kicker(user.role) : "" };
+  if (!user) return { name: "", kicker: "" };
+  if (user.role !== "STUDENT") return { name: user.name, kicker: kicker(user.role) };
+  // The game's heads-up display under the name, on every page: level, fortress stage, progress to the next level.
+  const game = await studentGame(user.id);
+  const f = fortressOf(game.xp);
+  return {
+    name: user.name,
+    kicker: kicker(user.role),
+    hud: { level: game.level, stage: f.current.name, pct: (game.xp - game.levelFrom) / (game.levelTo - game.levelFrom), streak: game.streak, lit: game.todayDone },
+  };
 }
 
 /**

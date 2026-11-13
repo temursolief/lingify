@@ -1,13 +1,16 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Castle } from "@/components/castle";
 import { ErrorBreakdownView } from "@/components/error-breakdown";
 import { Fire, LockKey, MagnifyingGlass, Cards, Target, type Icon } from "@/components/icons";
 import { Card, PageHeader, PageSkeleton, ProgressBar, SectionTitle, cx } from "@/components/ui";
 import { requireStudent } from "@/lib/auth";
 import { skillBadges } from "@/lib/badges";
 import { db } from "@/lib/db";
+import { fortressOf, STAGES, xpForLevel } from "@/lib/fortress";
 import { studentGame } from "@/lib/gamification";
+import { REAL_DAY_CARDS, XP } from "@/lib/xp";
 import { errorBreakdown } from "@/lib/insights";
 import { ERROR_TAG_LABEL } from "@/lib/passages";
 import { skillBands, type SkillBand } from "@/lib/skills";
@@ -48,6 +51,7 @@ async function JourneyContent() {
     }),
   ]);
   const badges = await skillBadges(user.id, game.bestStreak);
+  const fortress = fortressOf(game.xp);
   const band = bands.reading.band ?? bands.listening.band;
   const tagged = Object.values(breakdown.tags).reduce((a, b) => a + b, 0);
   const headline = breakdown.headline;
@@ -80,6 +84,53 @@ async function JourneyContent() {
           </div>
         </div>
 
+        <div className="flex flex-col gap-2.5">
+          <SectionTitle title="Fortress stages" note={`${fortress.stage + 1} of ${STAGES.length} built · it never shrinks`} />
+          <ol className="grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(130px,1fr))]">
+            {STAGES.map((st, i) => {
+              const built = i <= fortress.stage;
+              const current = i === fortress.stage;
+              return (
+                <li
+                  key={st.key}
+                  className={cx(
+                    "flex flex-col items-center gap-1 rounded-lg border p-2 text-center",
+                    current ? "border-accent bg-surface shadow-lifted" : built ? "border-line bg-surface" : "border-dashed border-[var(--color-neutral-700)]",
+                  )}
+                >
+                  <Castle stage={i} ghost={!built} streak={current ? game.streak : 0} className="w-full max-w-[120px]" />
+                  <span className="caps text-[13px]">{st.name}</span>
+                  <span className="text-[11px] text-muted tabular-nums">
+                    {current ? "You are here" : built ? "Built" : `Lv ${st.level} · ${(xpForLevel(st.level) - game.xp).toLocaleString("en-US")} XP to go`}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+
+        <section id="xp" className="flex scroll-mt-6 flex-col gap-2.5">
+          <SectionTitle title="How XP is earned" note="effort counts, speed does not" />
+          <div className="grid gap-x-6 gap-y-2 rounded-xl border border-line bg-surface p-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))]">
+            {[
+              [`+${XP.firstTry}`, "A first try at a passage or lesson, done honestly. Only your first try at each one counts."],
+              [`+${XP.proof}`, "A red answer fixed with its proof in the right paragraph."],
+              [`+${XP.proofElsewhere}`, "Fixed, but the proof was in another paragraph."],
+              [`+${XP.tag}`, "Saying why you missed an answer."],
+              [`+${XP.card}`, "Each flashcard you take time over. Rushed cards earn nothing."],
+              [`+${XP.homework}`, "Homework finished, words included."],
+            ].map(([xp, text]) => (
+              <div key={text} className="flex items-baseline gap-3">
+                <span className="w-10 shrink-0 font-display text-lg font-bold text-accent tabular-nums">{xp}</span>
+                <span className="text-[13px] text-soft">{text}</span>
+              </div>
+            ))}
+            <p className="text-xs text-muted [grid-column:1/-1]">
+              Flagged attempts earn nothing. Your streak needs one real action a day ({REAL_DAY_CARDS} cards, a proof or a first try); finish all three daily quests to earn a shield that saves a missed day.
+            </p>
+          </div>
+        </section>
+
         <div className="grid items-start gap-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))]">
           <Card className="flex flex-col gap-3 p-[18px]">
             <span className="kicker">Biggest bottleneck</span>
@@ -108,7 +159,7 @@ async function JourneyContent() {
             )}
             <Link
               href="/student/practice"
-              className="inline-flex items-center gap-1.5 self-start rounded-md border border-accent px-3.5 py-2 text-[var(--color-accent-300)] no-underline hover:bg-accent-soft hover:no-underline"
+              className="caps inline-flex items-center gap-1.5 self-start rounded-md bg-accent px-3.5 py-2 text-white no-underline shadow-[inset_0_-3px_0_var(--accent-shade)] hover:bg-accent-hover hover:text-white hover:no-underline"
             >
               <Target size={16} aria-hidden />
               Practise with a passage
@@ -122,8 +173,8 @@ async function JourneyContent() {
                 const I = BADGE_ICON[b.icon];
                 const locked = b.level === 0;
                 return (
-                  <div key={b.key} className={cx("flex flex-col gap-1.5 rounded-lg border p-3", locked ? "border-line opacity-60" : "border-[var(--color-accent-800)]")}>
-                    <I size={26} weight={locked ? "regular" : "fill"} className="text-[var(--color-accent-400)]" aria-hidden />
+                  <div key={b.key} className={cx("flex flex-col gap-1.5 rounded-lg border bg-surface p-3", locked ? "border-dashed border-line opacity-60" : "border-brass")}>
+                    <I size={26} weight={locked ? "regular" : "fill"} className={locked ? "text-muted" : "text-brass"} aria-hidden />
                     <span className="text-[13px] font-medium">{b.name}</span>
                     <span className="text-[11px] text-muted">{b.desc}</span>
                     <span className="text-[11px] text-[var(--color-accent-300)] tabular-nums">

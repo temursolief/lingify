@@ -3,6 +3,7 @@ import { cache } from "react";
 import { Prisma } from "@/generated/prisma/client";
 import { db } from "./db";
 import { addDays, dayKey, dayOf, startOfDayValue, weekStart } from "./time";
+import { crownsFrom, fortressOf } from "./fortress";
 import { classGoal, levelOf, questsFor, streakOf, totalsByDay, UNHURRIED_MS, XP, type DayCounts, type Quest, type XpEvent } from "./xp";
 
 type History = { answer: string; correct: boolean; at: string }[];
@@ -165,7 +166,19 @@ export const studentGame = cache(async (userId: string): Promise<Game> => {
   };
 });
 
-export type LeagueRow = { id: string; name: string; xp: number; you: boolean };
+export type LeagueRow = {
+  id: string;
+  name: string;
+  /** this week's XP: what the league ranks by */
+  xp: number;
+  you: boolean;
+  /** all-time XP, level and fortress stage: what classmates see of each other's castles */
+  totalXp: number;
+  level: number;
+  stage: number;
+  /** weeks finished first in this class */
+  crowns: number;
+};
 export type ClassGame = {
   classId: string;
   className: string;
@@ -178,6 +191,8 @@ export type ClassGame = {
   rank: number;
   league: LeagueRow[];
   daysLeft: number;
+  /** who won last week (several if tied), when the league ran with at least two students */
+  lastChampions: string[];
 };
 
 /** The weekly class goal and league for the student's class (the most recently joined, if they are in several). */
@@ -194,10 +209,35 @@ export const classGame = cache(async (userId: string): Promise<ClassGame | null>
   const monday = weekStart(today);
   const ids = members.map((m) => m.id);
   await refreshXp(ids);
-  const week = await db.xpDay.groupBy({ by: ["userId"], where: { userId: { in: ids }, day: { gte: monday } }, _sum: { xp: true } });
+  const [week, total, weeks] = await Promise.all([
+    db.xpDay.groupBy({ by: ["userId"], where: { userId: { in: ids }, day: { gte: monday } }, _sum: { xp: true } }),
+    db.xpDay.groupBy({ by: ["userId"], where: { userId: { in: ids } }, _sum: { xp: true } }),
+    // Every finished week's XP per student (weeks start on Monday, like the league), for crowns.
+    db.$queryRaw<{ userId: string; week: Date; xp: bigint }[]>`
+      SELECT "userId", date_trunc('week', "day")::date AS "week", SUM("xp") AS "xp"
+      FROM "XpDay" WHERE "userId" IN (${Prisma.join(ids)}) AND "day" < ${dayKey(monday)}::date
+      GROUP BY 1, 2`,
+  ]);
   const weekXpOf = new Map(week.map((w) => [w.userId, w._sum.xp ?? 0]));
+  const totalOf = new Map(total.map((w) => [w.userId, w._sum.xp ?? 0]));
+  const weekRows = weeks.map((w) => ({ userId: w.userId, week: dayKey(w.week), xp: Number(w.xp) }));
+  const crowns = crownsFrom(weekRows);
+  const lastKey = dayKey(addDays(monday, -7));
+  const lastChampionIds = crownsFrom(weekRows.filter((w) => w.week === lastKey));
   const league = members
-    .map((m) => ({ id: m.id, name: m.name, xp: weekXpOf.get(m.id) ?? 0, you: m.id === userId }))
+    .map((m) => {
+      const totalXp = totalOf.get(m.id) ?? 0;
+      return {
+        id: m.id,
+        name: m.name,
+        xp: weekXpOf.get(m.id) ?? 0,
+        you: m.id === userId,
+        totalXp,
+        level: levelOf(totalXp).level,
+        stage: fortressOf(totalXp).stage,
+        crowns: crowns.get(m.id) ?? 0,
+      };
+    })
     .sort((a, b) => b.xp - a.xp || a.name.localeCompare(b.name));
   const weekXp = league.reduce((n, r) => n + r.xp, 0);
   return {
@@ -212,5 +252,6 @@ export const classGame = cache(async (userId: string): Promise<ClassGame | null>
     rank: league.findIndex((r) => r.you) + 1,
     league,
     daysLeft: Math.round((addDays(monday, 7).getTime() - today.getTime()) / 86_400_000),
+    lastChampions: members.filter((m) => lastChampionIds.has(m.id)).map((m) => m.name),
   };
 });

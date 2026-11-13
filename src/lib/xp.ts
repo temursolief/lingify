@@ -42,8 +42,11 @@ export type DayCounts = { first: number; proofs: number; cards: number };
 
 export const QUEST_GOALS = { proofs: 2, cards: 20, first: 1 } as const;
 
+/** Cards in a day that count as a real day of study on their own. */
+export const REAL_DAY_CARDS = 10;
+
 /** One real action a day keeps the streak: 10 cards, one proof, or a first try. */
-export const isRealDay = (d: DayCounts) => d.cards >= 10 || d.proofs >= 1 || d.first >= 1;
+export const isRealDay = (d: DayCounts) => d.cards >= REAL_DAY_CARDS || d.proofs >= 1 || d.first >= 1;
 
 export const allQuestsDone = (d: DayCounts) => d.proofs >= QUEST_GOALS.proofs && d.cards >= QUEST_GOALS.cards && d.first >= QUEST_GOALS.first;
 

@@ -1,6 +1,10 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { Castle } from "@/components/castle";
+import { Podium } from "@/components/game";
+import { Crown } from "@/components/icons";
 import { Card, EmptyState, PageHeader, PageSkeleton, SectionTitle, cx } from "@/components/ui";
+import { rivalLine, STAGES } from "@/lib/fortress";
 import { requireStudent } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { classGame } from "@/lib/gamification";
@@ -8,14 +12,6 @@ import { formatDay } from "@/lib/time";
 import { JoinClassForm } from "../join-class-form";
 
 export const metadata: Metadata = { title: "Class" };
-
-const initials = (name: string) =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]!.toUpperCase())
-    .join("");
 
 async function ClassContent() {
   const user = await requireStudent();
@@ -38,46 +34,71 @@ async function ClassContent() {
     select: { id: true, note: true, createdAt: true, passage: { select: { title: true } }, lesson: { select: { title: true } } },
   });
   const pct = Math.min(100, Math.round((game.weekXp / game.goal) * 100));
+  const line = rivalLine(game.league);
 
   return (
     <>
       <PageHeader kicker={game.className} title="Your class" subtitle={`${game.students} student${game.students === 1 ? "" : "s"} · teacher ${game.teacherName}`} />
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-2.5 rounded-xl bg-section p-5">
-          <span className="text-[13px] text-[var(--color-accent-200)]">Class goal this week</span>
-          <span className="text-xl font-medium sm:text-[22px]">{game.goal.toLocaleString("en-US")} XP together by Sunday</span>
-          <div className="h-2 overflow-hidden rounded bg-section-ghost" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Class goal">
-            <div className="h-full bg-[var(--color-accent-300)] transition-[width] duration-500" style={{ width: `${pct}%` }} />
+          <span className="kicker text-gold">Class goal this week</span>
+          <span className="font-display text-2xl font-bold sm:text-[28px]">{game.goal.toLocaleString("en-US")} XP together by Sunday</span>
+          <div className="h-2.5 overflow-hidden rounded-[2px] bg-section-ghost" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Class goal">
+            <div className="h-full bg-gold transition-[width] duration-500" style={{ width: `${pct}%` }} />
           </div>
-          <span className="text-xs text-[var(--color-accent-200)]">
+          <span className="text-xs text-soft">
             {game.weekXp.toLocaleString("en-US")} XP so far · {game.daysLeft} day{game.daysLeft === 1 ? "" : "s"} left · you added {game.myWeekXp.toLocaleString("en-US")}
           </span>
         </div>
 
         <div className="grid items-start gap-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))]">
           {game.leagueEnabled && (
-            <div className="flex flex-col gap-1.5">
-              <SectionTitle title="Weekly league" note="resets on Monday · XP from honest work only" />
-              {game.league.map((row, i) => (
-                <div key={row.id} className={cx("flex items-center gap-3 rounded-lg px-3 py-2", row.you ? "bg-accent-soft" : "bg-surface")}>
-                  <span className="w-[18px] text-xs text-muted tabular-nums">{i + 1}</span>
-                  <span aria-hidden className="grid h-7 w-7 place-items-center rounded-full bg-[var(--color-neutral-800)] text-[11px] text-[var(--color-neutral-200)]">
-                    {initials(row.name)}
-                  </span>
-                  <span className="flex-1 truncate text-[13px]">
-                    {row.name}
-                    {row.you && " (you)"}
-                  </span>
-                  <span className="text-[13px] text-soft tabular-nums">{row.xp} XP</span>
-                </div>
-              ))}
+            <div className="flex flex-col gap-2.5">
+              <SectionTitle title="Weekly league" note="resets Monday · honest work only" />
+              <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
+                {game.students > 1 && <Podium rows={game.league} />}
+                {game.students > 1 && (
+                  <p className={cx("rounded-md px-3 py-2 text-[13px] font-semibold", line.kind === "lead" ? "bg-good-soft text-good" : "bg-accent-soft text-accent-ink")}>{line.text}</p>
+                )}
+                {game.lastChampions.length > 0 && (
+                  <p className="flex items-center gap-1.5 text-xs text-muted">
+                    <Crown size={14} weight="fill" className="text-gold" aria-hidden />
+                    Last week&apos;s champion: {game.lastChampions.join(", ")}
+                  </p>
+                )}
+              </div>
+              <ol className="flex flex-col gap-1.5">
+                {game.league.map((row, i) => (
+                  <li key={row.id} className={cx("flex items-center gap-3 rounded-lg border px-3 py-1.5", row.you ? "border-accent bg-accent-soft" : "border-line bg-surface")}>
+                    <span className="w-5 font-display text-lg font-bold text-muted tabular-nums">{i + 1}</span>
+                    <Castle stage={row.stage} className="w-12 shrink-0" />
+                    <span className="flex min-w-0 flex-1 flex-col">
+                      <span className="truncate text-sm font-semibold">
+                        {row.name}
+                        {row.you && " (you)"}
+                      </span>
+                      <span className="text-[11px] text-muted">
+                        Lv {row.level} · {STAGES[row.stage]!.name}
+                      </span>
+                    </span>
+                    {row.crowns > 0 && (
+                      <span className="flex items-center gap-0.5 text-xs font-semibold text-brass" title={`${row.crowns} week${row.crowns === 1 ? "" : "s"} won`}>
+                        <Crown size={14} weight="fill" className="text-gold" aria-hidden />
+                        {row.crowns}
+                      </span>
+                    )}
+                    <span className="font-display text-[17px] font-bold tabular-nums">{row.xp}</span>
+                    <span className="caps text-[10px] text-muted">XP</span>
+                  </li>
+                ))}
+              </ol>
             </div>
           )}
           <div className="flex flex-col gap-2.5">
             <SectionTitle title={`From ${game.teacherName}`} />
             {notes.length ? (
               notes.map((n) => (
-                <div key={n.id} className="flex flex-col gap-1.5 rounded-lg bg-surface p-3.5">
+                <div key={n.id} className="flex flex-col gap-1.5 rounded-lg border border-line bg-surface p-3.5">
                   <span className="text-[11px] text-muted">
                     {n.passage?.title ?? n.lesson?.title} · {formatDay(n.createdAt, true)}
                   </span>

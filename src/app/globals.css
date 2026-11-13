@@ -300,3 +300,26 @@
   height: 1px;
   background: linear-gradient(to right, transparent, var(--line) 48px, var(--line) calc(100% - 48px), transparent);
 }
+
+/* The fortress beacon: a slow flicker while the streak is alive (off for reduced motion via motion-safe). */
+@keyframes flicker {
+  0%,
+  100% {
+    transform: scale(1, 1);
+  }
+  50% {
+    transform: scale(0.94, 1.08);
+  }
+}
+
+/* A new fortress stage: the banner drops in once. */
+@keyframes drop-in {
+  from {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}

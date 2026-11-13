@@ -1,11 +1,13 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { BandPath, ClassGoalBar, HomeworkRow, NextUpCard, QuestList, StatChip } from "@/components/game";
-import { Fire, Lightning, ShieldCheck } from "@/components/icons";
+import Link from "next/link";
+import { BandPath, ClassGoalBar, FortressCard, HomeworkRow, LeagueCard, NextUpCard, QuestList } from "@/components/game";
+import { StageUp } from "@/components/stage-up";
 import { Card, EmptyState, SectionTitle, Skeleton } from "@/components/ui";
 import { requireStudent } from "@/lib/auth";
 import { studentSummary } from "@/lib/class-overview";
 import { db } from "@/lib/db";
+import { fortressOf } from "@/lib/fortress";
 import { classGame, studentGame } from "@/lib/gamification";
 import { formatLongDay, hourOf } from "@/lib/time";
 import { nextUp, studentHomework } from "@/lib/today";
@@ -47,26 +49,27 @@ async function TodayContent() {
   const weekAgo = now.getTime() - 7 * 86_400_000;
   const shown = homework.filter((h) => h.state !== "done" || (h.completedAt && h.completedAt.getTime() > weekAgo)).slice(0, 5);
 
+  const fortress = fortressOf(game.xp);
+  const crowns = cls?.leagueEnabled ? (cls.league.find((r) => r.you)?.crowns ?? 0) : 0;
+  const questsDone = game.quests.filter((q) => q.done).length;
+
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="mr-auto flex flex-col gap-1">
-          <span className="text-[13px] text-muted">{formatLongDay(now)}</span>
-          <h1 className="text-2xl sm:text-[30px]">
-            {greeting(now)}, {first}
-          </h1>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <StatChip icon={<Fire size={16} weight="fill" className={game.todayDone ? "text-flame" : "text-faint"} aria-hidden />} value={game.streak} label="day streak" />
-          <StatChip icon={<Lightning size={16} weight="fill" className="text-[var(--color-accent-400)]" aria-hidden />} value={game.xp.toLocaleString("en-US")} label={`XP · Lv ${game.level}`} />
-          <StatChip icon={<ShieldCheck size={16} className="text-[var(--color-accent-400)]" aria-hidden />} value={game.shields} label={game.shields === 1 ? "shield" : "shields"} />
-        </div>
+      <div className="flex flex-col gap-1">
+        <span className="caps text-[12px] text-muted">{formatLongDay(now)}</span>
+        <h1 className="text-[28px] sm:text-[34px]">
+          {greeting(now)}, {first}
+        </h1>
       </div>
 
+      <StageUp stage={fortress.stage} name={fortress.current.name} last={!fortress.ahead.length} />
+      <FortressCard game={game} crowns={crowns} />
       <NextUpCard {...next} />
 
       <div className="grid items-start gap-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))]">
         <div className="flex flex-col gap-2.5">
+          <SectionTitle title="Daily quests" note={questsDone === 3 ? "all done · shield earned" : `${questsDone}/3 · all 3 earn a shield`} />
+          <QuestList quests={game.quests} />
           <SectionTitle title="Homework" note={cls ? `from ${cls.teacherName}` : undefined} />
           {shown.length ? (
             shown.map((h) => <HomeworkRow key={h.href} h={h} now={now} />)
@@ -77,16 +80,14 @@ async function TodayContent() {
           )}
         </div>
         <div className="flex flex-col gap-2.5">
-          <SectionTitle title="Daily quests" note="finish all 3 → streak shield" />
-          <QuestList quests={game.quests} />
+          {cls?.leagueEnabled && cls.students > 1 && <LeagueCard cls={cls} />}
+          {cls && <ClassGoalBar game={cls} />}
           <BandPath band={summary.band} target={user.targetBand} href="/student/progress" />
         </div>
       </div>
 
-      {cls && <ClassGoalBar game={cls} />}
-
       <p className="text-xs text-faint">
-        One real action a day keeps your streak: 10 cards, one proof or a first try. +{game.todayXp} XP today.
+        {game.todayDone ? "Beacon lit for today." : "Light today's beacon: 10 cards, one proof or a first try."} <Link href="/student/progress#xp">How XP is earned</Link>
       </p>
     </div>
   );
@@ -99,7 +100,8 @@ function TodaySkeleton() {
         <Skeleton className="h-3 w-40" />
         <Skeleton className="h-8 w-72" />
       </div>
-      <Skeleton className="h-32 rounded-xl" />
+      <Skeleton className="h-64 rounded-xl" />
+      <Skeleton className="h-28 rounded-xl" />
       <div className="grid gap-4 md:grid-cols-2">
         <Skeleton className="h-56 rounded-xl" />
         <Skeleton className="h-56 rounded-xl" />

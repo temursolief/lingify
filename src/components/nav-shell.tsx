@@ -8,6 +8,7 @@ import {
   Books,
   Cards,
   ChalkboardTeacher,
+  Fire,
   GearSix,
   House,
   Path,
@@ -32,7 +33,7 @@ export type NavItem = {
 };
 
 export type NavBadges = Record<string, number>;
-export type NavPerson = { name: string; kicker: string };
+export type NavPerson = { name: string; kicker: string; hud?: { level: number; stage: string; pct: number; streak: number; lit: boolean } };
 
 /** The tab a path belongs to: the longest matching href (so "/student" only matches itself). */
 function activeKey(pathname: string, items: NavItem[], home: string) {
@@ -71,6 +72,22 @@ function Person({ person }: { person: Promise<NavPerson> }) {
     <>
       <span className="kicker">{p.kicker}</span>
       <span className="truncate font-display text-[17px] font-bold">{p.name}</span>
+      {p.hud && (
+        <span className="mt-2 flex flex-col gap-1">
+          <span className="flex items-center justify-between text-[11px]">
+            <span className="caps text-gold">
+              Lv {p.hud.level} · {p.hud.stage}
+            </span>
+            <span className={cx("flex items-center gap-0.5 font-semibold tabular-nums", p.hud.lit ? "text-[#e07a5f]" : "text-muted")} title="Day streak">
+              <Fire size={12} weight="fill" aria-hidden />
+              {p.hud.streak}
+            </span>
+          </span>
+          <span className="block h-1.5 overflow-hidden rounded-[2px] bg-grid" role="progressbar" aria-label="Level progress" aria-valuenow={Math.round(p.hud.pct * 100)} aria-valuemin={0} aria-valuemax={100}>
+            <span className="block h-full bg-gold" style={{ width: `${Math.round(p.hud.pct * 100)}%` }} />
+          </span>
+        </span>
+      )}
     </>
   );
 }

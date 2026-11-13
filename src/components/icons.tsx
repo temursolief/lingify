@@ -21,6 +21,8 @@ export {
   Compass,
   CursorClick,
   EyeSlash,
+  Confetti,
+  Crown,
   Fire,
   Flag,
   GearSix,
