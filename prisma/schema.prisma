@@ -66,6 +66,10 @@ model User {
   telegramChatId String?   @unique
   /// the IELTS band the student is working towards: the end of their band path
   targetBand     Float     @default(7)
+  /// XP days from this instant on need recounting (null = XpDay is up to date); see src/lib/gamification.ts
+  xpDirtyFrom    DateTime?
+  /// bumped by every mark, so a recount only clears the marker when no newer change came in while it ran
+  xpDirtySeq     Int       @default(0)
 
   classesTaught Class[]               @relation("TeacherClasses")
   enrollments   Enrollment[]
@@ -79,6 +83,7 @@ model User {
   cardStates    CardState[]
   reviewLogs    ReviewLog[]
   ownCards      Card[]                @relation("CardOwner")
+  xpDays        XpDay[]
 }
 
 model Class {
@@ -404,4 +409,18 @@ model ChunkMeaning {
   meaning   String
   uz        String?
   createdAt DateTime @default(now())
+}
+
+/// One student's XP and quest counts for one calendar day (app time zone): a rollup of the events in
+/// src/lib/gamification.ts, recounted from the first changed day whenever User.xpDirtyFrom is set.
+model XpDay {
+  userId String
+  day    DateTime @db.Date
+  xp     Int      @default(0)
+  first  Int      @default(0)
+  proofs Int      @default(0)
+  cards  Int      @default(0)
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, day])
 }

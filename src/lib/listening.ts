@@ -1,6 +1,7 @@
 import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
 import { recordFirstSubmit, settleHomework } from "./assignments";
+import { markXpDirty } from "./xp-store";
 import { db } from "./db";
 import type { VocabItem } from "./listening-format";
 import { answerKey, estimateBand, type QuestionGroup } from "./passage-format";
@@ -168,6 +169,7 @@ export async function submitListening(userId: string, attemptId: string, given: 
   const content = { lessonId: attempt.lessonId };
   await recordFirstSubmit(userId, content, now, assessment.flagged);
   if (allCorrect) await settleHomework(userId, content, now);
+  await markXpDirty(userId, now);
   return attempt;
 }
 

@@ -2,6 +2,7 @@ import "server-only";
 import { Prisma, type CardQueue } from "@/generated/prisma/client";
 import { answer, newSchedule, OPTIONS, type Rating, type Schedule } from "./anki";
 import { settleAfterReviews } from "./assignments";
+import { markXpDirty } from "./xp-store";
 import { db } from "./db";
 import { lessonVisibleTo } from "./listening";
 import { store, type OfflineCard } from "./offline-types";
@@ -224,6 +225,8 @@ export async function applyReviews(userId: string, reviews: Review[]): Promise<n
     db.reviewLog.createMany({ data: newLogs }),
     db.user.update({ where: { id: userId }, data: { lastActiveAt: new Date() } }),
   ]);
+  // Reviews synced from offline can be from earlier days.
+  await markXpDirty(userId, new Date(Math.min(...newLogs.map((l) => new Date(l.at!).getTime()))));
   const passageIds = [...new Set(cards.filter((c) => changed.has(c.id) && c.deck.passageId).map((c) => c.deck.passageId!))];
   await settleAfterReviews(userId, passageIds);
   return newLogs.length;

@@ -61,6 +61,24 @@ export function countsByDay(events: XpEvent[], dayOf: (d: Date) => Date): Map<st
   return days;
 }
 
+/** What the student did and earned on one day: the row stored in XpDay. */
+export type DayTotals = DayCounts & { xp: number };
+
+/** Like `countsByDay`, with the XP earned each day: what the XpDay rollup stores, one entry per active day. */
+export function totalsByDay(events: XpEvent[], dayOf: (d: Date) => Date): Map<string, DayTotals> {
+  const days = new Map<string, DayTotals>();
+  for (const e of events) {
+    const key = dayKey(dayOf(e.at));
+    const d = days.get(key) ?? { xp: 0, first: 0, proofs: 0, cards: 0 };
+    d.xp += e.xp;
+    if (e.kind === "first") d.first++;
+    else if (e.kind === "proof") d.proofs++;
+    else if (e.kind === "card") d.cards++;
+    days.set(key, d);
+  }
+  return days;
+}
+
 export const MAX_SHIELDS = 2;
 
 /**

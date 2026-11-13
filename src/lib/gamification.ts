@@ -1,25 +1,16 @@
 import "server-only";
 import { cache } from "react";
+import { Prisma } from "@/generated/prisma/client";
 import { db } from "./db";
 import { addDays, dayKey, dayOf, startOfDayValue, weekStart } from "./time";
-import {
-  classGoal,
-  countsByDay,
-  levelOf,
-  questsFor,
-  streakOf,
-  totalXp,
-  UNHURRIED_MS,
-  XP,
-  type Quest,
-  type XpEvent,
-} from "./xp";
+import { classGoal, levelOf, questsFor, streakOf, totalsByDay, UNHURRIED_MS, XP, type DayCounts, type Quest, type XpEvent } from "./xp";
 
 type History = { answer: string; correct: boolean; at: string }[];
 
 /**
  * Everything the given students did, as XP events, in five queries however many students there are. With `since`,
- * only events from then on (the weekly league); without it, all of them (a student's own total).
+ * only events from then on; without it, all of them. Pages never call this directly: it is how `refreshXp` recounts
+ * the XpDay rollup they read.
  *
  * Only the first valid attempt at each passage or lesson earns XP: practising a passage again counts for the streak
  * but not for points, so the same content cannot be farmed. A flagged first try earns nothing, and neither do its
@@ -49,8 +40,9 @@ export async function xpEvents(userIds: string[], since?: Date): Promise<Map<str
         answers: { where: { firstCorrect: false, correct: true }, select: { evidenceOk: true, errorTag: true, history: true } },
       },
     }),
+    // Every lesson try ever (cheap: no answers), so a repeat inside the window is still known to be a repeat.
     db.listeningAttempt.findMany({
-      where: { userId: users, invalidatedAt: null, firstSubmittedAt: since ? { gte: since } : { not: null } },
+      where: { userId: users, invalidatedAt: null, firstSubmittedAt: { not: null } },
       orderBy: { firstSubmittedAt: "asc" },
       select: { userId: true, lessonId: true, firstSubmittedAt: true, integrityFlagged: true },
     }),
@@ -89,6 +81,43 @@ export async function xpEvents(userIds: string[], since?: Date): Promise<Map<str
   return result;
 }
 
+/**
+ * Brings the XpDay rollup up to date for these students: anyone marked by `markXpDirty` has their days recounted from
+ * the first changed day, all of them from one `xpEvents` call. Clean students cost one indexed lookup. The rows are
+ * locked while the days are replaced, so two pages recounting the same student at once take turns, and the second
+ * one skips a student the first already brought up to date.
+ */
+export async function refreshXp(userIds: string[]) {
+  if (!userIds.length) return;
+  const dirty = await db.user.findMany({ where: { id: { in: userIds }, xpDirtyFrom: { not: null } }, select: { id: true, xpDirtyFrom: true, xpDirtySeq: true } });
+  if (!dirty.length) return;
+  // Whole days: recount from the midnight that starts the first changed day.
+  const fromDay = new Map(dirty.map((u) => [u.id, dayOf(u.xpDirtyFrom!)]));
+  const earliest = new Date(Math.min(...[...fromDay.values()].map((d) => d.getTime())));
+  const events = await xpEvents(
+    dirty.map((u) => u.id),
+    startOfDayValue(earliest),
+  );
+  await db.$transaction(async (tx) => {
+    const locked = await tx.$queryRaw<{ id: string; xpDirtyFrom: Date | null; xpDirtySeq: number }[]>`
+      SELECT "id", "xpDirtyFrom", "xpDirtySeq" FROM "User" WHERE "id" IN (${Prisma.join(dirty.map((u) => u.id))}) ORDER BY "id" FOR UPDATE`;
+    const now = new Map(locked.map((u) => [u.id, u]));
+    for (const u of dirty) {
+      const current = now.get(u.id);
+      // Another page recounted them while we were reading (cleared), or a change arrived since (dirty again, from a
+      // day we may not have read): leave it to the next read.
+      if (!current?.xpDirtyFrom || current.xpDirtySeq !== u.xpDirtySeq) continue;
+      const from = fromDay.get(u.id)!;
+      const rows = [...totalsByDay(events.get(u.id) ?? [], dayOf)]
+        .map(([key, t]) => ({ userId: u.id, day: new Date(`${key}T00:00:00.000Z`), ...t }))
+        .filter((r) => r.day >= from);
+      await tx.xpDay.deleteMany({ where: { userId: u.id, day: { gte: from } } });
+      if (rows.length) await tx.xpDay.createMany({ data: rows });
+      await tx.user.update({ where: { id: u.id }, data: { xpDirtyFrom: null } });
+    }
+  });
+}
+
 export type Game = {
   xp: number;
   level: number;
@@ -103,25 +132,24 @@ export type Game = {
   quests: Quest[];
 };
 
-/** One student's XP, level, streak, shields and today's quests. Cached for the request. */
+/** One student's XP, level, streak, shields and today's quests, from their XpDay rows. Cached for the request. */
 export const studentGame = cache(async (userId: string): Promise<Game> => {
-  const events = (await xpEvents([userId])).get(userId)!;
-  const now = new Date();
-  const today = dayOf(now);
-  const days = countsByDay(events, dayOf);
-  const xp = totalXp(events);
+  await refreshXp([userId]);
+  const rows = await db.xpDay.findMany({ where: { userId }, select: { day: true, xp: true, first: true, proofs: true, cards: true } });
+  const today = dayOf(new Date());
+  const monday = weekStart(today);
+  const days = new Map<string, DayCounts>(rows.map((r) => [dayKey(r.day), { first: r.first, proofs: r.proofs, cards: r.cards }]));
+  const sum = (keep: (day: Date) => boolean) => rows.reduce((n, r) => (keep(r.day) ? n + r.xp : n), 0);
+  const xp = sum(() => true);
   const { level, from, to } = levelOf(xp);
   const { streak, best, shields, todayDone } = streakOf(days, today);
-  const weekFrom = startOfDayValue(weekStart(today));
-  const todayFrom = startOfDayValue(today);
-  const sum = (from: Date) => events.reduce((n, e) => (e.at >= from ? n + e.xp : n), 0);
   return {
     xp,
     level,
     levelFrom: from,
     levelTo: to,
-    weekXp: sum(weekFrom),
-    todayXp: sum(todayFrom),
+    weekXp: sum((d) => d >= monday),
+    todayXp: sum((d) => d.getTime() === today.getTime()),
     streak,
     bestStreak: best,
     shields,
@@ -157,13 +185,12 @@ export const classGame = cache(async (userId: string): Promise<ClassGame | null>
   const members = cls.enrollments.map((e) => e.user);
   const today = dayOf(new Date());
   const monday = weekStart(today);
-  // Monday 00:00 in the app time zone: the first event that counts for this week.
-  const events = await xpEvents(
-    members.map((m) => m.id),
-    startOfDayValue(monday),
-  );
+  const ids = members.map((m) => m.id);
+  await refreshXp(ids);
+  const week = await db.xpDay.groupBy({ by: ["userId"], where: { userId: { in: ids }, day: { gte: monday } }, _sum: { xp: true } });
+  const weekXpOf = new Map(week.map((w) => [w.userId, w._sum.xp ?? 0]));
   const league = members
-    .map((m) => ({ id: m.id, name: m.name, xp: totalXp(events.get(m.id) ?? []), you: m.id === userId }))
+    .map((m) => ({ id: m.id, name: m.name, xp: weekXpOf.get(m.id) ?? 0, you: m.id === userId }))
     .sort((a, b) => b.xp - a.xp || a.name.localeCompare(b.name));
   const weekXp = league.reduce((n, r) => n + r.xp, 0);
   return {

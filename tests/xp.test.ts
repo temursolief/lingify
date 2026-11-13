@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { allQuestsDone, classGoal, countsByDay, levelOf, questsFor, streakOf, totalXp, type DayCounts, type XpEvent } from "../src/lib/xp";
+import { allQuestsDone, classGoal, countsByDay, levelOf, questsFor, streakOf, totalsByDay, totalXp, type DayCounts, type XpEvent } from "../src/lib/xp";
 
 const utcDay = (d: Date) => new Date(`${d.toISOString().slice(0, 10)}T00:00:00.000Z`);
 const day = (key: string) => new Date(`${key}T00:00:00.000Z`);
@@ -88,5 +88,30 @@ describe("quests and days", () => {
   it("sets a class goal of 500 XP per student", () => {
     expect(classGoal(12)).toBe(6000);
     expect(classGoal(0)).toBe(500);
+  });
+});
+
+describe("daily totals for the XpDay rollup", () => {
+  const at = (iso: string) => new Date(iso);
+  const events: XpEvent[] = [
+    { kind: "first", at: at("2026-11-10T09:00:00Z"), xp: 30 },
+    { kind: "proof", at: at("2026-11-10T09:10:00Z"), xp: 20 },
+    { kind: "tag", at: at("2026-11-10T09:10:00Z"), xp: 5 },
+    { kind: "card", at: at("2026-11-11T08:00:00Z"), xp: 2 },
+    { kind: "card", at: at("2026-11-11T08:01:00Z"), xp: 0 },
+    { kind: "homework", at: at("2026-11-11T10:00:00Z"), xp: 50 },
+  ];
+
+  it("sums XP and counts quest actions per day", () => {
+    const days = totalsByDay(events, utcDay);
+    expect(days.get("2026-11-10")).toEqual({ xp: 55, first: 1, proofs: 1, cards: 0 });
+    expect(days.get("2026-11-11")).toEqual({ xp: 52, first: 0, proofs: 0, cards: 2 });
+  });
+
+  it("agrees with the event-level totals, so the rollup and the old derivation match", () => {
+    const days = totalsByDay(events, utcDay);
+    expect([...days.values()].reduce((n, d) => n + d.xp, 0)).toBe(totalXp(events));
+    const counts = countsByDay(events, utcDay);
+    for (const [key, d] of days) expect({ first: d.first, proofs: d.proofs, cards: d.cards }).toEqual(counts.get(key));
   });
 });

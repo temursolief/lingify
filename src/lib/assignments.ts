@@ -2,6 +2,7 @@ import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
 import { db } from "./db";
 import { deckSummaries } from "./decks";
+import { markXpDirty } from "./xp-store";
 import { strictestPolicy, type ProctoringPolicy } from "./telemetry";
 
 /** The homework a recipient row belongs to: one passage or one listening lesson. */
@@ -80,7 +81,7 @@ export async function settleHomework(userId: string, content: Content, now = new
     await db.assignmentRecipient.updateMany({ where: { studentId: userId, assignment: assignmentOf(content), vocabCompletedAt: null }, data: { vocabCompletedAt: now } });
   }
   if (done) {
-    await db.assignmentRecipient.updateMany({
+    const finished = await db.assignmentRecipient.updateMany({
       where: {
         studentId: userId,
         completedAt: null,
@@ -89,6 +90,7 @@ export async function settleHomework(userId: string, content: Content, now = new
       },
       data: { completedAt: now },
     });
+    if (finished.count) await markXpDirty(userId, now);
   }
 }
 

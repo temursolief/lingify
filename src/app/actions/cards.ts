@@ -5,6 +5,7 @@ import { after } from "next/server";
 import { z } from "zod";
 import { requireStudent } from "@/lib/auth";
 import { chunkMeaning, knownChunkMeaning } from "@/lib/chunk-meaning";
+import { markXpDirty } from "@/lib/xp-store";
 import { db } from "@/lib/db";
 import { passageDeck, studyQueue, usableDeck } from "@/lib/decks";
 import { passageVisibleTo } from "@/lib/passages";
@@ -104,6 +105,9 @@ export async function explainChunkCard(cardId: string, input: ChunkInput): Promi
 /** Undo for a card the student just made from a highlight. */
 export async function deleteOwnCard(cardId: string) {
   const user = await requireStudent();
+  // Its reviews go with it (cascade), and so does their XP.
+  const firstReview = await db.reviewLog.aggregate({ where: { cardId, userId: user.id, card: { ownerId: user.id } }, _min: { at: true } });
   await db.card.deleteMany({ where: { id: cardId, ownerId: user.id } });
+  if (firstReview._min.at) await markXpDirty(user.id, firstReview._min.at);
   refresh();
 }

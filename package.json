@@ -16,7 +16,8 @@
     "db:seed": "tsx --conditions=react-server scripts/seed.ts",
     "postinstall": "prisma generate",
     "telegram:bot": "tsx --conditions=react-server scripts/telegram-bot.ts",
-    "telegram:remind": "tsx --conditions=react-server scripts/telegram-reminders.ts"
+    "telegram:remind": "tsx --conditions=react-server scripts/telegram-reminders.ts",
+    "xp:rebuild": "tsx --conditions=react-server scripts/rebuild-xp.ts"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",

@@ -216,6 +216,8 @@ async function seedDemo(deckId: string) {
   await db.card.createMany({ data: demoCards.map((c, position) => ({ ...c, deckId: jasurDeck.id, position })) });
   const jasurCards = await db.card.findMany({ where: { deckId: jasurDeck.id }, orderBy: { position: "asc" } });
   await applyReviews(jasur.id, jasurCards.map((c, i) => ({ cardId: c.id, rating: 4, at: new Date(now.getTime() - 86_400_000 + i * 1000), durationMs: 600 + (i % 3) * 100 })));
+  // Some history above is back-dated after it was saved: recount the demo students' XP from the beginning.
+  await db.user.updateMany({ where: { id: { in: students.map((s) => s.id) } }, data: { xpDirtyFrom: new Date(0), xpDirtySeq: { increment: 1 } } });
   console.log("demo: teacher@lingify.test, student@lingify.test, jasur@lingify.test, malika@lingify.test");
 }
 

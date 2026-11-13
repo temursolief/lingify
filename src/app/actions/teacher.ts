@@ -6,6 +6,7 @@ import { z } from "zod";
 import { requireAdmin, requireTeacher } from "@/lib/auth";
 import type { ProctoringPolicy } from "@/generated/prisma/client";
 import { teacherClass } from "@/lib/class-overview";
+import { markXpDirty } from "@/lib/xp-store";
 import { db } from "@/lib/db";
 import { parsePassageJson } from "@/lib/passage-format";
 import { appUrl, sendMessage } from "@/lib/telegram";
@@ -42,10 +43,13 @@ async function ownClass(classId: string) {
 
 export async function removeStudent(classId: string, studentId: string) {
   const cls = await ownClass(classId);
+  // Homework done for this class stops counting as XP: recount from the first one.
+  const first = await db.assignmentRecipient.aggregate({ where: { studentId, assignment: { classId: cls.id } }, _min: { completedAt: true } });
   await db.$transaction([
     db.assignmentRecipient.deleteMany({ where: { studentId, assignment: { classId: cls.id } } }),
     db.enrollment.deleteMany({ where: { classId: cls.id, userId: studentId } }),
   ]);
+  if (first._min.completedAt) await markXpDirty(studentId, first._min.completedAt);
   refresh();
 }
 
@@ -150,7 +154,14 @@ export async function assignLesson(_: FormState, formData: FormData): Promise<Fo
 
 export async function deleteAssignment(assignmentId: string) {
   const teacher = await requireTeacher();
+  // Whoever finished it loses that homework's XP: recount each of them from when they finished.
+  const done = await db.assignmentRecipient.findMany({
+    where: { assignmentId, completedAt: { not: null }, assignment: { class: { teacherId: teacher.id } } },
+    select: { studentId: true, completedAt: true },
+  });
   await db.assignment.deleteMany({ where: { id: assignmentId, class: { teacherId: teacher.id } } });
+  const earliest = done.reduce<Date | null>((min, r) => (!min || r.completedAt! < min ? r.completedAt! : min), null);
+  if (earliest) await markXpDirty(done.map((r) => r.studentId), earliest);
   refresh();
 }
 
@@ -164,8 +175,8 @@ export async function resetAttemptForRetake(input: { kind: "passage" | "lesson";
   const { kind, attemptId } = z.object({ kind: z.enum(["passage", "lesson"]), attemptId: z.string() }).parse(input);
   const attempt =
     kind === "passage"
-      ? await db.passageAttempt.findFirst({ where: { id: attemptId, invalidatedAt: null, firstSubmittedAt: { not: null } }, select: { userId: true, passageId: true, total: true } })
-      : await db.listeningAttempt.findFirst({ where: { id: attemptId, invalidatedAt: null, firstSubmittedAt: { not: null } }, select: { userId: true, lessonId: true } });
+      ? await db.passageAttempt.findFirst({ where: { id: attemptId, invalidatedAt: null, firstSubmittedAt: { not: null } }, select: { userId: true, passageId: true, total: true, firstSubmittedAt: true } })
+      : await db.listeningAttempt.findFirst({ where: { id: attemptId, invalidatedAt: null, firstSubmittedAt: { not: null } }, select: { userId: true, lessonId: true, firstSubmittedAt: true } });
   if (!attempt) return { error: "That attempt was already reset or never submitted." };
   const content = "passageId" in attempt ? { passageId: attempt.passageId } : { lessonId: attempt.lessonId };
   // Only a teacher who gave this student this homework, in one of their own classes.
@@ -182,6 +193,8 @@ export async function resetAttemptForRetake(input: { kind: "passage" | "lesson";
       : db.listeningAttempt.create({ data: { userId: attempt.userId, lessonId: attempt.lessonId } }),
     db.assignmentRecipient.updateMany({ where: mine, data: { completedAt: null, firstSubmitAt: null, integrityFlagged: false } }),
   ]);
+  // The set-aside try, everything done on it and its homework stop counting; the next try may become the first.
+  await markXpDirty(attempt.userId, attempt.firstSubmittedAt!);
   refresh();
   return { ok: "Retake required. The student will see a fresh, proctored test." };
 }

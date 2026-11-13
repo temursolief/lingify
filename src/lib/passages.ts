@@ -2,6 +2,7 @@ import "server-only";
 import type { ErrorTag, Prisma } from "@/generated/prisma/client";
 import { flagHomework, recordFirstSubmit, settleHomework } from "./assignments";
 import { db } from "./db";
+import { markXpDirty } from "./xp-store";
 import { answerKey, estimateBand, paragraphLetter, type QuestionGroup } from "./passage-format";
 import { assessFirstTry, locatingMismatch, type SubmissionMeta, type SubmissionReason } from "./telemetry";
 
@@ -157,6 +158,7 @@ export async function submitFirst(
   const content = { passageId: attempt.passageId };
   await recordFirstSubmit(userId, content, now, assessment.flagged);
   if (allCorrect) await settleHomework(userId, content, now);
+  await markXpDirty(userId, now);
 }
 
 export type RetryResult = { ok: true; correct: boolean; needsTag: boolean } | { ok: false; error: string };
@@ -182,7 +184,7 @@ function proofSequence(answers: { number: number; history: Prisma.JsonValue }[],
  */
 export async function retryQuestion(userId: string, attemptId: string, number: number, answer: string, evidence: Evidence | null): Promise<RetryResult> {
   const given = answer.trim();
-  const result = await db.$transaction(async (tx): Promise<RetryResult & { mismatch?: boolean; passageId?: string }> => {
+  const result = await db.$transaction(async (tx): Promise<RetryResult & { mismatch?: boolean; passageId?: string; firstAt?: Date }> => {
     await lockAttempt(tx, attemptId);
     const attempt = await tx.passageAttempt.findFirst({ where: { id: attemptId, userId }, include: { passage: { select: { groups: true } }, answers: true } });
     if (!attempt?.firstSubmittedAt) return { ok: false, error: "Submit your answers first." };
@@ -212,27 +214,32 @@ export async function retryQuestion(userId: string, attemptId: string, number: n
       await tx.passageAttempt.update({ where: { id: attemptId }, data: { integrityFlagged: true, integrityReasons: { push: "LOCATING_SKILL_MISMATCH" } } });
     }
     await tx.user.update({ where: { id: userId }, data: { lastActiveAt: now } });
-    return { ok: true, correct, needsTag: correct, mismatch, passageId: attempt.passageId };
+    return { ok: true, correct, needsTag: correct, mismatch, passageId: attempt.passageId, firstAt: attempt.firstSubmittedAt };
   });
   if ("mismatch" in result && result.mismatch && result.passageId) await flagHomework(userId, { passageId: result.passageId });
+  // A proof earns XP, and a new flag takes back the whole attempt's XP (from its first try, possibly days ago).
+  if (result.ok && (result.correct || result.mismatch)) await markXpDirty(userId, result.mismatch && result.firstAt ? result.firstAt : new Date());
   return result.ok ? { ok: true, correct: result.correct, needsTag: result.needsTag } : { ok: false, error: result.error };
 }
 
 /** Root-cause tag for a corrected question; once every question is green and tagged, the passage is complete. */
 export async function tagQuestion(userId: string, attemptId: string, number: number, tag: ErrorTag) {
-  const completed = await db.$transaction(async (tx) => {
+  const { completed, fixedAt } = await db.$transaction(async (tx) => {
     await lockAttempt(tx, attemptId);
     const attempt = await tx.passageAttempt.findFirst({ where: { id: attemptId, userId, invalidatedAt: null }, include: { answers: true } });
     const row = attempt?.answers.find((a) => a.number === number);
     if (!attempt || !row || !row.correct || row.firstCorrect) throw new Error("Nothing to tag");
     await tx.questionAnswer.update({ where: { attemptId_number: { attemptId, number } }, data: { errorTag: tag } });
+    // The tag's XP is dated to the fix it explains, which may be an earlier day.
+    const fixedAt = (row.history as History).findLast((h) => h.correct)?.at;
     const done = attempt.answers.every((a) => a.correct && (a.firstCorrect || a.number === number || a.errorTag));
-    if (!done || attempt.completedAt) return null;
+    if (!done || attempt.completedAt) return { completed: null, fixedAt };
     const now = new Date();
     await tx.passageAttempt.update({ where: { id: attemptId }, data: { completedAt: now } });
-    return { passageId: attempt.passageId, now };
+    return { completed: { passageId: attempt.passageId, now }, fixedAt };
   });
   if (completed) await settleHomework(userId, { passageId: completed.passageId }, completed.now);
+  await markXpDirty(userId, fixedAt ? new Date(fixedAt) : new Date(0));
 }
 
 export const ERROR_TAG_LABEL: Record<ErrorTag, { title: string; hint: string }> = {
