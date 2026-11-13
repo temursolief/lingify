@@ -2,19 +2,43 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ErrorBreakdownView } from "@/components/error-breakdown";
-import { Card, PageHeader, PageSkeleton } from "@/components/ui";
+import { Fire, LockKey, MagnifyingGlass, Cards, Target, type Icon } from "@/components/icons";
+import { Card, PageHeader, PageSkeleton, ProgressBar, SectionTitle, cx } from "@/components/ui";
 import { requireStudent } from "@/lib/auth";
-import { studentSummary } from "@/lib/class-overview";
+import { skillBadges } from "@/lib/badges";
 import { db } from "@/lib/db";
+import { studentGame } from "@/lib/gamification";
 import { errorBreakdown } from "@/lib/insights";
+import { ERROR_TAG_LABEL } from "@/lib/passages";
+import { skillBands, type SkillBand } from "@/lib/skills";
 import { formatDay } from "@/lib/time";
 
-export const metadata: Metadata = { title: "Progress" };
+export const metadata: Metadata = { title: "Journey" };
 
-async function ProgressContent() {
+const BADGE_ICON: Record<string, Icon> = { evidence: MagnifyingGlass, distractor: Target, flame: Fire, exam: LockKey, words: Cards };
+const TAG_ORDER = ["DISTRACTOR", "LOGIC", "VOCAB", "CARELESS"] as const;
+const TAG_COLOR = { DISTRACTOR: "var(--accent)", LOGIC: "var(--color-accent-600)", VOCAB: "var(--color-accent-700)", CARELESS: "var(--color-neutral-600)" };
+
+function BandTile({ name, skill, target }: { name: string; skill: SkillBand; target: number }) {
+  const d = skill.delta;
+  return (
+    <div className="flex flex-col gap-2 rounded-lg bg-surface p-3.5">
+      <span className="text-xs text-muted">{name}</span>
+      <div className="flex items-baseline gap-1.5">
+        <span className="text-[28px] font-medium tabular-nums">{skill.band !== null ? skill.band.toFixed(1) : "–"}</span>
+        {d !== null && <span className={cx("text-xs", d > 0 ? "text-good" : "text-muted")}>{d > 0 ? `+${d.toFixed(1)}` : d < 0 ? d.toFixed(1) : "±0"}</span>}
+      </div>
+      <ProgressBar value={(skill.band ?? 0) / target} label={`${name} band towards target`} />
+      <span className="text-[11px] text-faint">{skill.tries ? `from ${skill.tries} first tr${skill.tries === 1 ? "y" : "ies"}` : "no first tries yet"}</span>
+    </div>
+  );
+}
+
+async function JourneyContent() {
   const user = await requireStudent();
-  const [summary, breakdown, history] = await Promise.all([
-    studentSummary(user.id),
+  const [game, bands, breakdown, history] = await Promise.all([
+    studentGame(user.id),
+    skillBands(user.id),
     errorBreakdown([user.id]),
     db.passageAttempt.findMany({
       where: { userId: user.id, invalidatedAt: null, firstSubmittedAt: { not: null } },
@@ -23,40 +47,130 @@ async function ProgressContent() {
       include: { passage: { select: { title: true, slug: true } } },
     }),
   ]);
+  const badges = await skillBadges(user.id, game.bestStreak);
+  const band = bands.reading.band ?? bands.listening.band;
+  const tagged = Object.values(breakdown.tags).reduce((a, b) => a + b, 0);
+  const headline = breakdown.headline;
+
   return (
     <>
       <PageHeader
-        title="Progress"
-        subtitle={`${summary.band ? `Estimated band ${summary.band}` : "No band yet"} · ${summary.cardsThisWeek} flashcards this week · ${summary.streak}-day streak`}
+        kicker="Journey"
+        title={`${band !== null ? band.toFixed(1) : "–"} → ${user.targetBand.toFixed(1)}`}
+        subtitle={
+          <>
+            Estimated from your first tries. Level {game.level} · {game.xp.toLocaleString("en-US")} XP · {game.levelTo - game.xp} XP to level {game.level + 1} ·{" "}
+            <Link href="/student/settings">change goal</Link>
+          </>
+        }
       />
-      <div className="mx-auto max-w-3xl space-y-4">
-        <ErrorBreakdownView data={breakdown} />
+      <div className="flex flex-col gap-5">
+        <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr))]">
+          <BandTile name="Reading" skill={bands.reading} target={user.targetBand} />
+          <BandTile name="Listening" skill={bands.listening} target={user.targetBand} />
+          <div className="flex flex-col gap-2 rounded-lg bg-surface p-3.5">
+            <span className="text-xs text-muted">Streak</span>
+            <span className="text-[28px] font-medium tabular-nums">{game.streak}</span>
+            <span className="text-[11px] text-faint">best {game.bestStreak} · {game.shields} shield{game.shields === 1 ? "" : "s"}</span>
+          </div>
+          <div className="flex flex-col gap-2 rounded-lg bg-surface p-3.5">
+            <span className="text-xs text-muted">This week</span>
+            <span className="text-[28px] font-medium tabular-nums">{game.weekXp}</span>
+            <span className="text-[11px] text-faint">XP from honest work</span>
+          </div>
+        </div>
+
+        <div className="grid items-start gap-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))]">
+          <Card className="flex flex-col gap-3 p-[18px]">
+            <span className="kicker">Biggest bottleneck</span>
+            {headline ? (
+              <span className="text-[19px] font-medium">
+                {Math.round(headline.share * 100)}% of your mistakes are {ERROR_TAG_LABEL[headline.tag].title.toLowerCase()} in {headline.label}.
+              </span>
+            ) : (
+              <span className="text-[17px] font-medium">{breakdown.passages ? "No pattern yet. Tag why you missed answers to see one." : "Finish a passage to see what causes your mistakes."}</span>
+            )}
+            {tagged > 0 && (
+              <div className="flex flex-col gap-2">
+                {TAG_ORDER.map((t) => {
+                  const pct = Math.round((breakdown.tags[t] / tagged) * 100);
+                  return (
+                    <div key={t} className="grid grid-cols-[96px_1fr_36px] items-center gap-2.5 text-xs">
+                      <span className="text-soft">{ERROR_TAG_LABEL[t].title.split(" / ")[0]}</span>
+                      <div className="h-2 rounded bg-grid">
+                        <div className="h-full rounded" style={{ width: `${pct}%`, background: TAG_COLOR[t] }} />
+                      </div>
+                      <span className="text-right text-muted tabular-nums">{pct}%</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            <Link
+              href="/student/practice"
+              className="inline-flex items-center gap-1.5 self-start rounded-md border border-accent px-3.5 py-2 text-[var(--color-accent-300)] no-underline hover:bg-accent-soft hover:no-underline"
+            >
+              <Target size={16} aria-hidden />
+              Practise with a passage
+            </Link>
+          </Card>
+
+          <div className="flex flex-col gap-2.5">
+            <SectionTitle title="Skill badges" />
+            <div className="grid gap-2.5 [grid-template-columns:repeat(auto-fill,minmax(140px,1fr))]">
+              {badges.map((b) => {
+                const I = BADGE_ICON[b.icon];
+                const locked = b.level === 0;
+                return (
+                  <div key={b.key} className={cx("flex flex-col gap-1.5 rounded-lg border p-3", locked ? "border-line opacity-60" : "border-[var(--color-accent-800)]")}>
+                    <I size={26} weight={locked ? "regular" : "fill"} className="text-[var(--color-accent-400)]" aria-hidden />
+                    <span className="text-[13px] font-medium">{b.name}</span>
+                    <span className="text-[11px] text-muted">{b.desc}</span>
+                    <span className="text-[11px] text-[var(--color-accent-300)] tabular-nums">
+                      {locked ? "Locked" : `Level ${b.level}`} · {b.count} / {b.goal}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
         {history.length > 0 && (
-          <Card className="p-0">
-            <p className="px-4 pt-4 font-semibold">First tries</p>
-            <ul className="mt-2 divide-y divide-line">
+          <div className="flex flex-col gap-2.5">
+            <SectionTitle title="First tries" note="the exam-like score for each passage" />
+            <ul className="overflow-hidden rounded-lg bg-surface">
               {history.map((a) => (
-                <li key={a.id}>
-                  <Link href={`/student/passages/${a.passage.slug}`} className="flex items-center gap-4 px-4 py-2.5 text-ink no-underline hover:bg-hover hover:no-underline">
+                <li key={a.id} className="border-b border-line last:border-0">
+                  <Link href={`/student/passages/${a.passage.slug}`} className="flex items-center gap-4 px-3.5 py-2.5 text-ink no-underline hover:bg-hover hover:no-underline">
                     <span className="min-w-0 flex-1 truncate">{a.passage.title}</span>
-                    <span className="text-sm text-muted tabular-nums">
+                    <span className="text-xs text-muted tabular-nums">
                       {a.firstCorrect}/{a.total} · band {a.band} · {formatDay(a.firstSubmittedAt!)}
                     </span>
                   </Link>
                 </li>
               ))}
             </ul>
-          </Card>
+          </div>
+        )}
+
+        {breakdown.mistakes > 0 && (
+          <details className="group">
+            <summary className="cursor-pointer text-[13px] text-[var(--color-accent-400)] select-none">Every mistake, by type and cause</summary>
+            <div className="mt-4 max-w-3xl">
+              <ErrorBreakdownView data={breakdown} />
+            </div>
+          </details>
         )}
       </div>
     </>
   );
 }
 
-export default function ProgressPage() {
+export default function JourneyPage() {
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <ProgressContent />
+      <JourneyContent />
     </Suspense>
   );
 }

@@ -92,12 +92,12 @@ async function StudentContent(props: PageProps<"/teacher/classes/[id]/students/[
       <div className="mb-4 text-sm"><Link href={`/teacher/classes/${cls.id}`}>← {cls.name}</Link></div>
 
       {tab === "mistakes" ? (
-        <div className="mx-auto max-w-3xl"><ErrorBreakdownView data={breakdown} who="you" /></div>
+        <div className="max-w-3xl"><ErrorBreakdownView data={breakdown} who="you" /></div>
       ) : tab === "listening" ? (
         lessons.length === 0 ? (
           <Card className="py-8 text-center text-muted">No listening lessons submitted yet.</Card>
         ) : (
-          <div className="mx-auto max-w-4xl space-y-3">
+          <div className="max-w-4xl space-y-3">
             {lessons.map((l) => {
               const seconds = l.testStartedAt && l.firstSubmittedAt ? Math.round((l.firstSubmittedAt.getTime() - l.testStartedAt.getTime()) / 1000) : null;
               const t = l.telemetry as Partial<AttemptTelemetry>;
@@ -123,7 +123,7 @@ async function StudentContent(props: PageProps<"/teacher/classes/[id]/students/[
       ) : attempts.length === 0 ? (
         <Card className="py-8 text-center text-muted">No passages submitted yet.</Card>
       ) : (
-        <div className="mx-auto max-w-4xl space-y-3">
+        <div className="max-w-4xl space-y-3">
           {attempts.map((a) => (
             <details key={a.id} open={a.id === openId} className={cx("rounded-xl bg-surface shadow-bubble", a.invalidatedAt && "opacity-60")}>
               <summary className="flex cursor-pointer flex-wrap items-center gap-3 px-4 py-3">
@@ -160,7 +160,7 @@ async function StudentContent(props: PageProps<"/teacher/classes/[id]/students/[
                     return (
                       <tr key={q.number}>
                         <td className="py-1.5 pr-2">
-                          <span className={cx("inline-block w-7 rounded-sm text-center text-xs leading-5 text-white", q.firstCorrect ? "bg-good" : q.correct ? "bg-[#f0a020]" : "bg-bad")}>{q.number}</span>
+                          <span className={cx("inline-block w-7 rounded-sm text-center text-xs leading-5 text-page", q.firstCorrect ? "bg-good" : q.correct ? "bg-warn" : "bg-bad")}>{q.number}</span>
                         </td>
                         <td className="py-1.5 pr-2 tabular-nums">{q.tries}</td>
                         <td className="py-1.5 pr-2 whitespace-nowrap text-muted tabular-nums">

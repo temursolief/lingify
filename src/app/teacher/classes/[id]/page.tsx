@@ -13,6 +13,7 @@ import { errorBreakdown, homeworkMatrix, passageHeatmap, stuckStudents, type Hea
 import { clock, POLICY_LABEL } from "@/lib/telemetry";
 import { formatDay } from "@/lib/time";
 import { AssignLessonForm, AssignPassageForm, DeleteAssignmentButton, RetakeButton } from "../../teacher-forms";
+import { LeagueToggle } from "../../today-actions";
 
 export const metadata: Metadata = { title: "Class" };
 
@@ -43,6 +44,7 @@ async function ClassContent(props: PageProps<"/teacher/classes/[id]">) {
   return (
     <>
       <PageHeader
+        kicker="Class"
         title={cls.name}
         subtitle={<>Join code <b className="text-ink">{cls.joinCode}</b> · {rows.length} student{rows.length === 1 ? "" : "s"}{stuck.length > 0 && <span className="text-bad"> · {stuck.length} stuck</span>}</>}
       />
@@ -50,6 +52,9 @@ async function ClassContent(props: PageProps<"/teacher/classes/[id]">) {
 
       {tab === "students" && (
         <div className="space-y-4">
+          <div className="max-w-md">
+            <LeagueToggle classId={cls.id} on={cls.leagueEnabled} />
+          </div>
           {stuck.length > 0 && (
             <Card className="bg-bad-soft">
               <p className="font-semibold text-bad">Stuck students</p>
@@ -112,7 +117,7 @@ async function ClassContent(props: PageProps<"/teacher/classes/[id]">) {
       {tab === "listening" && <ListeningTab classId={cls.id} students={rows} />}
 
       {tab === "mistakes" && (
-        <div className="mx-auto max-w-3xl">
+        <div className="max-w-3xl">
           <ErrorBreakdownView data={await errorBreakdown(rows.map((r) => r.id))} who="class" />
         </div>
       )}
@@ -190,7 +195,7 @@ async function PassagesTab({ classId, teacherId, base, selected, students }: { c
                 </tbody>
               </table>
               <p className="mt-3 text-xs text-muted">
-                <span className="text-good">■</span> right first time · <span className="text-[#f0a020]">■</span> corrected (number = tries) · <span className="text-bad">■</span> still wrong ·{" "}
+                <span className="text-good">■</span> right first time · <span className="text-warn">■</span> corrected (number = tries) · <span className="text-bad">■</span> still wrong ·{" "}
                 <span className="text-muted">▨</span> blank because the test was auto-finished. Hover a cell for the first answer, time, order, proof and reason.
                 Questions most of the class got wrong are the ones to go through in your next lesson.
               </p>
@@ -330,7 +335,7 @@ function HeatCellView({ cell: c, answered }: { cell: HeatCell | null; answered: 
   return (
     <span
       className={cx(
-        "block h-6 w-7 rounded-sm text-center text-[11px] leading-6 text-white",
+        "block h-6 w-7 rounded-sm text-center text-[11px] leading-6 text-page",
         !c
           ? "bg-grid"
           : c.firstCorrect
@@ -338,7 +343,7 @@ function HeatCellView({ cell: c, answered }: { cell: HeatCell | null; answered: 
             : c.unansweredAuto && !c.correct
               ? "bg-[repeating-linear-gradient(135deg,#b8bec2_0_3px,#e4e6e9_3px_6px)] text-ink"
               : c.correct
-                ? "bg-[#f0a020]"
+                ? "bg-warn"
                 : "bg-bad",
       )}
       title={tip}

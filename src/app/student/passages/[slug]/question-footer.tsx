@@ -55,15 +55,26 @@ export function QuestionFooter({
     const needsTag = !state.firstCorrect && !state.errorTag;
     return (
       <div className="mt-2 text-sm">
-        <p className="font-medium text-good">✓ Correct{!state.firstCorrect && ` on try ${state.tries}`}</p>
+        <p className="font-medium text-good">
+          ✓ Correct{!state.firstCorrect && ` on try ${state.tries}`}
+          {!state.firstCorrect && <span className="ml-2 text-xs font-normal text-[var(--color-accent-300)]">proof found · XP earned</span>}
+        </p>
         {state.explanation && <p className="mt-0.5 text-muted">{state.explanation}</p>}
         {proofLine}
         {needsTag && (
-          <div className="mt-3 rounded-lg bg-paper p-3">
-            <p className="font-medium">Why did you miss this the first time?</p>
+          <div className="mt-3 rounded-lg bg-raised p-3">
+            <p className="font-medium">
+              Why did you miss this the first time? <span className="text-xs font-normal text-[var(--color-accent-300)]">+5 XP</span>
+            </p>
             <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
               {TAGS.map((t) => (
-                <button key={t.tag} type="button" disabled={pending} onClick={() => onTag(t.tag)} className="rounded-md bg-surface px-3 py-2 text-left ring-1 ring-line hover:bg-hover ring-inset">
+                <button
+                  key={t.tag}
+                  type="button"
+                  disabled={pending}
+                  onClick={() => onTag(t.tag)}
+                  className="rounded-md border border-line bg-transparent px-3 py-2 text-left hover:border-accent hover:text-[var(--color-accent-200)]"
+                >
                   <span className="block font-medium">{t.title}</span>
                   <span className="block text-xs text-muted">{t.hint}</span>
                 </button>
@@ -81,7 +92,7 @@ export function QuestionFooter({
       <p className="font-medium text-bad">✗ Not correct{state.tries > 1 && ` · ${state.tries} tries`}. Find the answer in the passage.</p>
       {proofLine}
       {!proof && !error && (
-        <p className={cx("mt-1", active ? "text-accent" : "text-muted")}>
+        <p className={cx("mt-1", active ? "text-[var(--color-accent-300)]" : "text-muted")}>
           {active ? (
             <>
               Now highlight the sentence that proves your new answer.{" "}
@@ -89,7 +100,9 @@ export function QuestionFooter({
               <button type="button" className="font-medium underline md:hidden" onClick={onActivate}>Open the passage</button>
             </>
           ) : (
-            <button type="button" className="text-accent hover:underline" onClick={onActivate}>Prove a new answer</button>
+            <button type="button" className="text-[var(--color-accent-400)] hover:underline" onClick={onActivate}>
+              Prove a new answer · <span className="text-[var(--color-accent-300)]">+20 XP</span>
+            </button>
           )}
         </p>
       )}

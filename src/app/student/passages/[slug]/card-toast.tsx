@@ -13,7 +13,7 @@ export function CardToast({ toast, onClose }: { toast: Toast; onClose: () => voi
     return () => clearTimeout(t);
   }, [onClose]);
   return (
-    <div role="status" className="fixed inset-x-4 bottom-16 z-30 rounded-xl bg-ink p-4 text-sm text-white shadow-lg md:left-auto md:right-6 md:w-80">
+    <div role="status" className="fixed inset-x-4 bottom-16 z-30 rounded-xl bg-raised p-4 text-sm text-ink shadow-float md:left-auto md:right-6 md:w-80">
       {"error" in toast ? (
         <p>{toast.error}</p>
       ) : undone ? (
@@ -23,12 +23,12 @@ export function CardToast({ toast, onClose }: { toast: Toast; onClose: () => voi
           <p className="font-medium">Flashcard added to your flashcards for this passage</p>
           <p className="mt-1">
             <b>{toast.chunk}</b>
-            {toast.meaning ? ` — ${toast.meaning}` : toast.pending && <span className="text-white/60"> — finding a simple meaning…</span>}
+            {toast.meaning ? ` — ${toast.meaning}` : toast.pending && <span className="text-muted"> — finding a simple meaning…</span>}
           </p>
-          {toast.uz && <p className="text-white/70">O‘zbekcha: {toast.uz}</p>}
+          {toast.uz && <p className="text-soft">O‘zbekcha: {toast.uz}</p>}
           <button
             type="button"
-            className="mt-2 text-[#8cc4ff] hover:underline"
+            className="mt-2 text-accent-ink hover:underline"
             onClick={() => {
               deleteOwnCard(toast.id);
               setUndone(true);

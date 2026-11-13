@@ -241,15 +241,15 @@ export function PassagePractice({ passage, groups: initialGroups, initial, polic
 
           {selection && (
             <div
-              className="absolute z-20 flex max-w-[calc(100%-1rem)] flex-wrap items-center gap-1 rounded-lg bg-ink p-1 font-sans text-sm text-white shadow-lg"
+              className="absolute z-20 flex max-w-[calc(100%-1rem)] flex-wrap items-center gap-1 rounded-lg bg-raised p-1 font-sans text-sm text-ink shadow-float"
               style={{ top: selection.top, left: selection.left }}
               onMouseUp={(e) => e.stopPropagation()}
             >
-              <button type="button" className="rounded-md px-2.5 py-1 hover:bg-white/15" onClick={() => makeCard(selection.evidence)} disabled={cardPending}>
+              <button type="button" className="rounded-md px-2.5 py-1 hover:bg-hover" onClick={() => makeCard(selection.evidence)} disabled={cardPending}>
                 Make flashcard
               </button>
               {active !== null && (!view.submitted || (stateOf.get(active) && !stateOf.get(active)!.correct)) && (
-                <button type="button" className="rounded-md px-2.5 py-1 hover:bg-white/15" onClick={() => setProofFor(active, selection.evidence)}>
+                <button type="button" className="rounded-md px-2.5 py-1 hover:bg-hover" onClick={() => setProofFor(active, selection.evidence)}>
                   Proof for question {active}
                 </button>
               )}
@@ -335,9 +335,9 @@ export function PassagePractice({ passage, groups: initialGroups, initial, polic
                 s
                   ? s.correct
                     ? s.firstCorrect || s.errorTag
-                      ? "bg-good text-white"
-                      : "bg-good text-white ring-2 ring-[#f0a020] ring-offset-1"
-                    : "bg-bad text-white"
+                      ? "bg-good-soft text-good"
+                      : "bg-good-soft text-good ring-2 ring-warn ring-offset-1"
+                    : "bg-bad-soft text-bad"
                   : answered
                     ? "bg-accent-soft text-accent"
                     : "bg-paper text-muted",
@@ -351,7 +351,7 @@ export function PassagePractice({ passage, groups: initialGroups, initial, polic
         {view.submitted && (
           <span className="ml-auto text-sm text-muted max-md:hidden">
             <span className="text-good">●</span> correct <span className="ml-2 text-bad">●</span> incorrect
-            {needTags > 0 && <><span className="ml-2 text-[#f0a020]">○</span> say why you missed it</>}
+            {needTags > 0 && <><span className="ml-2 text-warn">○</span> say why you missed it</>}
           </span>
         )}
       </nav>

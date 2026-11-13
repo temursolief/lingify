@@ -19,6 +19,7 @@
     "telegram:remind": "tsx --conditions=react-server scripts/telegram-reminders.ts"
   },
   "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
     "@prisma/adapter-pg": "^7.10.1",
     "@prisma/client": "^7.10.1",
     "bcryptjs": "^3.0.3",

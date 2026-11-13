@@ -27,3 +27,11 @@ export async function setUzbekGlosses(on: boolean) {
   const user = await requireStudent();
   await db.user.update({ where: { id: user.id }, data: { uzbekGlosses: z.boolean().parse(on) } });
 }
+
+/** The band at the end of the student's band path: 5.0 to 9.0 in half bands. */
+export async function setTargetBand(band: number) {
+  const user = await requireStudent();
+  const value = z.number().min(5).max(9).multipleOf(0.5).parse(band);
+  await db.user.update({ where: { id: user.id }, data: { targetBand: value } });
+  refresh();
+}

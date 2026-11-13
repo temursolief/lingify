@@ -40,8 +40,8 @@ function Marked({ text, marks }: { text: string; marks: { n: number; start: numb
           data-n={first ? first.n : undefined}
           className={cx(
             "rounded-sm px-0.5 text-ink",
-            st?.correct ? "bg-good-soft" : st && !st.correct ? "bg-[#fde2b8]" : "bg-learning",
-            first && "before:mr-1 before:rounded before:bg-ink before:px-1 before:font-sans before:text-[11px] before:text-white before:content-[attr(data-n)]",
+            st?.correct ? "bg-good-soft" : st && !st.correct ? "bg-warn-soft" : "bg-learning",
+            first && "before:mr-1 before:rounded before:bg-[var(--color-accent-700)] before:px-1 before:font-sans before:text-[11px] before:text-[var(--color-accent-100)] before:content-[attr(data-n)]",
           )}
         >
           {piece}

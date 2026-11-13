@@ -219,11 +219,11 @@ export function ListeningLesson({
               className={cx(
                 "rounded-md px-3 py-1.5 text-left text-sm ring-1 ring-inset transition-colors",
                 s?.correct && s.answer.toUpperCase() === v
-                  ? "bg-good text-white ring-good"
+                  ? "bg-good-soft text-good ring-good"
                   : triedWrong
                     ? "bg-bad-soft text-bad line-through ring-bad"
                     : chosen
-                      ? "bg-accent text-white ring-accent"
+                      ? "bg-[var(--color-accent-700)] text-[var(--color-accent-100)] ring-accent"
                       : "bg-surface ring-line hover:bg-hover",
               )}
             >
@@ -451,7 +451,7 @@ export function ListeningLesson({
                 aria-label={`Question ${n}${s ? (s.correct ? ", correct" : ", incorrect") : answered ? ", answered" : ""}`}
                 className={cx(
                   "h-8 min-w-8 shrink-0 rounded-md px-1.5 text-sm font-medium tabular-nums",
-                  s ? (s.correct ? "bg-good text-white" : "bg-bad text-white") : answered ? "bg-accent-soft text-accent" : "bg-paper text-muted",
+                  s ? (s.correct ? "bg-good-soft text-good" : "bg-bad-soft text-bad") : answered ? "bg-accent-soft text-accent" : "bg-paper text-muted",
                   active === n && "outline-2 outline-offset-2 outline-ink",
                 )}
               >

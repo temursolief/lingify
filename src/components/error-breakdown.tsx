@@ -2,10 +2,10 @@ import type { ErrorBreakdown } from "@/lib/insights";
 import { Card } from "./ui";
 
 const TAG = {
-  VOCAB: { title: "Vocab / Synonym", hint: "didn't know a word or missed the paraphrase", color: "#65aadd" },
-  DISTRACTOR: { title: "Trap / Distractor", hint: "fell for a word-match trick", color: "#e17076" },
-  LOGIC: { title: "Logic / NG vs False", hint: "over-inferred or misread the logic", color: "#a695e7" },
-  CARELESS: { title: "Speed / Careless", hint: "skimmed too fast or misread", color: "#faa774" },
+  VOCAB: { title: "Vocab / Synonym", hint: "didn't know a word or missed the paraphrase", color: "oklch(0.72 0.09 235)" },
+  DISTRACTOR: { title: "Trap / Distractor", hint: "fell for a word-match trick", color: "#9184d9" },
+  LOGIC: { title: "Logic / NG vs False", hint: "over-inferred or misread the logic", color: "oklch(0.74 0.09 165)" },
+  CARELESS: { title: "Speed / Careless", hint: "skimmed too fast or misread", color: "oklch(0.8 0.1 70)" },
 } as const;
 
 const pct = (n: number, d: number) => (d ? Math.round((n / d) * 100) : 0);
@@ -24,8 +24,8 @@ export function ErrorBreakdownView({ data, who = "you" }: { data: ErrorBreakdown
   return (
     <div className="space-y-4">
       {data.headline && (
-        <Card className="bg-accent-soft">
-          <p className="text-sm text-accent">Biggest bottleneck</p>
+        <Card className="bg-accent-soft shadow-[0_0_0_1px_var(--color-accent-800)]">
+          <p className="kicker">Biggest bottleneck</p>
           <p className="mt-1 text-lg font-semibold">
             {Math.round(data.headline.share * 100)}% of {subject} mistakes are {TAG[data.headline.tag].title.toLowerCase()} in {data.headline.label}.
           </p>
@@ -69,7 +69,7 @@ export function ErrorBreakdownView({ data, who = "you" }: { data: ErrorBreakdown
                 {(Object.keys(TAG) as (keyof typeof TAG)[]).map((t) =>
                   row.tags[t] ? <div key={t} style={{ width: `${pct(row.tags[t]!, data.byType[0].mistakes)}%`, background: TAG[t].color }} /> : null,
                 )}
-                <div style={{ width: `${pct(row.mistakes - Object.values(row.tags).reduce((a, b) => a + (b ?? 0), 0), data.byType[0].mistakes)}%` }} className="bg-[#c4c9cc]" />
+                <div style={{ width: `${pct(row.mistakes - Object.values(row.tags).reduce((a, b) => a + (b ?? 0), 0), data.byType[0].mistakes)}%` }} className="bg-[var(--color-neutral-600)]" />
               </div>
             </li>
           ))}
@@ -119,12 +119,12 @@ export function ErrorBreakdownView({ data, who = "you" }: { data: ErrorBreakdown
           <p className="font-semibold">Where {who === "you" ? "you" : "they"} looked</p>
           <p className="mt-1 text-sm text-muted">From the sentences highlighted as proof, compared with where the answer really is.</p>
           <div className="mt-3 grid grid-cols-2 gap-3">
-            <div className="rounded-lg bg-paper p-3">
+            <div className="rounded-lg bg-raised p-3">
               <p className="text-2xl font-semibold tabular-nums">{data.location}</p>
               <p className="text-sm">Location errors</p>
               <p className="text-xs text-muted">Looked in the wrong paragraph</p>
             </div>
-            <div className="rounded-lg bg-paper p-3">
+            <div className="rounded-lg bg-raised p-3">
               <p className="text-2xl font-semibold tabular-nums">{data.comprehension}</p>
               <p className="text-sm">Comprehension errors</p>
               <p className="text-xs text-muted">Found the right place but misread it</p>

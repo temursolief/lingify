@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Card, PageHeader, PageSkeleton } from "@/components/ui";
 import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { LibraryTabs } from "../library-tabs";
 import { DeleteLessonButton, UploadPassageForm } from "../teacher-forms";
 
 export const metadata: Metadata = { title: "Listening" };
@@ -18,11 +19,13 @@ async function LessonsContent() {
   return (
     <>
       <PageHeader
+        kicker="Library"
         title="Listening"
         subtitle="Video lessons (e.g. TED-Ed) with IELTS Listening questions and key words, for every student"
         action={<Link href="/teacher/listening/format" className="text-sm">Format guide</Link>}
       />
-      <div className="mx-auto max-w-3xl space-y-4">
+      <LibraryTabs current="listening" />
+      <div className="max-w-3xl space-y-4">
         <Card>
           <p className="font-semibold">Upload a lesson</p>
           <p className="mt-1 mb-3 text-sm text-muted">

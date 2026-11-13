@@ -13,10 +13,10 @@ async function TeacherHomeContent() {
   const count = await db.class.count({ where: { teacherId: teacher.id } });
   return (
     <>
-      <PageHeader title="New class" subtitle={count ? "Open a class on the left to see your students" : "Create your first class to get started"} />
-      <Card className="mx-auto max-w-lg">
-        <p className="font-semibold">Create a class</p>
-        <p className="mt-1 text-sm text-muted">You get a code. Students enter it after signing up, and the class appears on the left.</p>
+      <PageHeader kicker="Classes" title="New class" subtitle={count ? `You teach ${count} class${count === 1 ? "" : "es"} already` : "Create your first class to get started"} />
+      <Card className="max-w-lg">
+        <p className="font-medium">Create a class</p>
+        <p className="mt-1 text-sm text-muted">You get a code. Students enter it after signing up, and the class appears under Classes.</p>
         <CreateClassForm />
       </Card>
     </>

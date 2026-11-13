@@ -55,11 +55,11 @@ export function Group({
               className={cx(
                 "rounded-md px-3 py-1.5 text-left text-sm ring-1 transition-colors ring-inset",
                 isSubmitted && s?.correct
-                  ? "bg-good text-white ring-good"
+                  ? "bg-good-soft text-good ring-good"
                   : submitted && wasWrong
                     ? "bg-bad-soft text-bad line-through ring-bad"
                     : chosen
-                      ? "bg-accent text-white ring-accent"
+                      ? "bg-[var(--color-accent-700)] text-[var(--color-accent-100)] ring-accent"
                       : "bg-surface ring-line hover:bg-hover",
               )}
             >
