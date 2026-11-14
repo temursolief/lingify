@@ -84,7 +84,7 @@ async function PassagesContent() {
 
   return (
     <>
-      <PageHeader kicker="Practice · Reading" title="Passages" subtitle={summary.band ? `Estimated band ${summary.band} from your last passages` : "IELTS Academic Reading practice"} />
+      <PageHeader kicker="Practice · Reading" title="Passages" subtitle={summary.band ? `Estimated band ${summary.band} from your last passages` : undefined} />
       <div className="max-w-3xl space-y-6">
         <section>
           <h2 className="mb-2 px-1 text-sm font-medium text-muted">From your teacher</h2>
@@ -111,9 +111,6 @@ async function PassagesContent() {
             </ul>
           )}
         </section>
-        <p className="px-1 text-sm text-muted">
-          The first try is timed like the exam and gives your score. Then correct the red answers: highlight the sentence that proves each new answer.
-        </p>
       </div>
     </>
   );

@@ -10,7 +10,7 @@ export function LinkLogin({ code }: { code: string }) {
   return (
     <form action={action} className="text-center">
       <h1 className="text-xl">Open Lingify</h1>
-      <p className="mt-1 mb-5 text-sm text-muted">From your Telegram link. It works once, for 10 minutes.</p>
+      <p className="mt-1 mb-5 text-sm text-muted">Link works once, for 10 minutes.</p>
       <Button type="submit" disabled={pending || !code} className="w-full">
         {pending ? "Logging in…" : "Continue to Lingify"}
       </Button>

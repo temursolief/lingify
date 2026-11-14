@@ -7,8 +7,8 @@ import { Button, Field } from "@/components/ui";
 type Status = "idle" | "starting" | "waiting" | "unknown" | "pending" | "denied" | "expired" | "done" | "error";
 
 const MESSAGES: Partial<Record<Status, { text: string; tone: "muted" | "warn" | "bad" | "good" }>> = {
-  waiting: { text: "Telegram is open: press Start, then “Yes, it’s me”. This page logs you in by itself.", tone: "muted" },
-  unknown: { text: "This Telegram isn’t connected to Lingify yet. New here? Send the bot your class code and your name, and your teacher approves you. Already have an account? Log in with your email below and connect Telegram in Settings, so you keep your progress.", tone: "warn" },
+  waiting: { text: "In Telegram, press Start, then “Yes, it’s me”.", tone: "muted" },
+  unknown: { text: "This Telegram isn’t connected yet. New? Send the bot your class code. Have an account? Log in with email below, then connect Telegram in Settings.", tone: "warn" },
   pending: { text: "Your teacher hasn’t approved you yet. The bot will message you when they do.", tone: "warn" },
   denied: { text: "Log-in cancelled in Telegram.", tone: "bad" },
   expired: { text: "That log-in expired. Tap the button to try again.", tone: "bad" },
@@ -86,10 +86,10 @@ export function LoginForm({ notice }: { notice?: string }) {
         </p>
       )}
       {error && <p className="mt-3 text-sm text-bad" role="alert">{error}</p>}
-      <p className="mt-3 text-xs text-muted">New here? Open the bot and send it your class code. You can log in once your teacher approves you.</p>
+      <p className="mt-3 text-xs text-muted">New? Send your class code to the bot.</p>
 
       <details className="mt-6 border-t border-line pt-4" open={!!state?.error}>
-        <summary className="caps cursor-pointer text-[12px] text-muted">Log in with email (teachers, and students with an account)</summary>
+        <summary className="caps cursor-pointer text-[12px] text-muted">Log in with email</summary>
         <form action={action} className="mt-3">
           <div className="space-y-4">
             <Field label="Email" name="email" type="email" autoComplete="email" required />
@@ -99,7 +99,6 @@ export function LoginForm({ notice }: { notice?: string }) {
           <Button type="submit" variant="secondary" disabled={pending} className="mt-4 w-full">
             {pending ? "Logging in…" : "Log in"}
           </Button>
-          <p className="mt-2 text-xs text-muted">Students who already have an email and password can still use them here.</p>
         </form>
       </details>
     </div>

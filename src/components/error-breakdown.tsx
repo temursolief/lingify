@@ -17,7 +17,7 @@ export function ErrorBreakdownView({ data, who = "you" }: { data: ErrorBreakdown
   if (!data.mistakes) {
     return (
       <Card className="py-8 text-center text-muted">
-        {data.passages ? "No mistakes on first tries yet. Impressive!" : "Finish a passage to see what causes mistakes."}
+        {data.passages ? "No mistakes yet." : "Finish a passage first."}
       </Card>
     );
   }
@@ -29,7 +29,7 @@ export function ErrorBreakdownView({ data, who = "you" }: { data: ErrorBreakdown
           <p className="mt-1 text-lg font-semibold">
             {Math.round(data.headline.share * 100)}% of {subject} mistakes are {TAG[data.headline.tag].title.toLowerCase()} in {data.headline.label}.
           </p>
-          {data.passages < 5 && <p className="mt-1 text-sm text-muted">Based on {data.passages} passage{data.passages === 1 ? "" : "s"}. The picture gets clearer after five.</p>}
+          {data.passages < 5 && <p className="mt-1 text-sm text-muted">Based on {data.passages} passage{data.passages === 1 ? "" : "s"}.</p>}
         </Card>
       )}
 
@@ -78,9 +78,6 @@ export function ErrorBreakdownView({ data, who = "you" }: { data: ErrorBreakdown
 
       <Card className="p-0">
         <p className="px-4 pt-4 font-semibold">Skill bottlenecks: question type × cause</p>
-        <p className="px-4 text-sm text-muted">
-          First-try mistakes by IELTS question type, against the reason given after correcting them and where the proof was found.
-        </p>
         <div className="overflow-x-auto px-4 pt-3 pb-4">
           <table className="w-full min-w-[600px] text-sm">
             <thead className="border-b border-line text-muted">
@@ -117,7 +114,6 @@ export function ErrorBreakdownView({ data, who = "you" }: { data: ErrorBreakdown
       {data.location + data.comprehension > 0 && (
         <Card>
           <p className="font-semibold">Where {who === "you" ? "you" : "they"} looked</p>
-          <p className="mt-1 text-sm text-muted">From the sentences highlighted as proof, compared with where the answer really is.</p>
           <div className="mt-3 grid grid-cols-2 gap-3">
             <div className="rounded-lg bg-raised p-3">
               <p className="text-2xl font-semibold tabular-nums">{data.location}</p>

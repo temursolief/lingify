@@ -77,7 +77,7 @@ export function OfflineApp() {
       <div className="flex flex-1 items-center justify-center p-6">
         <Card className="max-w-md py-8 text-center">
           <p className="font-medium">Nothing is saved on this device yet</p>
-          <p className="mt-1 text-muted">Open Lingify once with internet. Your flashcards and passages will be saved here automatically.</p>
+          <p className="mt-1 text-muted">Open Lingify once online.</p>
           {online && <a href="/student" className="mt-4 inline-block font-medium">Open Lingify</a>}
         </Card>
       </div>
@@ -148,9 +148,9 @@ export function OfflineApp() {
       {online && reachable ? (
         <>Connected{waiting ? ", sending your answers…" : "."} <a href="/student" className="font-medium">Open full Lingify</a></>
       ) : waiting ? (
-        <>No connection. {waiting} answer{waiting === 1 ? "" : "s"} saved on this device, sent automatically when the connection is back.</>
+        <>No connection. {waiting} answer{waiting === 1 ? "" : "s"} saved.</>
       ) : (
-        <>No connection. Your work is saved on this device and sent automatically later.</>
+        <>No connection. Work saved.</>
       )}
     </p>
   );
@@ -169,7 +169,7 @@ export function OfflineApp() {
         />
       ) : passage ? (
         <>
-          <PageHeader title={passage.title} subtitle="Saved on this device · the questions need a connection" />
+          <PageHeader title={passage.title} subtitle="Questions need a connection" />
           <article className="mx-auto max-w-3xl space-y-5 rounded-xl bg-surface px-4 py-5 font-serif text-[1.0625rem] leading-relaxed shadow-bubble sm:px-8 sm:py-7">
             {passage.paragraphs.map((text, i) => (
               <div key={i} className="flex gap-3">

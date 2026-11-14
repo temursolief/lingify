@@ -89,13 +89,13 @@ export function QuestionFooter({
 
   return (
     <div className="mt-2 text-sm">
-      <p className="font-medium text-bad">✗ Not correct{state.tries > 1 && ` · ${state.tries} tries`}. Find the answer in the passage.</p>
+      <p className="font-medium text-bad">✗ Not correct{state.tries > 1 && ` · ${state.tries} tries`}.</p>
       {proofLine}
       {!proof && !error && (
         <p className={cx("mt-1", active ? "text-[var(--color-accent-300)]" : "text-muted")}>
           {active ? (
             <>
-              Now highlight the sentence that proves your new answer.{" "}
+              Highlight the proof.{" "}
               {/* On a phone the passage is behind the other tab. */}
               <button type="button" className="font-medium underline md:hidden" onClick={onActivate}>Open the passage</button>
             </>

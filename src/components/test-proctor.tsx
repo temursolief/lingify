@@ -35,7 +35,7 @@ export function SubmittingOverlay({ failed }: { failed: boolean }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4" role="status">
       <div className="w-full max-w-sm rounded-xl bg-surface p-6 text-center shadow-lg">
         <p className="font-semibold">Submitting your answers…</p>
-        {failed && <p className="mt-2 text-sm text-muted">No connection right now. Your answers are saved on this device and sent as soon as it is back.</p>}
+        {failed && <p className="mt-2 text-sm text-muted">No connection. Answers saved, sent when back.</p>}
       </div>
     </div>
   );

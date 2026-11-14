@@ -28,12 +28,10 @@ async function SettingsContent() {
       <div className="max-w-2xl space-y-4">
         <Card>
           <p className="font-medium">Target band</p>
-          <p className="mt-1 text-[13px] text-muted">The end of your band path on Today and Journey.</p>
           <TargetBandPicker value={user.targetBand} />
         </Card>
         <Card>
           <p className="font-medium">Uzbek translations</p>
-          <p className="mt-1 text-[13px] text-muted">Add a short Uzbek translation to the flashcards you make from passages.</p>
           <UzbekToggle on={user.uzbekGlosses} />
         </Card>
         <Card>

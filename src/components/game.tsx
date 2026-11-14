@@ -81,7 +81,7 @@ function OwedNote({ game }: { game: Game }) {
     lines.push(`Yesterday cost you ${fmtXp(-yesterday.xp)} XP${why ? `: ${why}` : ""}.`);
   }
   if (owed.streak) {
-    lines.push(owed.shieldCovers ? "No real action yet today: a shield will save your streak at midnight, but a day with none costs a shield." : `No real action yet today: ${XP_LOSS.idleDay} XP and your streak are lost at midnight.`);
+    lines.push(owed.shieldCovers ? "No real action yet today: a shield will be used at midnight." : `No real action yet today: ${XP_LOSS.idleDay} XP and your streak are lost at midnight.`);
   }
   if (owed.words) lines.push(`No flashcards yet today: ${XP_LOSS.noWords} XP lost at midnight.`);
   if (!lines.length) return null;

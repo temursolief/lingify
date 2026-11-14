@@ -27,16 +27,14 @@ async function PassagesContent() {
   });
   return (
     <>
-      <PageHeader kicker="Library" title="My passages" subtitle="Upload IELTS passages as JSON, then assign them from a class" action={<Link href="/teacher/passages/format" className="text-sm">Format guide</Link>} />
+      <PageHeader kicker="Library" title="My passages" action={<Link href="/teacher/passages/format" className="text-sm">Format guide</Link>} />
       <LibraryTabs current="passages" />
       <div className="max-w-3xl space-y-4">
         <Card>
           <p className="font-semibold">Upload a passage</p>
           <p className="mt-1 mb-3 text-sm text-muted">
-            The file must follow the <Link href="/teacher/passages/format">passage format</Link>, in one of two shapes: just the passage (
-            <a href="/samples/passage-example.json" download>example</a>), or the passage with its flashcards inside the same file (
-            <a href="/samples/passage-with-deck-example.json" download>example with flashcards</a>), so no Anki export has to be uploaded afterwards.
-            You can choose many files at once; mistakes are listed per file so you can fix them.
+            JSON files. Examples: <a href="/samples/passage-example.json" download>passage</a>,{" "}
+            <a href="/samples/passage-with-deck-example.json" download>with flashcards</a>.
           </p>
           <UploadPassageForm />
         </Card>
@@ -60,10 +58,7 @@ async function PassagesContent() {
                     </summary>
                     <div className="mt-2 max-w-md rounded-md bg-paper p-3">
                       <p className="mb-2 text-muted">
-                        Flashcards can come inside the passage file (a <code className="font-mono text-xs">deck</code> in the JSON), or from Anki:
-                        File → Export → “Anki Deck Package (.apkg)”, with media included (use this for images and sounds). Students assigned
-                        this passage study the deck with Anki&apos;s scheduling, and any highlight they make from it goes into the same deck,
-                        visible only to them. Uploading an .apkg again updates its matching cards instead of duplicating them.
+                        Anki .apkg, with media. Re-uploading updates cards.
                       </p>
                       <UploadDeckForm passageId={p.id} />
                     </div>

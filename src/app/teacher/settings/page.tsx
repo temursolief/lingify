@@ -19,10 +19,7 @@ async function SettingsContent() {
         {admin && (
           <Card>
             <p className="font-semibold">Add a teacher</p>
-            <p className="mt-1 mb-3 text-sm text-muted">
-              There is no public sign-up. Teachers log in with the email and password you set here; students join through the Telegram bot with a class
-              code and their teacher approves them.
-            </p>
+            <p className="mt-1 mb-3 text-sm text-muted">They log in with this email and password.</p>
             <AddTeacherForm />
           </Card>
         )}

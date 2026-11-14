@@ -67,7 +67,7 @@ async function JourneyContent() {
         title={`${band !== null ? band.toFixed(1) : "–"} → ${user.targetBand.toFixed(1)}`}
         subtitle={
           <>
-            Estimated from your first tries. Level {game.level} · {fmtXp(game.xp)} XP · {fmtXp(game.levelTo - game.xp)} XP to level {game.level + 1} ·{" "}
+            Level {game.level} · {fmtXp(game.xp)} XP · {fmtXp(game.levelTo - game.xp)} XP to level {game.level + 1} ·{" "}
             <Link href="/student/settings">change goal</Link>
           </>
         }
@@ -84,12 +84,12 @@ async function JourneyContent() {
           <div className="flex flex-col gap-2 rounded-lg bg-surface p-3.5">
             <span className="text-xs text-muted">This week</span>
             <span className="text-[28px] font-medium tabular-nums">{fmtXp(game.weekXp)}</span>
-            <span className="text-[11px] text-faint">XP from honest work</span>
+            <span className="text-[11px] text-faint">XP</span>
           </div>
         </div>
 
         <div className="flex flex-col gap-2.5">
-          <SectionTitle title="Fortress stages" note={`${fortress.stage + 1} of ${STAGES.length} built · a built stage always stands`} />
+          <SectionTitle title="Fortress stages" note={`${fortress.stage + 1} of ${STAGES.length} built`} />
           <ol className="grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(130px,1fr))]">
             {STAGES.map((st, i) => {
               const built = i <= fortress.stage;
@@ -114,15 +114,15 @@ async function JourneyContent() {
         </div>
 
         <section id="xp" className="flex scroll-mt-6 flex-col gap-2.5">
-          <SectionTitle title="How XP is earned and lost" note="effort counts, speed does not" />
+          <SectionTitle title="XP" />
           <div className="grid gap-x-6 gap-y-2 rounded-xl border border-line bg-surface p-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))]">
             {[
-              [`+${XP.correct}`, "Each answer right at your first try of a passage or lesson, done honestly. Only your first try at each one counts."],
-              [`+${XP.proof}`, "A red answer fixed with its proof in the right paragraph."],
-              [`+${XP.proofElsewhere}`, "Fixed, but the proof was in another paragraph."],
-              [`+${fmtXp(XP.tag)}`, "Saying why you missed an answer."],
-              [`+${fmtXp(XP.card)}`, "Each flashcard you take time over. Rushed cards earn nothing."],
-              [`+${XP.homework}`, "A piece of homework finished, words included."],
+              [`+${XP.correct}`, "Right answer, first try"],
+              [`+${XP.proof}`, "Fix with proof in right paragraph"],
+              [`+${XP.proofElsewhere}`, "Fix, proof elsewhere"],
+              [`+${fmtXp(XP.tag)}`, "Tag why you missed"],
+              [`+${fmtXp(XP.card)}`, "Flashcard (not rushed)"],
+              [`+${XP.homework}`, "Homework finished"],
             ].map(([xp, text]) => (
               <div key={text} className="flex items-baseline gap-3">
                 <span className="w-10 shrink-0 font-display text-lg font-bold text-olive tabular-nums">{xp}</span>
@@ -130,9 +130,9 @@ async function JourneyContent() {
               </div>
             ))}
             {[
-              [`−${XP_LOSS.idleDay}`, "A day with no real action (a proof, a first try or 10 cards). A shield saves the streak and spares this."],
-              [`−${XP_LOSS.noWords}`, "A day with no flashcards reviewed. Words are owed every day, shield or not."],
-              [`−${XP_LOSS.leftTest}`, "A test you walked out of: leaving the tab, the window or fullscreen ends it."],
+              [`−${XP_LOSS.idleDay}`, "Idle day (shield spares it)"],
+              [`−${XP_LOSS.noWords}`, "No flashcards that day"],
+              [`−${XP_LOSS.leftTest}`, "Left a test"],
             ].map(([xp, text]) => (
               <div key={text} className="flex items-baseline gap-3">
                 <span className="w-10 shrink-0 font-display text-lg font-bold text-accent tabular-nums">{xp}</span>
@@ -140,8 +140,7 @@ async function JourneyContent() {
               </div>
             ))}
             <p className="text-xs text-muted [grid-column:1/-1]">
-              Flagged attempts earn nothing. Finish all three daily quests to earn a shield (you can hold two). Penalties stop after {IDLE_CAP_DAYS} days in a row away, and they can never take you below where your current stage began: a castle you built stays standing.
-              Your streak needs one real action a day ({REAL_DAY_CARDS} cards, a proof or a first try).
+              3 quests = shield (max 2). Streak: {REAL_DAY_CARDS} cards, a proof or a first try a day. Penalties stop after {IDLE_CAP_DAYS} days.
             </p>
           </div>
         </section>
@@ -154,7 +153,7 @@ async function JourneyContent() {
                 {Math.round(headline.share * 100)}% of your mistakes are {ERROR_TAG_LABEL[headline.tag].title.toLowerCase()} in {headline.label}.
               </span>
             ) : (
-              <span className="text-[17px] font-medium">{breakdown.passages ? "No pattern yet. Tag why you missed answers to see one." : "Finish a passage to see what causes your mistakes."}</span>
+              <span className="text-[17px] font-medium">{breakdown.passages ? "No pattern yet." : "Finish a passage first."}</span>
             )}
             {tagged > 0 && (
               <div className="flex flex-col gap-2">

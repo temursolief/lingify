@@ -61,7 +61,7 @@ async function ClassContent(props: PageProps<"/teacher/classes/[id]">) {
           {stuck.length > 0 && (
             <Card className="bg-bad-soft">
               <p className="font-semibold text-bad">Stuck students</p>
-              <p className="text-sm text-muted">Three or more tries and still red. A quick word in class may help.</p>
+              <p className="text-sm text-muted">3+ tries, still red.</p>
               <ul className="mt-2 space-y-1 text-sm">
                 {stuck.map((s) => (
                   <li key={`${s.userId}-${s.passageId}`}>
@@ -196,8 +196,7 @@ async function PassagesTab({ classId, teacherId, base, selected, students }: { c
               </table>
               <p className="mt-3 text-xs text-muted">
                 <span className="text-good">■</span> right first time · <span className="text-warn">■</span> corrected (number = tries) · <span className="text-bad">■</span> still wrong ·{" "}
-                <span className="text-muted">▨</span> blank because the test was auto-finished. Hover a cell for the first answer, time, order, proof and reason.
-                Questions most of the class got wrong are the ones to go through in your next lesson.
+                <span className="text-muted">▨</span> auto-finished. Hover for details.
               </p>
             </div>
           )}
@@ -207,7 +206,7 @@ async function PassagesTab({ classId, teacherId, base, selected, students }: { c
       {heat && heat.magnets.length > 0 && (
         <Card>
           <p className="font-semibold">Mistake magnets</p>
-          <p className="text-sm text-muted">Where many students chose the same wrong answer on the first try: a trap worth going through in class.</p>
+          <p className="text-sm text-muted">Same wrong answer on first try.</p>
           <table className="mt-3 w-full text-left text-sm">
             <thead className="border-b border-line text-muted">
               <tr>
@@ -370,7 +369,7 @@ const reached = (row: HomeworkRow, stage: HomeworkRow["stage"]) => STAGE_ORDER.i
 async function HomeworkTab({ classId, base, selected }: { classId: string; base: string; selected: string | null }) {
   // The list and the matrix (of the chosen homework, or the newest) at once.
   const [assignments, hw] = await Promise.all([classAssignments(classId), homeworkMatrix(classId, selected)]);
-  if (!assignments.length) return <Card className="py-8 text-center text-muted">Nothing assigned yet. Assign a passage or a lesson from their tabs.</Card>;
+  if (!assignments.length) return <Card className="py-8 text-center text-muted">Nothing assigned yet.</Card>;
   if (!hw) return null;
   const id = hw.id;
 
@@ -399,7 +398,7 @@ async function HomeworkTab({ classId, base, selected }: { classId: string; base:
         <div className="px-4 pt-4">
           <p className="font-semibold">{hw.title}</p>
           <p className="text-sm text-muted">
-            {POLICY_LABEL[hw.policy]} · {hw.requireVocabFirst ? (hw.kind === "reading" ? "vocabulary required (today's cards in the passage deck)" : "vocabulary required (key words read)") : "vocabulary not required"}
+            {POLICY_LABEL[hw.policy]} · {hw.requireVocabFirst ? "vocabulary required" : "vocabulary not required"}
             {hw.dueAt && ` · due ${formatDay(hw.dueAt)}`}
           </p>
         </div>
@@ -467,7 +466,7 @@ async function HomeworkTab({ classId, base, selected }: { classId: string; base:
           </table>
           <p className="mt-3 text-xs text-muted">
             Done means: first try submitted, every red answer corrected{hw.kind === "reading" ? " with a highlighted proof and its reason tagged" : ""}
-            {hw.requireVocabFirst ? ", and the vocabulary cleared" : ""}. Integrity flags are signals to check, not proof: a student may have a good reason.
+            {hw.requireVocabFirst ? ", and the vocabulary cleared" : ""}. Flags are signals, not proof.
           </p>
         </div>
       </Card>

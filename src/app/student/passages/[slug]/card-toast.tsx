@@ -20,7 +20,7 @@ export function CardToast({ toast, onClose }: { toast: Toast; onClose: () => voi
         <p>Card removed.</p>
       ) : (
         <>
-          <p className="font-medium">Flashcard added to your flashcards for this passage</p>
+          <p className="font-medium">Flashcard added</p>
           <p className="mt-1">
             <b>{toast.chunk}</b>
             {toast.meaning ? ` — ${toast.meaning}` : toast.pending && <span className="text-muted"> — finding a simple meaning…</span>}

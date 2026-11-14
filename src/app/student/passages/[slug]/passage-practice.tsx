@@ -170,10 +170,8 @@ export function PassagePractice({ passage, groups: initialGroups, initial, polic
           pending={starting || attempt.sending !== "idle" || (initial.started && policy !== "NONE")}
           startLabel={`${passage.timeLimit}:00`}
           points={[
-            <>{groups ? `${numbers.length} questions` : "The questions"} in <b>{passage.timeLimit} minutes</b>, like the exam. This first try gives your score.</>,
-            "After you submit, wrong answers turn red. Correct them yourself: the right answer is never shown.",
-            <>To check a corrected answer, <b>highlight the sentence that proves it</b> in the passage.</>,
-            "Highlight any useful phrase to make a flashcard from it.",
+            <>{groups ? `${numbers.length} questions` : "The questions"} in <b>{passage.timeLimit} minutes</b>, . First try gives your score.</>,
+            <>Then fix red answers: <b>highlight the proof</b>.</>,
           ]}
           onStart={begin}
         />
@@ -234,8 +232,8 @@ export function PassagePractice({ passage, groups: initialGroups, initial, polic
         <div ref={passageRef} className={cx("relative min-h-0 overflow-y-auto overscroll-contain border-line bg-surface px-4 py-4 md:border-r md:px-8 md:py-6", tab !== "passage" && "max-md:hidden")}>
           <p className="mb-4 text-xs text-muted">
             {active !== null && view.submitted && stateOf.get(active) && !stateOf.get(active)!.correct
-              ? `Highlight the sentence that proves your answer to question ${active}.`
-              : `Highlight words to make a flashcard${view.submitted && red ? " or to prove a corrected answer" : ""}.`}
+              ? `Highlight proof for question ${active}.`
+              : `Highlight words to make a flashcard${view.submitted && red ? " or proof" : ""}.`}
           </p>
           <PassageText paragraphs={passage.paragraphs} proofs={proofs} stateOf={stateOf} />
 
@@ -263,15 +261,15 @@ export function PassagePractice({ passage, groups: initialGroups, initial, polic
             <div className="mb-6 rounded-xl bg-good-soft p-4 text-good">
               <p className="font-semibold">Passage complete</p>
               <p className="mt-1 text-sm">
-                First try: {view.firstCorrect} of {view.total} (estimated band {view.band}). Every answer is now correct.{" "}
-                <Link href="/student/progress" className="text-good underline">See what caused your mistakes</Link>
+                First try: {view.firstCorrect} of {view.total} (band {view.band}).{" "}
+                <Link href="/student/progress" className="text-good underline">Your mistakes</Link>
               </p>
             </div>
           )}
           {view.submitted && !view.completed && red > 0 && (
             <div className="mb-6 rounded-xl bg-paper p-4 text-sm">
               <p className="font-medium">Correct the red answers</p>
-              <p className="mt-1 text-muted">Choose a new answer, then highlight the sentence in the passage that proves it and press Check.</p>
+              <p className="mt-1 text-muted">New answer, highlight proof, press Check.</p>
             </div>
           )}
 

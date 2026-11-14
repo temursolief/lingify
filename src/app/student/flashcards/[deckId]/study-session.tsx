@@ -213,7 +213,7 @@ export function StudySession({
           {more === "failed" ? (
             <>
               <p className="font-semibold">More cards are due today</p>
-              <p className="mt-1 text-muted">They could not be loaded: there is no connection. Your answers are saved on this device.</p>
+              <p className="mt-1 text-muted">No connection. Your answers are saved.</p>
               <Button className="mt-4" onClick={loadMore}>Try again</Button>
             </>
           ) : (
@@ -222,8 +222,8 @@ export function StudySession({
         </div>
       ) : (
         <div className="mx-auto max-w-xl rounded-xl bg-surface p-8 text-center shadow-bubble">
-          <p className="font-semibold">Congratulations! You have finished this deck for now.</p>
-          <p className="mt-1 text-muted">{studied ? `${studied} card${studied === 1 ? "" : "s"} studied. ` : ""}Come back later for cards that are due again.</p>
+          <p className="font-semibold">Deck done for now.</p>
+          <p className="mt-1 text-muted">{studied ? `${studied} card${studied === 1 ? "" : "s"} studied.` : "Come back later."}</p>
           {note && <p className="mt-3 text-xs text-muted">{note}</p>}
           <Link href={backHref} className="mt-4 inline-block">Back to decks</Link>
         </div>

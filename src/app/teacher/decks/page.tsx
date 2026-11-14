@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Card, PageHeader, PageSkeleton } from "@/components/ui";
-import { OPTIONS } from "@/lib/anki";
 import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formatDay } from "@/lib/time";
@@ -19,14 +18,13 @@ async function DecksContent() {
   });
   return (
     <>
-      <PageHeader kicker="Library" title="Anki decks" subtitle="Decks uploaded here appear for every student" />
+      <PageHeader kicker="Library" title="Anki decks" />
       <LibraryTabs current="decks" />
       <div className="max-w-3xl space-y-4">
         <Card>
           <p className="font-semibold">Upload a deck</p>
           <p className="mt-1 mb-3 text-sm text-muted">
-            In Anki desktop: File → Export → “Anki Deck Package (.apkg)”, with media included. Students study it with Anki&apos;s scheduling,
-            except that no card waits longer than {OPTIONS.maxInterval} days.
+            Anki: File → Export → .apkg, with media.
           </p>
           <UploadDeckForm />
         </Card>

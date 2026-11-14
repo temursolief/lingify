@@ -21,53 +21,43 @@ const TYPES: { type: string; name: string; fields: string; answer: string }[] = 
 export default function FormatPage() {
   return (
     <>
-      <PageHeader title="Passage format" subtitle="How to prepare a passage JSON file" action={<Link href="/teacher/passages" className="text-sm">My passages</Link>} />
+      <PageHeader title="Passage format" action={<Link href="/teacher/passages" className="text-sm">My passages</Link>} />
       <div className="max-w-3xl space-y-4 text-[15px]">
         <Card>
           <p className="font-semibold">The file</p>
           <ul className="mt-2 list-disc space-y-1.5 pl-5">
-            <li><Code>title</Code>: the passage title.</li>
-            <li><Code>timeLimit</Code>: minutes for the first try (5–60, usually 20).</li>
-            <li><Code>paragraphs</Code>: the passage, one string per paragraph. They are labelled A, B, C… in this order.</li>
-            <li><Code>questionGroups</Code>: groups of questions, each with a <Code>type</Code>, <Code>instructions</Code> and <Code>questions</Code>.</li>
-            <li><Code>deck</Code> (optional): the passage&apos;s flashcards, see below.</li>
+            <li><Code>title</Code></li>
+            <li><Code>timeLimit</Code>: minutes, 5–60.</li>
+            <li><Code>paragraphs</Code>: one string each (A, B, C…).</li>
+            <li><Code>questionGroups</Code>: <Code>type</Code>, <Code>instructions</Code>, <Code>questions</Code>.</li>
+            <li><Code>deck</Code> (optional): flashcards.</li>
           </ul>
-          <p className="mt-3 text-sm text-muted">
-            Two shapes are accepted: the passage on its own, or the passage with a <Code>deck</Code>. Both upload the same way and
-            can be mixed in one go.
-          </p>
         </Card>
         <Card>
           <div className="flex items-baseline justify-between gap-2">
             <p className="font-semibold">Flashcards inside the file</p>
             <a href="/samples/passage-with-deck-example.json" download className="text-sm">Download example with flashcards</a>
           </div>
-          <p className="mt-2 text-sm text-muted">
-            Add a <Code>deck</Code> and the passage is saved with its flashcards, ready for the students it is assigned to. No Anki export is needed.
-          </p>
           <ul className="mt-2 list-disc space-y-1.5 pl-5">
-            <li><Code>deck.name</Code> (optional): the deck&apos;s name; the passage title if left out.</li>
-            <li><Code>deck.cards</Code>: 1 to {MAX_DECK_CARDS} cards. Each card is one of two kinds:</li>
+            <li><Code>deck.name</Code> (optional)</li>
+            <li><Code>deck.cards</Code>: 1 to {MAX_DECK_CARDS} cards, either:</li>
           </ul>
           <ul className="mt-2 ml-5 list-[circle] space-y-1.5 pl-5">
             <li>
-              <b>a word card</b>: <Code>word</Code> and <Code>meaning</Code>, and optionally <Code>example</Code> (a sentence that contains the word: the card
-              then shows that sentence with the word blanked out) and <Code>uz</Code> (the Uzbek meaning). Each word only once.
+              <b>word</b>: <Code>word</Code>, <Code>meaning</Code>, optional <Code>example</Code> and <Code>uz</Code>. Each word once.
             </li>
             <li>
-              <b>a free card</b>: <Code>front</Code> and <Code>back</Code>, plain text or simple HTML (bold, lists, images from a web address). Scripts are removed.
+              <b>free</b>: <Code>front</Code>, <Code>back</Code> (text or simple HTML).
             </li>
           </ul>
-          <p className="mt-2 text-sm text-muted">
-            Need images or sounds stored with the cards, or already have a deck in Anki? Upload an .apkg on the passage instead (My passages → Flashcard deck).
-          </p>
+          <p className="mt-2 text-sm text-muted">Images or sounds: upload an .apkg instead.</p>
         </Card>
         <Card>
           <p className="font-semibold">Every question</p>
           <ul className="mt-2 list-disc space-y-1.5 pl-5">
-            <li><Code>number</Code>: the question number, as in the exam (1, 2, 3…). Each number only once.</li>
-            <li><Code>evidence</Code> (recommended): the paragraph letter that proves the answer. Lingify then tells you whether a student looked in the wrong paragraph or misread the right one.</li>
-            <li><Code>explanation</Code> (optional): shown only after the student finds the right answer.</li>
+            <li><Code>number</Code>: unique (1, 2, 3…).</li>
+            <li><Code>evidence</Code> (recommended): paragraph letter of the proof.</li>
+            <li><Code>explanation</Code> (optional): shown after a correct answer.</li>
           </ul>
         </Card>
         <Card className="p-0">
@@ -99,7 +89,6 @@ export default function FormatPage() {
             <p className="font-semibold">Complete example: the passage with its flashcards</p>
             <a href="/samples/passage-with-deck-example.json" download className="text-sm">Download example with flashcards</a>
           </div>
-          <p className="mt-2 text-sm text-muted">The same passage; only the <Code>deck</Code> at the end is new.</p>
           <pre className="mt-3 max-h-[32rem] overflow-auto rounded-lg bg-paper p-3 font-mono text-xs leading-relaxed">{JSON.stringify(EXAMPLE_PASSAGE_WITH_DECK, null, 2)}</pre>
         </Card>
       </div>

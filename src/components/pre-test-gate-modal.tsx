@@ -41,15 +41,15 @@ export function PreTestGateModal({
           {points.map((p, i) => <li key={i}>{p}</li>)}
         </ul>
         {policy === "NONE" ? (
-          <p className="mt-4 rounded-lg bg-paper p-3 text-sm text-muted">Practice mode: your teacher sees if you leave the test, but it is not submitted for you.</p>
+          <p className="mt-4 rounded-lg bg-paper p-3 text-sm text-muted">Practice mode: leaving is shown to your teacher.</p>
         ) : (
           <div className="mt-4 rounded-lg bg-warn-soft p-3 text-sm text-ink">
             <p className="font-semibold">{fullscreen ? "This test runs in Fullscreen Lock mode." : "This test is locked to this screen."}</p>
             <p className="mt-1">
               {policy === "STRICT"
                 ? `${leave} will immediately finish and submit your test.`
-                : `${leave} gives you one warning: come back within 5 seconds. The second time, your test is submitted.`}{" "}
-              Copying, pasting{kind === "reading" ? " and Find (Ctrl+F)" : ""} are turned off. A weak connection does not count against you.
+                : `${leave}: one warning (5 seconds), then it submits.`}{" "}
+              Copy, paste{kind === "reading" ? " and Find" : ""} are off.
             </p>
           </div>
         )}

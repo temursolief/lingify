@@ -327,8 +327,8 @@ export function ListeningLesson({
           pending={pending || sending !== "idle" || (initial.started && policy !== "NONE")}
           startLabel="no time limit"
           points={[
-            "Watch the video and answer the IELTS Listening questions. Pause and replay as often as you need.",
-            "This first try gives your score. After you submit, wrong answers turn red: listen again and correct them yourself.",
+            "First try gives your score. Replay as often as you like.",
+            "Then correct the red answers.",
           ]}
           onStart={begin}
         />
@@ -373,13 +373,9 @@ export function ListeningLesson({
               <LiteVideo id={lesson.videoId} title={lesson.title} onEvent={testOn ? telemetry.videoEvent : undefined} allowFullscreen={!testOn} />
             </div>
           </div>
-          <p className="order-2 px-4 pt-3 text-sm text-muted md:p-0">
-            Pause, rewind and replay as often as you need.{view.submitted && red ? " For each red answer, find that part of the video and listen again." : ""}
-          </p>
           {gated ? (
             <section className="order-4 mx-4 mb-6 rounded-xl bg-raised p-4 md:m-0">
               <p className="font-medium">Key words</p>
-              <p className="mt-1 text-sm text-muted">Read these before the questions: they appear in the video and in what you&apos;ll answer.</p>
               <VocabList vocabulary={vocabulary} />
               <Button className="mt-3" onClick={readVocab} disabled={pending}>I&apos;ve read these words</Button>
             </section>
@@ -398,7 +394,7 @@ export function ListeningLesson({
 
         <div className="pane-x order-3 py-5 md:min-h-0 md:overflow-y-auto md:py-6">
           {gated ? (
-            <p className="text-muted">Read the key words, then press “I&apos;ve read these words” to see the questions.</p>
+            <p className="text-muted">Read the key words first.</p>
           ) : (
             <>
               {view.submitted && <IntegrityBanner kind="listening" reason={view.reason} firstCorrect={view.firstCorrect} total={view.total} band={view.band} />}
@@ -406,7 +402,7 @@ export function ListeningLesson({
                 <div className="mb-6 rounded-xl bg-good-soft p-4 text-good">
                   <p className="font-semibold">Lesson complete</p>
                   <p className="mt-1 text-sm">
-                    First try: {view.firstCorrect} of {view.total} (estimated listening band {view.band}). Every answer is now correct.{" "}
+                    First try: {view.firstCorrect} of {view.total} (band {view.band}).{" "}
                     <Link href="/student/listening" className="text-good underline">Back to the library</Link>
                   </p>
                 </div>
@@ -414,7 +410,7 @@ export function ListeningLesson({
               {view.submitted && !view.completed && (
                 <div className="mb-6 rounded-xl bg-paper p-4 text-sm">
                   <p className="font-medium">Correct the red answers</p>
-                  <p className="mt-1 text-muted">Listen to that part of the video again, write a new answer and press Check.</p>
+                  <p className="mt-1 text-muted">Listen again, then press Check.</p>
                 </div>
               )}
               <div className="space-y-8">
@@ -472,7 +468,7 @@ function Footer({ n, state, changed, error, pending, onCheck }: { n: number; sta
   if (state.correct) return <p className="mt-2 text-sm font-medium text-good">✓ Correct{!state.firstCorrect && ` on try ${state.tries}`}</p>;
   return (
     <div className="mt-2 text-sm">
-      <p className="font-medium text-bad">✗ Not correct{state.tries > 1 && ` · ${state.tries} tries`}. Listen to that part again.</p>
+      <p className="font-medium text-bad">✗ Not correct{state.tries > 1 && ` · ${state.tries} tries`}.</p>
       {error && <p className="mt-1 text-bad">{error}</p>}
       <Button className="mt-2 px-3 py-1.5 text-sm" disabled={pending || !changed} onClick={onCheck}>Check question {n}</Button>
     </div>

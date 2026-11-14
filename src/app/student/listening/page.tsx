@@ -51,7 +51,7 @@ async function LibraryContent() {
 
   return (
     <>
-      <PageHeader kicker="Practice · Listening" title="Listening" subtitle="Watch a video lesson, answer the IELTS Listening questions and learn its key words" />
+      <PageHeader kicker="Practice · Listening" title="Listening" />
       <div className="max-w-3xl">
         {lessons.length === 0 ? (
           <Card className="py-8 text-center text-muted">Nothing assigned yet. Ask your teacher.</Card>
@@ -90,7 +90,7 @@ async function LibraryContent() {
             })}
           </ul>
         )}
-        <p className="mt-3 px-1 text-sm text-muted">Videos need an internet connection. A video only starts loading when you press play.</p>
+        <p className="mt-3 px-1 text-sm text-muted">Videos need internet.</p>
       </div>
     </>
   );

@@ -24,7 +24,6 @@ async function LessonsContent() {
       <PageHeader
         kicker="Library"
         title="Listening"
-        subtitle="Video lessons (e.g. TED-Ed) with IELTS Listening questions and key words, for every student"
         action={<Link href="/teacher/listening/format" className="text-sm">Format guide</Link>}
       />
       <LibraryTabs current="listening" />
@@ -32,8 +31,7 @@ async function LessonsContent() {
         <Card>
           <p className="font-semibold">Upload a lesson</p>
           <p className="mt-1 mb-3 text-sm text-muted">
-            One JSON file: the YouTube link, the questions with their answers, and the key words. Start from the{" "}
-            <a href="/samples/listening-example.json" download>TED-Ed example</a> and replace every “FILL IN” with the answer.
+            One JSON file. <a href="/samples/listening-example.json" download>Example</a>
           </p>
           <UploadPassageForm lesson />
         </Card>

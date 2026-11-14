@@ -22,7 +22,7 @@ async function ClassContent() {
       <>
         <PageHeader kicker="Class" title="Your class" />
         <Card lift className="max-w-md">
-          <p className="text-[13px] text-soft">You are not in a class yet. Ask your teacher for the join code.</p>
+          <p className="text-[13px] text-soft">Enter your teacher&apos;s join code.</p>
           <JoinClassForm />
         </Card>
       </>
@@ -59,7 +59,7 @@ async function ClassContent() {
         <div className="grid items-start gap-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))]">
           {game.leagueEnabled && (
             <div className="flex flex-col gap-2.5">
-              <SectionTitle title="Weekly league" note="resets Monday · honest work only" />
+              <SectionTitle title="Weekly league" note="resets Monday" />
               <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
                 {game.students > 1 && <Podium rows={game.league} />}
                 {game.students > 1 && (

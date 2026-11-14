@@ -69,7 +69,7 @@ async function TodayContent() {
         ) : (
           <Card className="flex items-center gap-3">
             <SealCheck size={26} weight="fill" className="text-good" aria-hidden />
-            <span className="text-[13px] text-soft">No one is stuck, nothing was flagged and everyone has been active. A good moment to assign the next passage.</span>
+            <span className="text-[13px] text-soft">All clear.</span>
           </Card>
         )}
 

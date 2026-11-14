@@ -79,7 +79,7 @@ export function LeagueToggle({ classId, on }: { classId: string; on: boolean }) 
       </span>
       <span className="flex flex-col gap-0.5">
         <span className="text-[13px]">Weekly league</span>
-        <span className="text-xs text-muted">Students see a ranking by this week&apos;s XP. The class goal stays on either way.</span>
+        <span className="text-xs text-muted">Ranking by weekly XP.</span>
       </span>
     </button>
   );
@@ -97,7 +97,6 @@ export function JoinRequests({ classId, requests }: { classId: string; requests:
       <p className="caps text-[15px] text-warn">
         {requests.length} student{requests.length === 1 ? "" : "s"} asking to join
       </p>
-      <p className="mt-0.5 text-sm text-soft">They asked with the class code through the Telegram bot. Approved students can log in; the bot tells them.</p>
       <ul className="mt-3 flex flex-col gap-2">
         {requests.map((r) => (
           <li key={r.id} className="flex flex-wrap items-center gap-3 rounded-lg bg-surface px-3 py-2">

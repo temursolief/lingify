@@ -37,7 +37,7 @@ async function TodayContent() {
         <Card lift className="flex flex-col gap-2">
           <span className="kicker">Start here</span>
           <span className="text-[17px] font-medium">Join your class</span>
-          <p className="text-[13px] text-soft">Ask your teacher for the six-letter join code. Your homework, words and class goal appear here once you are in.</p>
+          <p className="text-[13px] text-soft">Enter your teacher&apos;s join code.</p>
           <JoinClassForm />
         </Card>
       </div>
@@ -74,7 +74,7 @@ async function TodayContent() {
             shown.map((h) => <HomeworkRow key={h.href} h={h} now={now} />)
           ) : (
             <Card>
-              <EmptyState title="No homework right now">Your teacher&apos;s next task will show up here.</EmptyState>
+              <EmptyState title="No homework right now" />
             </Card>
           )}
         </div>

@@ -33,7 +33,7 @@ async function ClassesContent() {
       <PageHeader
         kicker="Teaching"
         title="Classes"
-        subtitle={classes.length ? `${classes.length} class${classes.length === 1 ? "" : "es"}` : "Create your first class: students join it with a code"}
+        subtitle={classes.length ? `${classes.length} class${classes.length === 1 ? "" : "es"}` : undefined}
         action={
           <Link href="/teacher/new" className={`${accentOutline} px-4 py-2 text-sm font-medium`}>
             <Plus size={16} aria-hidden />
@@ -73,7 +73,7 @@ async function ClassesContent() {
       ) : (
         <Card>
           <EmptyState title="No classes yet">
-            <Link href="/teacher/new">Create a class</Link> and share its join code with your students.
+            <Link href="/teacher/new">Create a class</Link>
           </EmptyState>
         </Card>
       )}
