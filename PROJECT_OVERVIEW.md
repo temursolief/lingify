@@ -93,7 +93,7 @@ README.md / TASK.md / PLAN.md   Setup, current status, next-six-changes plan
 | Homework & integrity | `assignments.ts` (`proctoringFor`, `settleHomework`: the one place that decides "done"), `telemetry.ts` (shared Zod schemas and pure flag rules), `submissions.ts` (first-submission bodies, used by actions and the beacon route) |
 | Test lock (client) | `use-test-proctor.ts` (fullscreen, visibility, blur, leave detection, guards, beacon), `use-question-telemetry.ts` (dwell time, answer times), `test-draft.ts` (sessionStorage backup); components `pre-test-gate-modal.tsx`, `test-proctor.tsx`, `integrity-banner.tsx`, `integrity-badge.tsx` |
 | Offline (client) | `offline-store.ts` (IndexedDB), `offline-sync.ts` (queue + pack refresh, Web Locks), `offline-types.ts` |
-| Misc | `assignments.ts`, `student-sections.ts`, `telegram.ts` |
+| Misc | `assignments.ts`, `telegram.ts` |
 
 ---
 
