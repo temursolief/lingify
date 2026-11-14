@@ -9,7 +9,7 @@ import { requireTeacher } from "@/lib/auth";
 import { classOverview, teacherClass } from "@/lib/class-overview";
 import { db } from "@/lib/db";
 import { ERROR_TAG_LABEL } from "@/lib/passages";
-import { errorBreakdown, homeworkMatrix, passageHeatmap, stuckStudents, type HeatCell, type HomeworkRow } from "@/lib/insights";
+import { classAssignments, classRoster, errorBreakdown, homeworkMatrix, passageHeatmap, type HeatCell, type HomeworkRow } from "@/lib/insights";
 import { clock, POLICY_LABEL } from "@/lib/telemetry";
 import { formatDay } from "@/lib/time";
 import { AssignLessonForm, AssignPassageForm, DeleteAssignmentButton, RetakeButton } from "../../teacher-forms";
@@ -39,14 +39,16 @@ async function ClassContent(props: PageProps<"/teacher/classes/[id]">) {
   if (!cls) notFound();
   const tab = TABS.some((t) => t.key === sp.tab) ? String(sp.tab) : "students";
   const base = `/teacher/classes/${cls.id}`;
-  const [rows, stuck] = await Promise.all([classOverview(cls.id), stuckStudents(cls.id)]);
+  // Every tab shows the student count and the stuck count; only the Students tab needs everyone's numbers.
+  const [{ students, stuck }, overview] = await Promise.all([classRoster(cls.id), tab === "students" ? classOverview(cls.id) : null]);
+  const rows = overview ?? [];
 
   return (
     <>
       <PageHeader
         kicker="Class"
         title={cls.name}
-        subtitle={<>Join code <b className="text-ink">{cls.joinCode}</b> · {rows.length} student{rows.length === 1 ? "" : "s"}{stuck.length > 0 && <span className="text-bad"> · {stuck.length} stuck</span>}</>}
+        subtitle={<>Join code <b className="text-ink">{cls.joinCode}</b> · {students.length} student{students.length === 1 ? "" : "s"}{stuck.length > 0 && <span className="text-bad"> · {stuck.length} stuck</span>}</>}
       />
       <Tabs current={tab} items={TABS.map((t) => ({ ...t, href: t.key === "students" ? base : `${base}?tab=${t.key}` }))} />
 
@@ -68,7 +70,7 @@ async function ClassContent(props: PageProps<"/teacher/classes/[id]">) {
               </ul>
             </Card>
           )}
-          {rows.length === 0 ? (
+          {students.length === 0 ? (
             <Card className="py-8 text-center text-muted">No students yet. Share the join code <b className="text-ink">{cls.joinCode}</b>.</Card>
           ) : (
             <div className="overflow-x-auto rounded-xl bg-surface shadow-bubble">
@@ -112,13 +114,13 @@ async function ClassContent(props: PageProps<"/teacher/classes/[id]">) {
 
       {tab === "homework" && <HomeworkTab classId={cls.id} base={base} selected={typeof sp.a === "string" ? sp.a : null} />}
 
-      {tab === "passages" && <PassagesTab classId={cls.id} teacherId={teacher.id} base={base} selected={typeof sp.p === "string" ? sp.p : null} students={rows} />}
+      {tab === "passages" && <PassagesTab classId={cls.id} teacherId={teacher.id} base={base} selected={typeof sp.p === "string" ? sp.p : null} students={students} />}
 
-      {tab === "listening" && <ListeningTab classId={cls.id} students={rows} />}
+      {tab === "listening" && <ListeningTab classId={cls.id} students={students} />}
 
       {tab === "mistakes" && (
         <div className="max-w-3xl">
-          <ErrorBreakdownView data={await errorBreakdown(rows.map((r) => r.id))} who="class" />
+          <ErrorBreakdownView data={await errorBreakdown({ classId: cls.id })} who="class" />
         </div>
       )}
     </>
@@ -126,16 +128,13 @@ async function ClassContent(props: PageProps<"/teacher/classes/[id]">) {
 }
 
 async function PassagesTab({ classId, teacherId, base, selected, students }: { classId: string; teacherId: string; base: string; selected: string | null; students: { id: string; name: string }[] }) {
-  const [assignments, passages] = await Promise.all([
-    db.assignment.findMany({
-      where: { classId, passageId: { not: null }, passage: { archivedAt: null } },
-      orderBy: { createdAt: "desc" },
-      include: { passage: { select: { id: true, title: true } }, recipients: { select: { completedAt: true } } },
-    }),
+  // The list, the library and the heatmap (of the chosen passage, or the latest assigned one) all at once.
+  const [assignments, passages, heat] = await Promise.all([
+    classAssignments(classId, "passage"),
     db.passage.findMany({ where: { archivedAt: null, OR: [{ ownerId: null }, { ownerId: teacherId }] }, orderBy: { title: "asc" }, select: { id: true, title: true, ownerId: true } }),
+    passageHeatmap(classId, selected),
   ]);
-  const passageId = selected ?? assignments[0]?.passageId ?? null;
-  const heat = passageId ? await passageHeatmap(classId, passageId) : null;
+  const passageId = heat?.passageId ?? null;
   const title = passages.find((p) => p.id === passageId)?.title;
 
   return (
@@ -236,13 +235,13 @@ async function PassagesTab({ classId, teacherId, base, selected, students }: { c
         ) : (
           <ul className="mt-2 divide-y divide-line">
             {assignments.map((a) => {
-              const done = a.recipients.filter((r) => r.completedAt).length;
-              const late = a.dueAt && a.dueAt < new Date() ? a.recipients.length - done : 0;
+              const done = a.done;
+              const late = a.dueAt && a.dueAt < new Date() ? a.total - done : 0;
               return (
                 <li key={a.id} className={cx("flex flex-wrap items-center gap-3 px-4 py-2.5", a.passageId === passageId && "bg-accent-soft")}>
-                  <Link href={`${base}?tab=passages&p=${a.passageId}`} className="min-w-0 flex-1 truncate">{a.passage!.title}</Link>
+                  <Link href={`${base}?tab=passages&p=${a.passageId}`} className="min-w-0 flex-1 truncate">{a.title}</Link>
                   <Link href={`${base}?tab=homework&a=${a.id}`} className="text-sm">
-                    {done}/{a.recipients.length} done
+                    {done}/{a.total} done
                   </Link>
                   <span className="text-sm text-muted">
                     {a.dueAt && `due ${formatDay(a.dueAt)}`}
@@ -266,11 +265,7 @@ async function PassagesTab({ classId, teacherId, base, selected, students }: { c
 
 async function ListeningTab({ classId, students }: { classId: string; students: { id: string; name: string }[] }) {
   const [assignments, lessons] = await Promise.all([
-    db.assignment.findMany({
-      where: { classId, lessonId: { not: null }, lesson: { archivedAt: null } },
-      orderBy: { createdAt: "desc" },
-      include: { lesson: { select: { id: true, title: true } }, recipients: { select: { completedAt: true } } },
-    }),
+    classAssignments(classId, "lesson"),
     db.listeningLesson.findMany({ where: { archivedAt: null }, orderBy: { title: "asc" }, select: { id: true, title: true } }),
   ]);
 
@@ -283,13 +278,13 @@ async function ListeningTab({ classId, students }: { classId: string; students: 
         ) : (
           <ul className="mt-2 divide-y divide-line">
             {assignments.map((a) => {
-              const done = a.recipients.filter((r) => r.completedAt).length;
-              const late = a.dueAt && a.dueAt < new Date() ? a.recipients.length - done : 0;
+              const done = a.done;
+              const late = a.dueAt && a.dueAt < new Date() ? a.total - done : 0;
               return (
                 <li key={a.id} className="flex flex-wrap items-center gap-3 px-4 py-2.5">
-                  <span className="min-w-0 flex-1 truncate">{a.lesson!.title}</span>
+                  <span className="min-w-0 flex-1 truncate">{a.title}</span>
                   <Link href={`/teacher/classes/${classId}?tab=homework&a=${a.id}`} className="text-sm">
-                    {done}/{a.recipients.length} done
+                    {done}/{a.total} done
                   </Link>
                   <span className="text-sm text-muted">
                     {a.dueAt && `due ${formatDay(a.dueAt)}`}
@@ -372,30 +367,26 @@ const reached = (row: HomeworkRow, stage: HomeworkRow["stage"]) => STAGE_ORDER.i
  * integrity badge and "Require retake".
  */
 async function HomeworkTab({ classId, base, selected }: { classId: string; base: string; selected: string | null }) {
-  const assignments = await db.assignment.findMany({
-    where: { classId, OR: [{ passage: { archivedAt: null } }, { lesson: { archivedAt: null } }] },
-    orderBy: { createdAt: "desc" },
-    select: { id: true, dueAt: true, passage: { select: { title: true } }, lesson: { select: { title: true } }, recipients: { select: { completedAt: true, integrityFlagged: true } } },
-  });
+  // The list and the matrix (of the chosen homework, or the newest) at once.
+  const [assignments, hw] = await Promise.all([classAssignments(classId), homeworkMatrix(classId, selected)]);
   if (!assignments.length) return <Card className="py-8 text-center text-muted">Nothing assigned yet. Assign a passage or a lesson from their tabs.</Card>;
-  const id = assignments.some((a) => a.id === selected) ? selected! : assignments[0].id;
-  const hw = await homeworkMatrix(classId, id);
   if (!hw) return null;
+  const id = hw.id;
 
   return (
     <div className="space-y-4">
       <Card className="p-0">
         <ul className="divide-y divide-line">
           {assignments.map((a) => {
-            const done = a.recipients.filter((r) => r.completedAt).length;
-            const flagged = a.recipients.filter((r) => r.integrityFlagged).length;
+            const done = a.done;
+            const flagged = a.flagged;
             return (
               <li key={a.id} className={cx("flex flex-wrap items-center gap-3 px-4 py-2", a.id === id && "bg-accent-soft")}>
                 <Link href={`${base}?tab=homework&a=${a.id}`} className="min-w-0 flex-1 truncate">
-                  <span className="text-xs text-muted">{a.passage ? "Reading" : "Listening"} · </span>
-                  {a.passage?.title ?? a.lesson?.title}
+                  <span className="text-xs text-muted">{a.passageId ? "Reading" : "Listening"} · </span>
+                  {a.title}
                 </Link>
-                <span className="text-sm text-muted tabular-nums">{done}/{a.recipients.length} done{a.dueAt && ` · due ${formatDay(a.dueAt)}`}</span>
+                <span className="text-sm text-muted tabular-nums">{done}/{a.total} done{a.dueAt && ` · due ${formatDay(a.dueAt)}`}</span>
                 {flagged > 0 && <Badge tone="bad">{flagged} flagged</Badge>}
               </li>
             );

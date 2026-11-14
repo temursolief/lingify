@@ -7,6 +7,7 @@ import { IntegrityBadge } from "@/components/integrity-badge";
 import { Card, PageHeader, PageSkeleton, Tabs, cx } from "@/components/ui";
 import { requireTeacher } from "@/lib/auth";
 import { studentSummary, teacherClass } from "@/lib/class-overview";
+import type { ListeningAttempt, PassageAttempt, QuestionAnswer, User } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import { attemptBadge, errorBreakdown } from "@/lib/insights";
 import { paragraphLetter } from "@/lib/passage-format";
@@ -50,26 +51,28 @@ async function StudentContent(props: PageProps<"/teacher/classes/[id]/students/[
   const teacher = await requireTeacher();
   const { id, studentId } = await props.params;
   const sp = await props.searchParams;
-  const cls = await teacherClass(id, teacher.id);
-  if (!cls) notFound();
-  const enrollment = await db.enrollment.findUnique({ where: { userId_classId: { userId: studentId, classId: cls.id } }, include: { user: true } });
-  if (!enrollment) notFound();
-  const student = enrollment.user;
-
-  const [summary, breakdown, attempts, lessons] = await Promise.all([
-    studentSummary(student.id),
-    errorBreakdown([student.id]),
-    db.passageAttempt.findMany({
-      where: { userId: student.id, firstSubmittedAt: { not: null } },
-      orderBy: { firstSubmittedAt: "desc" },
-      include: { passage: { select: { id: true, title: true } }, answers: { orderBy: { number: "asc" } } },
-    }),
-    db.listeningAttempt.findMany({
-      where: { userId: student.id, firstSubmittedAt: { not: null } },
-      orderBy: { firstSubmittedAt: "desc" },
-      include: { lesson: { select: { title: true } } },
-    }),
+  // Everything starts at once. The student's work is read alongside the access check but shown only after it: a
+  // teacher sees a student only if the class is theirs and the student is in it.
+  const [cls, student, summary, breakdown, attempts, lessons] = await Promise.all([
+    teacherClass(id, teacher.id),
+    db.$queryRaw<User[]>`
+      SELECT u.* FROM "Enrollment" e JOIN "User" u ON u.id = e."userId" WHERE e."userId" = ${studentId} AND e."classId" = ${id}`.then((r) => r[0] ?? null),
+    studentSummary(studentId),
+    errorBreakdown([studentId]),
+    // Every first try with its passage and its answers in order: one query.
+    db.$queryRaw<(PassageAttempt & { passage: { id: string; title: string }; answers: QuestionAnswer[] })[]>`
+      SELECT a.*, json_build_object('id', p.id, 'title', p.title) AS passage,
+             (SELECT coalesce(json_agg(q ORDER BY q.number), '[]') FROM "QuestionAnswer" q WHERE q."attemptId" = a.id) AS answers
+      FROM "PassageAttempt" a JOIN "Passage" p ON p.id = a."passageId"
+      WHERE a."userId" = ${studentId} AND a."firstSubmittedAt" IS NOT NULL
+      ORDER BY a."firstSubmittedAt" DESC`,
+    db.$queryRaw<(ListeningAttempt & { lesson: { title: string } })[]>`
+      SELECT a.*, json_build_object('title', l.title) AS lesson
+      FROM "ListeningAttempt" a JOIN "ListeningLesson" l ON l.id = a."lessonId"
+      WHERE a."userId" = ${studentId} AND a."firstSubmittedAt" IS NOT NULL
+      ORDER BY a."firstSubmittedAt" DESC`,
   ]);
+  if (!cls || !student) notFound();
   const base = `/teacher/classes/${cls.id}/students/${student.id}`;
   const tab = sp.tab === "mistakes" || sp.tab === "listening" ? sp.tab : "work";
   const openId = typeof sp.p === "string" ? attempts.find((a) => a.passageId === sp.p && !a.invalidatedAt)?.id : attempts[0]?.id;

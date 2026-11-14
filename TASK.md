@@ -23,7 +23,9 @@ queued in front of each page's own query, which is why Listening felt slow; it i
 3.0 s → 0.18 s on Neon, same results. Student pages likewise: the layout (sidebar counts, XP heads-up) went from 13
 queries to 4, and Today from 27 to 6, Journey 21 → 8, Words 19 → 6, Class 24 → 6, Passages 20 → 6; each data function is
 one SQL statement (`studentHomework`, `studentSummaries`, `studentGame`, `classGame`, badges, decks), with the
-same results for all students on Neon. Homework can be given as many passages or lessons at once (a checklist; one assignment each). A
+same results for all students on Neon. Teacher class pages too: Homework tab 27 → 5 queries, Passages 21 → 6,
+Listening 17 → 5, Students 13 → 4, Mistakes 14 → 4, a student's page 11 → 7, the class list 4 → 2 (`classOverview`,
+`classRoster`, `classAssignments`, `passageHeatmap`, `homeworkMatrix` are single statements). Homework can be given as many passages or lessons at once (a checklist; one assignment each). A
 passage JSON may carry its own flashcards in a `deck` (word cards or free front/back cards), so no `.apkg` is needed;
 the plain shape still works. Examples: `public/samples/passage-example.json` and `passage-with-deck-example.json`.
 

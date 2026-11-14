@@ -4,20 +4,29 @@ import Link from "next/link";
 import { ArrowUpRight, Plus, UsersThree } from "@/components/icons";
 import { accentOutline, Badge, Card, EmptyState, PageHeader, PageSkeleton } from "@/components/ui";
 import { requireTeacher } from "@/lib/auth";
-import { classActivity } from "@/lib/class-overview";
+import { STUCK_TRIES } from "@/lib/insights";
 import { db } from "@/lib/db";
+import { utc } from "@/lib/sql";
+import { addDays } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Classes" };
 
 /** One card per class, newest first, with how many are active and who is stuck. */
 async function ClassesContent() {
   const teacher = await requireTeacher();
-  const classes = await db.class.findMany({
-    where: { teacherId: teacher.id },
-    select: { id: true, name: true, joinCode: true, leagueEnabled: true, _count: { select: { enrollments: true, assignments: true } } },
-    orderBy: { createdAt: "desc" },
-  });
-  const activity = await classActivity(classes.map((c) => c.id));
+  // Each class with its counts, who was active this week and who is stuck: one statement.
+  const since = addDays(new Date(), -7);
+  const rows = await db.$queryRaw<{ id: string; name: string; joinCode: string; leagueEnabled: boolean; enrollments: number; assignments: number; active: number; stuck: number }[]>`
+    SELECT c.id, c.name, c."joinCode", c."leagueEnabled",
+      (SELECT count(*) FROM "Enrollment" e WHERE e."classId" = c.id)::int AS enrollments,
+      (SELECT count(*) FROM "Assignment" a WHERE a."classId" = c.id)::int AS assignments,
+      (SELECT count(*) FROM "Enrollment" e JOIN "User" u ON u.id = e."userId" WHERE e."classId" = c.id AND u."lastActiveAt" >= ${utc(since)})::int AS active,
+      (SELECT count(*) FROM "Enrollment" e WHERE e."classId" = c.id AND EXISTS (
+        SELECT 1 FROM "PassageAttempt" a JOIN "QuestionAnswer" q ON q."attemptId" = a.id
+        WHERE a."userId" = e."userId" AND a."invalidatedAt" IS NULL AND a."completedAt" IS NULL AND q.correct = false AND q.tries >= ${STUCK_TRIES}))::int AS stuck
+    FROM "Class" c WHERE c."teacherId" = ${teacher.id} ORDER BY c."createdAt" DESC`;
+  const classes = rows.map((c) => ({ ...c, _count: { enrollments: c.enrollments, assignments: c.assignments } }));
+  const activity = new Map(rows.map((c) => [c.id, { active: c.active, stuck: c.stuck }]));
   return (
     <>
       <PageHeader
