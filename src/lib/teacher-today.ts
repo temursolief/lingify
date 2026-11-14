@@ -1,8 +1,9 @@
 import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { cache } from "react";
+import { Prisma } from "@/generated/prisma/client";
 import { db } from "./db";
-import { passageHeatmap, stuckStudents } from "./insights";
+import { STUCK_TRIES } from "./insights";
 import { addDays, formatDay } from "./time";
 
 /** Days without opening Lingify, with homework open, before a student shows up on the teacher's list. */
@@ -41,64 +42,131 @@ export async function teacherBadge(teacherId: string): Promise<number> {
   return (await teacherToday(teacherId)).items.length;
 }
 
+type Member = { classId: string; className: string; userId: string | null; name: string | null; lastActiveAt: number | null; linked: boolean; open: number };
+type Stuck = { userId: string; name: string; passageId: string; title: string; questions: number[] };
+type Flagged = { kind: "passage" | "lesson"; id: string; userId: string; band: number | null; seconds: number | null; reasons: string[]; name: string; title: string };
+type Due = { id: string; classId: string; className: string; title: string; passageId: string | null; dueAt: number | null; done: number; total: number };
+type Magnet = { classId: string; passageId: string; title: string; number: number; answer: string; count: number };
+type Today = { members: Member[]; stuck: Stuck[]; flagged: Flagged[]; due: Due[]; magnets: Magnet[]; submitted: { classId: string; submitted: number }[] };
+
+/** A JavaScript time as a timestamp column compares it (they are stored in UTC, without a zone). */
+const utc = (d: Date) => Prisma.sql`(to_timestamp(${d.getTime() / 1000}) AT TIME ZONE 'UTC')`;
+/** A timestamp column as milliseconds, so JSON carries it without the zone guesswork of a bare date string. */
+const ms = (col: Prisma.Sql) => Prisma.sql`(extract(epoch FROM ${col}) * 1000)::float8`;
+
+/**
+ * Everything the Today page needs, in one SQL statement: one round trip to the database however many classes the
+ * teacher has (it used to be about thirty queries, several waiting on each other, and a full heatmap per class read
+ * every answer's history only to find its most common wrong answer). The database does the joining and counting;
+ * each part comes back as a JSON array.
+ */
+async function todayRows(teacherId: string, flagSince: Date, dueFrom: Date): Promise<Today> {
+  const [row] = await db.$queryRaw<Today[]>`
+    WITH students AS (
+      SELECT DISTINCT e."userId" FROM "Enrollment" e JOIN "Class" c ON c.id = e."classId" WHERE c."teacherId" = ${teacherId}
+    ),
+    latest AS (
+      -- the passage each class was given most recently
+      SELECT DISTINCT ON (a."classId") a."classId", a."passageId", p.title
+      FROM "Assignment" a JOIN "Class" c ON c.id = a."classId" JOIN "Passage" p ON p.id = a."passageId"
+      WHERE c."teacherId" = ${teacherId} AND a."passageId" IS NOT NULL
+      ORDER BY a."classId", a."createdAt" DESC
+    ),
+    att AS (
+      -- each student's latest counted attempt at it
+      SELECT DISTINCT ON (l."classId", pa."userId") l."classId", l."passageId", l.title, pa.id, pa."firstSubmittedAt"
+      FROM latest l
+      JOIN "Enrollment" e ON e."classId" = l."classId"
+      JOIN "PassageAttempt" pa ON pa."userId" = e."userId" AND pa."passageId" = l."passageId" AND pa."invalidatedAt" IS NULL
+      ORDER BY l."classId", pa."userId", pa."startedAt" DESC
+    )
+    SELECT
+      (SELECT coalesce(json_agg(m ORDER BY m."classCreated" DESC, m.name), '[]') FROM (
+        SELECT c.id AS "classId", c.name AS "className", c."createdAt" AS "classCreated", u.id AS "userId", u.name,
+               ${ms(Prisma.sql`u."lastActiveAt"`)} AS "lastActiveAt", (u."telegramChatId" IS NOT NULL) AS linked,
+               (SELECT count(*) FROM "AssignmentRecipient" r JOIN "Assignment" a ON a.id = r."assignmentId" JOIN "Class" c2 ON c2.id = a."classId"
+                 WHERE r."studentId" = u.id AND r."completedAt" IS NULL AND c2."teacherId" = ${teacherId})::int AS "open"
+        FROM "Class" c LEFT JOIN "Enrollment" e ON e."classId" = c.id LEFT JOIN "User" u ON u.id = e."userId"
+        WHERE c."teacherId" = ${teacherId}
+      ) m) AS members,
+      (SELECT coalesce(json_agg(s ORDER BY s.name, s.title), '[]') FROM (
+        SELECT a."userId", u.name, a."passageId", p.title, array_agg(qa.number ORDER BY qa.number) AS questions
+        FROM "QuestionAnswer" qa
+        JOIN "PassageAttempt" a ON a.id = qa."attemptId"
+        JOIN "User" u ON u.id = a."userId"
+        JOIN "Passage" p ON p.id = a."passageId"
+        WHERE qa.correct = false AND qa.tries >= ${STUCK_TRIES} AND a."invalidatedAt" IS NULL AND a."completedAt" IS NULL
+          AND a."userId" IN (SELECT "userId" FROM students)
+        GROUP BY a."userId", u.name, a."passageId", p.title
+      ) s) AS stuck,
+      (SELECT coalesce(json_agg(f ORDER BY f.kind DESC, f.at DESC), '[]') FROM (
+        SELECT 'passage' AS kind, a.id, a."userId", a.band, a."firstSeconds" AS seconds, a."integrityReasons" AS reasons, u.name, p.title, a."firstSubmittedAt" AS at
+        FROM "PassageAttempt" a JOIN "User" u ON u.id = a."userId" JOIN "Passage" p ON p.id = a."passageId"
+        WHERE a."integrityFlagged" AND a."invalidatedAt" IS NULL AND a."firstSubmittedAt" >= ${utc(flagSince)} AND a."userId" IN (SELECT "userId" FROM students)
+        UNION ALL
+        SELECT 'lesson', a.id, a."userId", a.band, NULL, a."integrityReasons", u.name, l.title, a."firstSubmittedAt"
+        FROM "ListeningAttempt" a JOIN "User" u ON u.id = a."userId" JOIN "ListeningLesson" l ON l.id = a."lessonId"
+        WHERE a."integrityFlagged" AND a."invalidatedAt" IS NULL AND a."firstSubmittedAt" >= ${utc(flagSince)} AND a."userId" IN (SELECT "userId" FROM students)
+      ) f) AS flagged,
+      (SELECT coalesce(json_agg(d), '[]') FROM (
+        SELECT a.id, a."classId", c.name AS "className", coalesce(p.title, l.title) AS title, a."passageId", ${ms(Prisma.sql`a."dueAt"`)} AS "dueAt",
+               (SELECT count(*) FROM "AssignmentRecipient" r WHERE r."assignmentId" = a.id AND r."completedAt" IS NOT NULL)::int AS done,
+               (SELECT count(*) FROM "AssignmentRecipient" r WHERE r."assignmentId" = a.id)::int AS total
+        FROM "Assignment" a JOIN "Class" c ON c.id = a."classId"
+        LEFT JOIN "Passage" p ON p.id = a."passageId" LEFT JOIN "ListeningLesson" l ON l.id = a."lessonId"
+        WHERE c."teacherId" = ${teacherId}
+          AND (a."dueAt" IS NULL OR a."dueAt" >= ${utc(dueFrom)})
+          AND ((p.id IS NOT NULL AND p."archivedAt" IS NULL) OR (l.id IS NOT NULL AND l."archivedAt" IS NULL))
+        ORDER BY a."dueAt" ASC NULLS LAST, a."createdAt" DESC
+        LIMIT 6
+      ) d) AS due,
+      (SELECT coalesce(json_agg(g), '[]') FROM (
+        -- wrong first answers on the latest passage, counted per question and answer (blanks are not a "choice")
+        SELECT att."classId", att."passageId", att.title, qa.number, upper(btrim(qa.history->0->>'answer')) AS answer, count(*)::int AS count
+        FROM att JOIN "QuestionAnswer" qa ON qa."attemptId" = att.id
+        WHERE att."firstSubmittedAt" IS NOT NULL AND qa."firstCorrect" = false AND btrim(coalesce(qa.history->0->>'answer', '')) <> ''
+        GROUP BY 1, 2, 3, 4, 5
+      ) g) AS magnets,
+      (SELECT coalesce(json_agg(k), '[]') FROM (
+        SELECT "classId", count(*)::int AS submitted FROM att WHERE "firstSubmittedAt" IS NOT NULL GROUP BY 1
+      ) k) AS submitted`;
+  return row!;
+}
+
 /**
  * What needs this teacher today, worst first: students stuck on a question, flagged first tries, questions that
  * tricked most of a class, and students who have gone quiet with homework open. Plus homework coming due.
  */
 export const teacherToday = cache(async (teacherId: string) => {
-  const classes = await db.class.findMany({ where: { teacherId }, select: { id: true, name: true, _count: { select: { enrollments: true } } }, orderBy: { createdAt: "desc" } });
-  const classIds = classes.map((c) => c.id);
-  const enrollments = await db.enrollment.findMany({ where: { classId: { in: classIds } }, select: { userId: true, classId: true } });
-  const studentIds = [...new Set(enrollments.map((e) => e.userId))];
-  const classOf = new Map(enrollments.map((e) => [e.userId, e.classId]));
-  const flagSince = addDays(new Date(), -FLAG_DAYS);
-  const quietSince = addDays(new Date(), -INACTIVE_DAYS);
-  const mineFlag = { userId: { in: studentIds }, integrityFlagged: true, invalidatedAt: null, firstSubmittedAt: { gte: flagSince } };
+  const now = new Date();
+  const quietSince = addDays(now, -INACTIVE_DAYS).getTime();
+  const { members, stuck, flagged, due, magnets: wrong, submitted } = await todayRows(teacherId, addDays(now, -FLAG_DAYS), addDays(now, -2));
 
-  const [stuck, flaggedReading, flaggedListening, quiet, assignments, linked] = await Promise.all([
-    Promise.all(classIds.map(async (id) => (await stuckStudents(id)).map((s) => ({ ...s, classId: id })))).then((r) => r.flat()),
-    db.passageAttempt.findMany({ where: mineFlag, select: { id: true, userId: true, band: true, firstSeconds: true, integrityReasons: true, user: { select: { name: true } }, passage: { select: { title: true } } } }),
-    db.listeningAttempt.findMany({ where: mineFlag, select: { id: true, userId: true, band: true, integrityReasons: true, user: { select: { name: true } }, lesson: { select: { title: true } } } }),
-    db.user.findMany({
-      where: {
-        id: { in: studentIds },
-        OR: [{ lastActiveAt: null }, { lastActiveAt: { lt: quietSince } }],
-        recipients: { some: { completedAt: null, assignment: { class: { teacherId } } } },
-      },
-      select: { id: true, name: true, lastActiveAt: true, telegramChatId: true, _count: { select: { recipients: { where: { completedAt: null, assignment: { class: { teacherId } } } } } } },
-    }),
-    db.assignment.findMany({
-      where: { classId: { in: classIds }, OR: [{ dueAt: null }, { dueAt: { gte: addDays(new Date(), -2) } }], AND: [{ OR: [{ passage: { archivedAt: null } }, { lesson: { archivedAt: null } }] }] },
-      orderBy: [{ dueAt: { sort: "asc", nulls: "last" } }, { createdAt: "desc" }],
-      take: 6,
-      select: {
-        id: true,
-        classId: true,
-        dueAt: true,
-        passageId: true,
-        class: { select: { name: true } },
-        passage: { select: { title: true } },
-        lesson: { select: { title: true } },
-        recipients: { select: { completedAt: true } },
-      },
-    }),
-    db.user.findMany({ where: { id: { in: studentIds }, telegramChatId: { not: null } }, select: { id: true } }).then((r) => new Set(r.map((u) => u.id))),
-  ]);
-
-  // The latest passage each class was given: its most popular wrong answer, if it tricked half the class or more.
-  const latestPassage = new Map<string, { passageId: string; title: string }>();
-  for (const a of await db.assignment.findMany({ where: { classId: { in: classIds }, passageId: { not: null } }, orderBy: { createdAt: "desc" }, select: { classId: true, passageId: true, passage: { select: { title: true } } } })) {
-    if (!latestPassage.has(a.classId)) latestPassage.set(a.classId, { passageId: a.passageId!, title: a.passage!.title });
+  const classes = [...new Map(members.map((m) => [m.classId, m.className])).entries()];
+  const className = new Map(classes);
+  const students = new Map<string, Member>();
+  const classOf = new Map<string, string>();
+  for (const m of members) {
+    if (!m.userId) continue;
+    students.set(m.userId, m);
+    classOf.set(m.userId, m.classId);
   }
-  const magnets = (
-    await Promise.all(
-      [...latestPassage.entries()].map(async ([classId, p]) => {
-        const heat = await passageHeatmap(classId, p.passageId);
-        const top = heat.magnets[0];
-        return top && heat.submitted >= 3 && top.share >= 0.5 ? { classId, ...p, ...top, submitted: heat.submitted } : null;
-      }),
-    )
-  ).filter((m) => m !== null);
+  const quiet = [...students.values()].filter((u) => u.open > 0 && (u.lastActiveAt === null || u.lastActiveAt < quietSince));
+
+  // A class's mistake magnet: the wrong answer most of it chose on one question, if that is half the class or more.
+  const submittedIn = new Map(submitted.map((s) => [s.classId, s.submitted]));
+  const best = new Map<string, Magnet>();
+  for (const w of wrong) {
+    const b = best.get(w.classId);
+    if (!b || w.count > b.count || (w.count === b.count && (w.number < b.number || (w.number === b.number && w.answer < b.answer)))) best.set(w.classId, w);
+  }
+  const magnets = classes
+    .map(([classId]) => {
+      const m = best.get(classId);
+      const n = submittedIn.get(classId) ?? 0;
+      return m && n >= 3 && m.count / n >= 0.5 ? { ...m, submitted: n } : null;
+    })
+    .filter((m) => m !== null);
 
   const student = (id: string) => `/teacher/classes/${classOf.get(id)}/students/${id}`;
   const items: Attention[] = [
@@ -106,30 +174,20 @@ export const teacherToday = cache(async (teacherId: string) => {
       (s): Attention => ({
         id: `stuck:${s.userId}:${s.passageId}`,
         tone: "bad",
-        title: `${s.name} is stuck on ${s.questions.length > 1 ? "questions" : "question"} ${s.questions.sort((a, b) => a - b).join(", ")} of “${s.title}”`,
+        title: `${s.name} is stuck on ${s.questions.length > 1 ? "questions" : "question"} ${s.questions.join(", ")} of “${s.title}”`,
         meta: "Three or more wrong tries and still red",
         href: student(s.userId),
-        action: { kind: "nudge", studentId: s.userId, name: s.name, linked: linked.has(s.userId) },
+        action: { kind: "nudge", studentId: s.userId, name: s.name, linked: !!students.get(s.userId)?.linked },
       }),
     ),
-    ...flaggedReading.map(
+    ...flagged.map(
       (a): Attention => ({
         id: `flag:${a.id}`,
         tone: "bad",
-        title: `${a.user.name}'s first try at “${a.passage.title}” was flagged`,
-        meta: [a.band !== null && `Band ${a.band}`, a.firstSeconds && `${Math.round(a.firstSeconds / 60)} min`, a.integrityReasons.length && a.integrityReasons.map(reasonLabel).join(", ")].filter(Boolean).join(" · "),
+        title: `${a.name}'s first try at “${a.title}” was flagged`,
+        meta: [a.band !== null && `Band ${a.band}`, a.seconds && `${Math.round(a.seconds / 60)} min`, a.reasons.length && a.reasons.map(reasonLabel).join(", ")].filter(Boolean).join(" · "),
         href: student(a.userId),
-        action: { kind: "retake", attemptKind: "passage", attemptId: a.id, name: a.user.name },
-      }),
-    ),
-    ...flaggedListening.map(
-      (a): Attention => ({
-        id: `flag:${a.id}`,
-        tone: "bad",
-        title: `${a.user.name}'s first try at “${a.lesson.title}” was flagged`,
-        meta: [a.band !== null && `Band ${a.band}`, a.integrityReasons.length && a.integrityReasons.map(reasonLabel).join(", ")].filter(Boolean).join(" · "),
-        href: student(a.userId),
-        action: { kind: "retake", attemptKind: "lesson", attemptId: a.id, name: a.user.name },
+        action: { kind: "retake", attemptKind: a.kind, attemptId: a.id, name: a.name },
       }),
     ),
     ...magnets.map(
@@ -137,35 +195,35 @@ export const teacherToday = cache(async (teacherId: string) => {
         id: `magnet:${m.classId}:${m.number}`,
         tone: "warn",
         title: `${m.count} of ${m.submitted} chose ${m.answer} on Q${m.number}`,
-        meta: `“${m.title}” · ${classes.find((c) => c.id === m.classId)?.name}. Worth five minutes in class`,
+        meta: `“${m.title}” · ${className.get(m.classId)}. Worth five minutes in class`,
         href: `/teacher/classes/${m.classId}?tab=passages&p=${m.passageId}`,
         action: { kind: "link", label: "See insights", href: `/teacher/classes/${m.classId}?tab=passages&p=${m.passageId}` },
       }),
     ),
     ...quiet.map(
       (u): Attention => ({
-        id: `quiet:${u.id}`,
+        id: `quiet:${u.userId}`,
         tone: "muted",
         title: `${u.name} has been quiet`,
-        meta: `Last active ${ago(u.lastActiveAt)} · ${u._count.recipients} homework open`,
-        href: student(u.id),
-        action: { kind: "nudge", studentId: u.id, name: u.name, linked: !!u.telegramChatId },
+        meta: `Last active ${ago(u.lastActiveAt === null ? null : new Date(u.lastActiveAt))} · ${u.open} homework open`,
+        href: student(u.userId!),
+        action: { kind: "nudge", studentId: u.userId!, name: u.name!, linked: u.linked },
       }),
     ),
   ];
 
-  const dueSoon: DueSoon[] = assignments.map((a) => ({
+  const dueSoon: DueSoon[] = due.map((a) => ({
     id: a.id,
     classId: a.classId,
-    className: a.class.name,
-    title: a.passage?.title ?? a.lesson?.title ?? "",
+    className: a.className,
+    title: a.title,
     kind: a.passageId ? "reading" : "listening",
-    dueAt: a.dueAt,
-    done: a.recipients.filter((r) => r.completedAt).length,
-    total: a.recipients.length,
+    dueAt: a.dueAt === null ? null : new Date(a.dueAt),
+    done: a.done,
+    total: a.total,
   }));
 
-  return { items, dueSoon, classes: classes.length, students: studentIds.length };
+  return { items, dueSoon, classes: classes.length, students: students.size };
 });
 
 const REASONS: Record<string, string> = {

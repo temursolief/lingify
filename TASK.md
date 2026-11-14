@@ -19,7 +19,8 @@ which also charges missed days the first time anyone looks after midnight); rule
 
 **2026-11-14: teacher side.** The sidebar's Today count (about 30 queries) was computed on every teacher page and
 queued in front of each page's own query, which is why Listening felt slow; it is now cached for a minute per teacher
-(`teacherBadge`). Homework can be given as many passages or lessons at once (a checklist; one assignment each). A
+(`teacherBadge`). The Today page's data (`teacherToday`) is now one SQL statement instead of about 40 queries:
+3.0 s → 0.18 s on Neon, same results. Homework can be given as many passages or lessons at once (a checklist; one assignment each). A
 passage JSON may carry its own flashcards in a `deck` (word cards or free front/back cards), so no `.apkg` is needed;
 the plain shape still works. Examples: `public/samples/passage-example.json` and `passage-with-deck-example.json`.
 

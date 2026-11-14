@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BookOpenText, Headphones, Plus, SealCheck } from "@/components/icons";
 import { accentOutline, Card, PageHeader, PageSkeleton, ProgressBar, quietOutline, SectionTitle } from "@/components/ui";
-import { requireTeacher } from "@/lib/auth";
+import { getSession, requireTeacher } from "@/lib/auth";
 import { dueLabel, teacherToday, type Attention } from "@/lib/teacher-today";
 import { formatLongDay } from "@/lib/time";
 import { NudgeButton, RetakeNowButton } from "./today-actions";
@@ -29,8 +29,11 @@ function Fix({ item }: { item: Attention }) {
 }
 
 async function TodayContent() {
-  const teacher = await requireTeacher();
-  const { items, dueSoon, classes, students } = await teacherToday(teacher.id);
+  // The session cookie names the teacher without a query, so the list is fetched alongside the account check instead
+  // of after it; requireTeacher still sends anyone else away before anything is shown.
+  const session = await getSession();
+  const [, today] = await Promise.all([requireTeacher(), session ? teacherToday(session.userId) : null]);
+  const { items, dueSoon, classes, students } = today!;
   const firstClass = dueSoon[0]?.classId;
   return (
     <>
