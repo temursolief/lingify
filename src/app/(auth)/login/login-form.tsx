@@ -8,7 +8,7 @@ type Status = "idle" | "starting" | "waiting" | "unknown" | "pending" | "denied"
 
 const MESSAGES: Partial<Record<Status, { text: string; tone: "muted" | "warn" | "bad" | "good" }>> = {
   waiting: { text: "Telegram is open: press Start, then “Yes, it’s me”. This page logs you in by itself.", tone: "muted" },
-  unknown: { text: "You’re new: send the bot your class code and your name. Your teacher then approves you, and the bot tells you.", tone: "warn" },
+  unknown: { text: "This Telegram isn’t connected to Lingify yet. New here? Send the bot your class code and your name, and your teacher approves you. Already have an account? Log in with your email below and connect Telegram in Settings, so you keep your progress.", tone: "warn" },
   pending: { text: "Your teacher hasn’t approved you yet. The bot will message you when they do.", tone: "warn" },
   denied: { text: "Log-in cancelled in Telegram.", tone: "bad" },
   expired: { text: "That log-in expired. Tap the button to try again.", tone: "bad" },
@@ -89,7 +89,7 @@ export function LoginForm({ notice }: { notice?: string }) {
       <p className="mt-3 text-xs text-muted">New here? Open the bot and send it your class code. You can log in once your teacher approves you.</p>
 
       <details className="mt-6 border-t border-line pt-4" open={!!state?.error}>
-        <summary className="caps cursor-pointer text-[12px] text-muted">Teachers: log in with email</summary>
+        <summary className="caps cursor-pointer text-[12px] text-muted">Log in with email (teachers, and students with an account)</summary>
         <form action={action} className="mt-3">
           <div className="space-y-4">
             <Field label="Email" name="email" type="email" autoComplete="email" required />

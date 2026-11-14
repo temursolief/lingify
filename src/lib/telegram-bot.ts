@@ -27,7 +27,9 @@ const accountOf = (chatId: string) =>
   });
 type Account = NonNullable<Awaited<ReturnType<typeof accountOf>>>;
 
-const ASK_CODE = "Hi! I'm the Lingify bot. 👋\n\nTo start, send me your <b>class code</b>: the six letters your teacher gave you.";
+const ASK_CODE =
+  "Hi! I'm the Lingify bot. 👋\n\n<b>New to Lingify?</b> Send me your <b>class code</b>: the six letters your teacher gave you.\n\n" +
+  "<b>Already have an account</b> (email and password)? Don't send the code, or you'll start again from zero. Log in on the website with your email, open <b>Settings → Connect Telegram</b>, and from then on you can log in here.";
 const HELP = "Commands:\n/login: open Lingify\n/help: this message\n\nNew here? Send me your class code.";
 
 function waitingText(a: Account) {

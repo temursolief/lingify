@@ -6,6 +6,12 @@ export async function POST(request: Request) {
   if (!secret || request.headers.get("x-telegram-bot-api-secret-token") !== secret) {
     return new Response(null, { status: 401 });
   }
-  await handleUpdate(await request.json().catch(() => ({})));
+  try {
+    await handleUpdate(await request.json().catch(() => ({})));
+  } catch (error) {
+    // Answer 200 anyway: an error status makes Telegram resend the same update again and again, repeating every
+    // message the bot already sent for it.
+    console.error("[telegram webhook]", error);
+  }
   return new Response(null, { status: 200 });
 }

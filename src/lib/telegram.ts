@@ -9,8 +9,9 @@ export function botLink(code: string) {
   return `https://t.me/${process.env.TELEGRAM_BOT_USERNAME}?start=${encodeURIComponent(code)}`;
 }
 
+/** The site's address for links in messages. Netlify sets URL to the production address when APP_URL is missing. */
 export function appUrl(path = "") {
-  return `${process.env.APP_URL ?? "http://localhost:3000"}${path}`;
+  return `${(process.env.APP_URL || process.env.URL || "http://localhost:3000").replace(/\/$/, "")}${path}`;
 }
 
 export type Button = { text: string; callback_data?: string; url?: string };
