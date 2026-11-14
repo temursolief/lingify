@@ -338,11 +338,24 @@ running.
 | `npm test` | Unit tests: Anki scheduler, passage format and grading, .apkg import, card templates, dates, integrity rules. With `TEST_DATABASE_URL` set to a throwaway database (migrations applied), also the proctored-submission tests against PostgreSQL |
 | `npm run lint` | ESLint |
 | `npm run telegram:remind` | Telegram reminders (`-- --weekly` for teacher summaries, `-- --dry-run` to preview) |
-| `npm run telegram:bot` | Telegram bot in long-polling mode, for local development |
+| `npm run telegram:bot` | Telegram bot in long-polling mode, for local development. **Removes the webhook: use a separate test bot, never the production one** |
 
-## Telegram reminders
+## Telegram log-in, join requests and reminders
 
-Students and teachers link Telegram in Settings: the app gives a one-time link that opens the bot with `/start CODE`.
+**Students log in with Telegram; there is no sign-up page.** A new student opens the bot, sends their class code and
+their full name, and waits: the request shows on the class page and on Today, and (if the teacher linked Telegram) the
+bot sends the teacher Approve / Decline buttons. Approved students get a log-in link from the bot. From then on they
+tap **Log in with Telegram** on the website (the bot asks "Log in as … on Chrome on Windows? Yes / No"; the waiting
+browser is logged in) or send `/login` to the bot for a one-time link. Only students with an approved class can log in;
+one removed from every class is logged out. Teachers log in with email and password; admin teachers add teacher
+accounts in Settings. Students from before this keep their email log-in and can connect Telegram in Settings.
+
+Security: a website log-in code works once, for 10 minutes, only in the browser that holds its secret cookie, and only
+for the Telegram account that opened it first; a one-time link is spent by a button press (POST), not by opening it.
+Code: `src/lib/telegram-bot.ts` (the conversation), `src/lib/telegram-login.ts` (tokens), `src/lib/enrollments.ts`
+(requests and approval). Set `TELEGRAM_DRY_RUN=1` to print bot messages instead of sending them.
+
+Students and teachers can also link Telegram in Settings: the app gives a one-time link that opens the bot with `/start CODE`.
 
 1. Create a bot with [@BotFather](https://t.me/BotFather) and set `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME` and
    `APP_URL` in `.env`.

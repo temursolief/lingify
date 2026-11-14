@@ -56,7 +56,7 @@ async function StudentContent(props: PageProps<"/teacher/classes/[id]/students/[
   const [cls, student, summary, breakdown, attempts, lessons] = await Promise.all([
     teacherClass(id, teacher.id),
     db.$queryRaw<User[]>`
-      SELECT u.* FROM "Enrollment" e JOIN "User" u ON u.id = e."userId" WHERE e."userId" = ${studentId} AND e."classId" = ${id}`.then((r) => r[0] ?? null),
+      SELECT u.* FROM "Enrollment" e JOIN "User" u ON u.id = e."userId" WHERE e."userId" = ${studentId} AND e."classId" = ${id} AND e.status = 'APPROVED'`.then((r) => r[0] ?? null),
     studentSummary(studentId),
     errorBreakdown([studentId]),
     // Every first try with its passage and its answers in order: one query.

@@ -1,4 +1,4 @@
-import { handleUpdate } from "@/lib/telegram";
+import { handleUpdate } from "@/lib/telegram-bot";
 
 /** Telegram calls this when someone writes to the bot. Register it with setWebhook and the same secret token. */
 export async function POST(request: Request) {

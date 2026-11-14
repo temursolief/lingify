@@ -40,7 +40,18 @@ export const getSession = cache(async () => decryptSession((await cookies()).get
 export const currentUser = cache((userId: string) =>
   db.user.findUnique({
     where: { id: userId },
-    select: { id: true, email: true, name: true, role: true, uzbekGlosses: true, telegramCode: true, telegramChatId: true, targetBand: true },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      uzbekGlosses: true,
+      telegramCode: true,
+      telegramChatId: true,
+      targetBand: true,
+      // in the same query: a student needs a class that approved them
+      _count: { select: { enrollments: { where: { status: "APPROVED" } } } },
+    },
   }),
 );
 
@@ -50,6 +61,8 @@ export async function requireUser(role?: "STUDENT" | "TEACHER") {
   const user = await currentUser(session.userId);
   if (!user) redirect("/auth/signout");
   if (role && user.role !== role) redirect(user.role === "TEACHER" ? "/teacher" : "/student");
+  // Only students a teacher approved may use Lingify: one removed from every class is logged out.
+  if (user.role === "STUDENT" && user._count.enrollments === 0) redirect("/auth/signout?why=pending");
   return user;
 }
 
@@ -58,7 +71,8 @@ export const requireStudent = () => requireUser("STUDENT");
 export const requireTeacher = () => requireUser("TEACHER");
 
 /** Admin teachers upload Anki decks for the whole system. Set ADMIN_EMAILS="a@school.uz,b@school.uz" in .env. */
-export function isAdmin(email: string) {
+export function isAdmin(email: string | null) {
+  if (!email) return false;
   const list = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
   return list.includes(email.toLowerCase());
 }

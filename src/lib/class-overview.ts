@@ -97,7 +97,7 @@ export async function classOverview(classId: string): Promise<StudentRow[]> {
     FROM "Enrollment" e
     JOIN "User" u ON u.id = e."userId"
     LEFT JOIN LATERAL (${reviewHealthColumns(Prisma.sql`u.id`, addDays(now, -7))}) rh ON true
-    WHERE e."classId" = ${classId}
+    WHERE e."classId" = ${classId} AND e.status = 'APPROVED'
     ORDER BY u.name ASC`;
   return rows.map((r) => ({
     id: r.id,

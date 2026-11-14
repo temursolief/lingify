@@ -304,8 +304,8 @@ export const classGame = cache(async (userId: string): Promise<ClassGame | null>
   const read = async () =>
     (
       await db.$queryRaw<ClassRow[]>`
-        WITH me AS (SELECT e."classId" FROM "Enrollment" e WHERE e."userId" = ${userId} ORDER BY e."joinedAt" DESC LIMIT 1),
-        mem AS (SELECT u.id, u.name, u."xpDirtyFrom" IS NOT NULL AS dirty FROM "Enrollment" e JOIN "User" u ON u.id = e."userId" WHERE e."classId" = (SELECT "classId" FROM me))
+        WITH me AS (SELECT e."classId" FROM "Enrollment" e WHERE e."userId" = ${userId} AND e.status = 'APPROVED' ORDER BY e."joinedAt" DESC LIMIT 1),
+        mem AS (SELECT u.id, u.name, u."xpDirtyFrom" IS NOT NULL AS dirty FROM "Enrollment" e JOIN "User" u ON u.id = e."userId" WHERE e."classId" = (SELECT "classId" FROM me) AND e.status = 'APPROVED')
         SELECT c.id, c.name, c."leagueEnabled", t.name AS "teacherName",
           (SELECT coalesce(json_agg(json_build_object(
              'id', m.id, 'name', m.name, 'dirty', m.dirty,

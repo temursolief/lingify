@@ -34,7 +34,7 @@ export async function errorBreakdown(who: string[] | { classId: string }): Promi
     ? who.length
       ? Prisma.sql`${Prisma.join(who)}`
       : null
-    : Prisma.sql`SELECT "userId" FROM "Enrollment" WHERE "classId" = ${who.classId}`;
+    : Prisma.sql`SELECT "userId" FROM "Enrollment" WHERE "classId" = ${who.classId} AND status = 'APPROVED'`;
   // The first-try misses and the number of passages tried, in one statement.
   const [{ rows, passages }] = users
     ? await db.$queryRaw<{ rows: { type: string; errorTag: ErrorTag | null; evidenceOk: boolean | null; correct: boolean }[]; passages: number }[]>`
@@ -131,7 +131,7 @@ export async function passageHeatmap(classId: string, chosen: string | null) {
         SELECT a."passageId" FROM "Assignment" a JOIN "Passage" p ON p.id = a."passageId"
         WHERE a."classId" = ${classId} AND p."archivedAt" IS NULL ORDER BY a."createdAt" DESC LIMIT 1)) AS id
     ),
-    mem AS (SELECT u.id, u.name FROM "Enrollment" e JOIN "User" u ON u.id = e."userId" WHERE e."classId" = ${classId})
+    mem AS (SELECT u.id, u.name FROM "Enrollment" e JOIN "User" u ON u.id = e."userId" WHERE e."classId" = ${classId} AND e.status = 'APPROVED')
     SELECT (SELECT id FROM pick) AS "passageId",
       (SELECT coalesce(json_agg(json_build_object('id', id, 'name', name) ORDER BY name), '[]') FROM mem) AS students,
       (SELECT coalesce(json_agg(t), '[]') FROM (
@@ -259,9 +259,11 @@ export type StuckStudent = { userId: string; name: string; passageId: string; ti
  * A class's students (id and name, for the header and the assign forms) and those with a red question after 3 or
  * more tries, on any passage: one query.
  */
-export async function classRoster(classId: string): Promise<{ students: { id: string; name: string }[]; stuck: StuckStudent[] }> {
-  const [row] = await db.$queryRaw<{ students: { id: string; name: string }[]; stuck: StuckStudent[] }[]>`
-    WITH mem AS (SELECT u.id, u.name FROM "Enrollment" e JOIN "User" u ON u.id = e."userId" WHERE e."classId" = ${classId})
+export type JoinRequest = { id: string; name: string; username: string | null; requestedAt: number; naming: boolean };
+
+export async function classRoster(classId: string): Promise<{ students: { id: string; name: string }[]; stuck: StuckStudent[]; requests: JoinRequest[] }> {
+  const [row] = await db.$queryRaw<{ students: { id: string; name: string }[]; stuck: StuckStudent[]; requests: JoinRequest[] }[]>`
+    WITH mem AS (SELECT u.id, u.name FROM "Enrollment" e JOIN "User" u ON u.id = e."userId" WHERE e."classId" = ${classId} AND e.status = 'APPROVED')
     SELECT
       (SELECT coalesce(json_agg(json_build_object('id', id, 'name', name) ORDER BY name), '[]') FROM mem) AS students,
       (SELECT coalesce(json_agg(s ORDER BY s.name, s.title), '[]') FROM (
@@ -272,7 +274,11 @@ export async function classRoster(classId: string): Promise<{ students: { id: st
         JOIN "Passage" p ON p.id = a."passageId"
         WHERE q.correct = false AND q.tries >= ${STUCK_TRIES} AND a."invalidatedAt" IS NULL AND a."completedAt" IS NULL
         GROUP BY a."userId", m.name, a."passageId", p.title
-      ) s) AS stuck`;
+      ) s) AS stuck,
+      -- students asking to join, oldest first ("naming": still telling the bot their name)
+      (SELECT coalesce(json_agg(json_build_object('id', u.id, 'name', u.name, 'username', u."telegramUsername",
+                'requestedAt', ${ms(Prisma.sql`e."joinedAt"`)}, 'naming', u."telegramStep" = 'name') ORDER BY e."joinedAt"), '[]')
+        FROM "Enrollment" e JOIN "User" u ON u.id = e."userId" WHERE e."classId" = ${classId} AND e.status = 'PENDING') AS requests`;
   return row!;
 }
 

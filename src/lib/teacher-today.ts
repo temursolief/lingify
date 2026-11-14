@@ -48,7 +48,8 @@ type Stuck = { userId: string; name: string; passageId: string; title: string; q
 type Flagged = { kind: "passage" | "lesson"; id: string; userId: string; band: number | null; seconds: number | null; reasons: string[]; name: string; title: string };
 type Due = { id: string; classId: string; className: string; title: string; passageId: string | null; dueAt: number | null; done: number; total: number };
 type Magnet = { classId: string; passageId: string; title: string; number: number; answer: string; count: number };
-type Today = { members: Member[]; stuck: Stuck[]; flagged: Flagged[]; due: Due[]; magnets: Magnet[]; submitted: { classId: string; submitted: number }[] };
+type Request = { classId: string; className: string; names: string[] };
+type Today = { members: Member[]; stuck: Stuck[]; flagged: Flagged[]; due: Due[]; magnets: Magnet[]; submitted: { classId: string; submitted: number }[]; requests: Request[] };
 
 
 /**
@@ -60,7 +61,7 @@ type Today = { members: Member[]; stuck: Stuck[]; flagged: Flagged[]; due: Due[]
 async function todayRows(teacherId: string, flagSince: Date, dueFrom: Date): Promise<Today> {
   const [row] = await db.$queryRaw<Today[]>`
     WITH students AS (
-      SELECT DISTINCT e."userId" FROM "Enrollment" e JOIN "Class" c ON c.id = e."classId" WHERE c."teacherId" = ${teacherId}
+      SELECT DISTINCT e."userId" FROM "Enrollment" e JOIN "Class" c ON c.id = e."classId" WHERE c."teacherId" = ${teacherId} AND e.status = 'APPROVED'
     ),
     latest AS (
       -- the passage each class was given most recently
@@ -73,7 +74,7 @@ async function todayRows(teacherId: string, flagSince: Date, dueFrom: Date): Pro
       -- each student's latest counted attempt at it
       SELECT DISTINCT ON (l."classId", pa."userId") l."classId", l."passageId", l.title, pa.id, pa."firstSubmittedAt"
       FROM latest l
-      JOIN "Enrollment" e ON e."classId" = l."classId"
+      JOIN "Enrollment" e ON e."classId" = l."classId" AND e.status = 'APPROVED'
       JOIN "PassageAttempt" pa ON pa."userId" = e."userId" AND pa."passageId" = l."passageId" AND pa."invalidatedAt" IS NULL
       ORDER BY l."classId", pa."userId", pa."startedAt" DESC
     )
@@ -83,7 +84,7 @@ async function todayRows(teacherId: string, flagSince: Date, dueFrom: Date): Pro
                ${ms(Prisma.sql`u."lastActiveAt"`)} AS "lastActiveAt", (u."telegramChatId" IS NOT NULL) AS linked,
                (SELECT count(*) FROM "AssignmentRecipient" r JOIN "Assignment" a ON a.id = r."assignmentId" JOIN "Class" c2 ON c2.id = a."classId"
                  WHERE r."studentId" = u.id AND r."completedAt" IS NULL AND c2."teacherId" = ${teacherId})::int AS "open"
-        FROM "Class" c LEFT JOIN "Enrollment" e ON e."classId" = c.id LEFT JOIN "User" u ON u.id = e."userId"
+        FROM "Class" c LEFT JOIN "Enrollment" e ON e."classId" = c.id AND e.status = 'APPROVED' LEFT JOIN "User" u ON u.id = e."userId"
         WHERE c."teacherId" = ${teacherId}
       ) m) AS members,
       (SELECT coalesce(json_agg(s ORDER BY s.name, s.title), '[]') FROM (
@@ -126,7 +127,14 @@ async function todayRows(teacherId: string, flagSince: Date, dueFrom: Date): Pro
       ) g) AS magnets,
       (SELECT coalesce(json_agg(k), '[]') FROM (
         SELECT "classId", count(*)::int AS submitted FROM att WHERE "firstSubmittedAt" IS NOT NULL GROUP BY 1
-      ) k) AS submitted`;
+      ) k) AS submitted,
+      (SELECT coalesce(json_agg(q), '[]') FROM (
+        -- students asking to join, per class
+        SELECT c.id AS "classId", c.name AS "className", array_agg(u.name ORDER BY e."joinedAt") AS names
+        FROM "Enrollment" e JOIN "Class" c ON c.id = e."classId" JOIN "User" u ON u.id = e."userId"
+        WHERE c."teacherId" = ${teacherId} AND e.status = 'PENDING'
+        GROUP BY c.id, c.name
+      ) q) AS requests`;
   return row!;
 }
 
@@ -137,7 +145,7 @@ async function todayRows(teacherId: string, flagSince: Date, dueFrom: Date): Pro
 export const teacherToday = cache(async (teacherId: string) => {
   const now = new Date();
   const quietSince = addDays(now, -INACTIVE_DAYS).getTime();
-  const { members, stuck, flagged, due, magnets: wrong, submitted } = await todayRows(teacherId, addDays(now, -FLAG_DAYS), addDays(now, -2));
+  const { members, stuck, flagged, due, magnets: wrong, submitted, requests } = await todayRows(teacherId, addDays(now, -FLAG_DAYS), addDays(now, -2));
 
   const classes = [...new Map(members.map((m) => [m.classId, m.className])).entries()];
   const className = new Map(classes);
@@ -167,6 +175,16 @@ export const teacherToday = cache(async (teacherId: string) => {
 
   const student = (id: string) => `/teacher/classes/${classOf.get(id)}/students/${id}`;
   const items: Attention[] = [
+    ...requests.map(
+      (r): Attention => ({
+        id: `requests:${r.classId}`,
+        tone: "accent",
+        title: `${r.names.length} student${r.names.length === 1 ? "" : "s"} asking to join ${r.className}`,
+        meta: r.names.slice(0, 4).join(", ") + (r.names.length > 4 ? ` and ${r.names.length - 4} more` : ""),
+        href: `/teacher/classes/${r.classId}`,
+        action: { kind: "link", label: "Review", href: `/teacher/classes/${r.classId}` },
+      }),
+    ),
     ...stuck.map(
       (s): Attention => ({
         id: `stuck:${s.userId}:${s.passageId}`,

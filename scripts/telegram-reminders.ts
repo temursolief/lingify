@@ -28,7 +28,7 @@ async function reminderFor(userId: string) {
 }
 
 async function remindStudents() {
-  const students = await db.user.findMany({ where: { role: "STUDENT", telegramChatId: { not: null } } });
+  const students = await db.user.findMany({ where: { role: "STUDENT", telegramChatId: { not: null }, enrollments: { some: { status: "APPROVED" } } } });
   let sent = 0;
   for (const s of students) {
     const r = await reminderFor(s.id);
@@ -40,7 +40,7 @@ async function remindStudents() {
 async function summariseForTeachers() {
   const teachers = await db.user.findMany({
     where: { role: "TEACHER", telegramChatId: { not: null } },
-    include: { classesTaught: { include: { enrollments: { include: { user: { select: { id: true, name: true } } } } } } },
+    include: { classesTaught: { include: { enrollments: { where: { status: "APPROVED" }, include: { user: { select: { id: true, name: true } } } } } } },
   });
   const since = new Date(Date.now() - 7 * 86_400_000);
   for (const t of teachers) {

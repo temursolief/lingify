@@ -1,8 +1,7 @@
 /**
- * Telegram bot integration. Needs TELEGRAM_BOT_TOKEN and TELEGRAM_BOT_USERNAME (from @BotFather);
- * without them every function is a no-op and the settings page explains how to switch reminders on.
+ * Telegram Bot API helpers and message texts. Needs TELEGRAM_BOT_TOKEN and TELEGRAM_BOT_USERNAME (from @BotFather);
+ * without them every call is a no-op. What the bot does with incoming messages is in telegram-bot.ts.
  */
-import { db } from "./db";
 
 export const telegramConfigured = () => !!process.env.TELEGRAM_BOT_TOKEN && !!process.env.TELEGRAM_BOT_USERNAME;
 
@@ -14,42 +13,46 @@ export function appUrl(path = "") {
   return `${process.env.APP_URL ?? "http://localhost:3000"}${path}`;
 }
 
-export async function sendMessage(chatId: string, text: string): Promise<boolean> {
+export type Button = { text: string; callback_data?: string; url?: string };
+
+/**
+ * Calls the Bot API. With TELEGRAM_DRY_RUN=1 nothing is sent: the call is printed instead, so the bot can be tried
+ * locally with simulated updates without touching the real bot or its webhook.
+ */
+async function callApi(method: string, body: Record<string, unknown>): Promise<boolean> {
+  if (process.env.TELEGRAM_DRY_RUN === "1") {
+    console.log(`[telegram:${method}]`, JSON.stringify(body));
+    return true;
+  }
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) return false;
-  const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+  const res = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML", disable_web_page_preview: true }),
+    body: JSON.stringify(body),
   }).catch(() => null);
   return !!res?.ok;
 }
 
-type Update = { message?: { chat: { id: number }; text?: string } };
+const keyboard = (buttons?: Button[][]) => (buttons?.length ? { reply_markup: { inline_keyboard: buttons } } : {});
 
-/** Handles "/start CODE" from the bot link: connects the chat to the Lingify account that owns the code. */
-export async function handleUpdate(update: Update) {
-  const msg = update.message;
-  if (!msg?.text) return;
-  const chatId = String(msg.chat.id);
-  const match = msg.text.trim().match(/^\/start\s+([A-Za-z0-9]+)$/);
-  if (!match) {
-    await sendMessage(chatId, "Hello! To connect your Lingify account, open the link on your Lingify Settings page.");
-    return;
-  }
-  const user = await db.user.findUnique({ where: { telegramCode: match[1] } });
-  if (!user) {
-    await sendMessage(chatId, "This link has expired. Please open a new one from your Lingify Settings page.");
-    return;
-  }
-  await db.user.updateMany({ where: { telegramChatId: chatId, NOT: { id: user.id } }, data: { telegramChatId: null } });
-  await db.user.update({ where: { id: user.id }, data: { telegramChatId: chatId, telegramCode: null } });
-  await sendMessage(
-    chatId,
-    user.role === "TEACHER"
-      ? `Connected, ${escapeHtml(user.name)}! You will get a weekly summary of your classes here.`
-      : `Connected, ${escapeHtml(user.name)}! I will remind you here when flashcards are due or a passage from your teacher is waiting.`,
-  );
+export function sendMessage(chatId: string, text: string, buttons?: Button[][]): Promise<boolean> {
+  return callApi("sendMessage", { chat_id: chatId, text, parse_mode: "HTML", disable_web_page_preview: true, ...keyboard(buttons) });
+}
+
+/** Replaces a message the bot sent, e.g. a question whose buttons were just pressed. */
+export function editMessage(chatId: string, messageId: number, text: string, buttons?: Button[][]): Promise<boolean> {
+  return callApi("editMessageText", { chat_id: chatId, message_id: messageId, text, parse_mode: "HTML", disable_web_page_preview: true, ...keyboard(buttons) });
+}
+
+/** Stops the spinner on a pressed button, optionally with a short toast. */
+export function answerCallback(callbackId: string, text?: string): Promise<boolean> {
+  return callApi("answerCallbackQuery", { callback_query_id: callbackId, ...(text ? { text } : {}) });
+}
+
+/** A button that opens a web page. Telegram refuses non-HTTPS addresses (local development), so those become null. */
+export function urlButton(text: string, url: string): Button | null {
+  return url.startsWith("https://") ? { text, url } : null;
 }
 
 export function escapeHtml(s: string) {

@@ -17,6 +17,12 @@ three months of steady work). XP lives in `XpDay` (tenths of a point per student
 which also charges missed days the first time anyone looks after midnight); rules are in `src/lib/xp.ts`,
 `src/lib/fortress.ts`, `src/lib/xp-recount.ts`. The weekly class goal is 150 XP per student.
 
+**2026-11-15: Telegram log-in and teacher approval.** No sign-up page: students join through the bot (class code +
+name), the teacher approves on the class page, on Today or with Telegram buttons, and students log in with Telegram
+(website button confirmed in the bot, or `/login` one-time link). Only approved students can log in. Teachers keep email;
+admins add teachers in Settings. Migration `20261115090000_telegram_login` (enrollment status, optional email and
+password, `LoginToken`). See README "Telegram log-in".
+
 **2026-11-14: teacher side.** The sidebar's Today count (about 30 queries) was computed on every teacher page and
 queued in front of each page's own query, which is why Listening felt slow; it is now cached for a minute per teacher
 (`teacherBadge`). The Today page's data (`teacherToday`) is now one SQL statement instead of about 40 queries:

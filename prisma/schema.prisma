@@ -54,9 +54,10 @@ enum ErrorTag {
 
 model User {
   id             String    @id @default(cuid())
-  email          String    @unique
+  /// teachers (and students from before Telegram log-in) sign in with email and password; Telegram students have neither
+  email          String?   @unique
   name           String
-  passwordHash   String
+  passwordHash   String?
   role           Role
   createdAt      DateTime  @default(now())
   lastActiveAt   DateTime?
@@ -64,6 +65,10 @@ model User {
   uzbekGlosses   Boolean   @default(true)
   telegramCode   String?   @unique
   telegramChatId String?   @unique
+  /// shown to the teacher beside a join request, e.g. "aziza_k"
+  telegramUsername String?
+  /// what the bot is waiting for from this chat during sign-up, e.g. "name"
+  telegramStep   String?
   /// the IELTS band the student is working towards: the end of their band path
   targetBand     Float     @default(7)
   /// XP days from this instant on need recounting (null = XpDay is up to date); see src/lib/gamification.ts
@@ -83,6 +88,7 @@ model User {
   cardStates    CardState[]
   reviewLogs    ReviewLog[]
   ownCards      Card[]                @relation("CardOwner")
+  loginTokens   LoginToken[]
   xpDays        XpDay[]
 }
 
@@ -101,10 +107,20 @@ model Class {
   @@index([teacherId])
 }
 
+/// A student asks to join with the class code (PENDING); the teacher approves (APPROVED) or declines (row deleted).
+/// Only students with an approved class can log in.
+enum EnrollmentStatus {
+  PENDING
+  APPROVED
+}
+
 model Enrollment {
-  userId   String
-  classId  String
-  joinedAt DateTime @default(now())
+  userId     String
+  classId    String
+  joinedAt   DateTime         @default(now())
+  /// existing rows were all approved; every new request is created PENDING
+  status     EnrollmentStatus @default(APPROVED)
+  approvedAt DateTime?
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   class    Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
 
@@ -424,4 +440,32 @@ model XpDay {
   user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, day])
+}
+
+enum LoginTokenStatus {
+  /// waiting for the student to open the bot and confirm
+  WAITING
+  CONFIRMED
+  DENIED
+  /// a session was made from it; it can never be used again
+  USED
+}
+
+/// One Telegram log-in: either started on the website (`secretHash` = SHA-256 of the secret kept in that browser's
+/// cookie, `code` = what the t.me link carries) or a one-time link sent by the bot (`code` only, user known). Short-lived.
+model LoginToken {
+  id          String           @id @default(cuid())
+  code        String           @unique
+  secretHash  String?          @unique
+  status      LoginTokenStatus @default(WAITING)
+  userId      String?
+  user        User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// what the website should tell the student while it waits, e.g. "pending" (asked to join, not approved yet)
+  note        String?
+  /// the browser that asked, e.g. "Chrome on Windows", shown in the bot's confirmation so a stranger's request stands out
+  device      String?
+  createdAt   DateTime         @default(now())
+  expiresAt   DateTime
+
+  @@index([expiresAt])
 }

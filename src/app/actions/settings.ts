@@ -13,6 +13,7 @@ export async function createTelegramCode() {
 
 export async function unlinkTelegram() {
   const user = await requireUser();
-  await db.user.update({ where: { id: user.id }, data: { telegramChatId: null, telegramCode: null } });
+  // Telegram is the only way in for a student without a password: keep it connected.
+  await db.user.updateMany({ where: { id: user.id, OR: [{ role: "TEACHER" }, { passwordHash: { not: null } }] }, data: { telegramChatId: null, telegramCode: null } });
   refresh();
 }

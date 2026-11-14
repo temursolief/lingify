@@ -13,7 +13,7 @@ import { classAssignments, classRoster, errorBreakdown, homeworkMatrix, passageH
 import { clock, POLICY_LABEL } from "@/lib/telemetry";
 import { formatDay } from "@/lib/time";
 import { AssignLessonForm, AssignPassageForm, DeleteAssignmentButton, RetakeButton } from "../../teacher-forms";
-import { LeagueToggle } from "../../today-actions";
+import { JoinRequests, LeagueToggle } from "../../today-actions";
 
 export const metadata: Metadata = { title: "Class" };
 
@@ -40,7 +40,7 @@ async function ClassContent(props: PageProps<"/teacher/classes/[id]">) {
   const tab = TABS.some((t) => t.key === sp.tab) ? String(sp.tab) : "students";
   const base = `/teacher/classes/${cls.id}`;
   // Every tab shows the student count and the stuck count; only the Students tab needs everyone's numbers.
-  const [{ students, stuck }, overview] = await Promise.all([classRoster(cls.id), tab === "students" ? classOverview(cls.id) : null]);
+  const [{ students, stuck, requests }, overview] = await Promise.all([classRoster(cls.id), tab === "students" ? classOverview(cls.id) : null]);
   const rows = overview ?? [];
 
   return (
@@ -51,6 +51,7 @@ async function ClassContent(props: PageProps<"/teacher/classes/[id]">) {
         subtitle={<>Join code <b className="text-ink">{cls.joinCode}</b> · {students.length} student{students.length === 1 ? "" : "s"}{stuck.length > 0 && <span className="text-bad"> · {stuck.length} stuck</span>}</>}
       />
       <Tabs current={tab} items={TABS.map((t) => ({ ...t, href: t.key === "students" ? base : `${base}?tab=${t.key}` }))} />
+      {requests.length > 0 && <JoinRequests classId={cls.id} requests={requests} />}
 
       {tab === "students" && (
         <div className="space-y-4">

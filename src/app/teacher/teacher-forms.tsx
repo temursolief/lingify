@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useActionState, useState, useTransition } from "react";
 import { deleteLesson, uploadLesson } from "@/app/actions/listening";
+import { createTeacher } from "@/app/actions/auth";
 import { assignLesson, assignPassage, createClass, deleteAssignment, deleteDeck, deletePassage, removeStudent, resetAttemptForRetake, uploadPassage, type FormState } from "@/app/actions/teacher";
 import { Button } from "@/components/ui";
 import { POLICY_LABEL, type ProctoringPolicy } from "@/lib/telemetry";
@@ -379,6 +380,21 @@ export function UploadDeckForm({ passageId }: { passageId?: string }) {
       <Button type="submit" disabled={pending}>{pending ? "Importing… large decks take a minute" : "Upload deck"}</Button>
       {message?.ok && <p className="text-sm text-good">{message.ok}</p>}
       {message?.error && <p className="text-sm text-bad">{message.error}</p>}
+    </form>
+  );
+}
+
+/** Admins add teacher accounts here (there is no public sign-up). */
+export function AddTeacherForm() {
+  const [state, action, pending] = useActionState(createTeacher, undefined);
+  return (
+    <form action={action} className="flex flex-col gap-2">
+      <input name="name" placeholder="Name" aria-label="Teacher's name" required className={inputClass} />
+      <input name="email" type="email" placeholder="Email" aria-label="Teacher's email" required className={inputClass} />
+      <input name="password" type="password" placeholder="Password (8 characters or more)" aria-label="Password" minLength={8} required className={inputClass} />
+      <Button type="submit" disabled={pending} className="self-start">{pending ? "Adding…" : "Add teacher"}</Button>
+      {state?.error && <p className="text-sm text-bad">{state.error}</p>}
+      {state?.ok && <p className="text-sm text-good">{state.ok}</p>}
     </form>
   );
 }

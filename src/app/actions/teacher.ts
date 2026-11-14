@@ -8,6 +8,7 @@ import type { ProctoringPolicy } from "@/generated/prisma/client";
 import { teacherClass } from "@/lib/class-overview";
 import { markXpDirty } from "@/lib/xp-store";
 import { deckCardRows } from "@/lib/vocab-cards";
+import { approveRequest, declineRequest } from "@/lib/enrollments";
 import { db } from "@/lib/db";
 import { parsePassageJson } from "@/lib/passage-format";
 import { appUrl, sendMessage } from "@/lib/telegram";
@@ -145,7 +146,7 @@ async function assign(formData: FormData, content: "passage" | "lesson"): Promis
       : await db.listeningLesson.findMany({ where: { id: { in: ids }, archivedAt: null }, select: { id: true, title: true } });
   if (items.length !== ids.length) return { error: `One of the ${noun}s is no longer available. Reload the page and choose again.` };
 
-  const enrolled = (await db.enrollment.findMany({ where: { classId: cls.id }, select: { userId: true } })).map((e) => e.userId);
+  const enrolled = (await db.enrollment.findMany({ where: { classId: cls.id, status: "APPROVED" }, select: { userId: true } })).map((e) => e.userId);
   const picked = formData.getAll("students").map(String).filter((id) => enrolled.includes(id));
   const students = picked.length ? picked : enrolled;
   if (!students.length) return { error: "This class has no students yet." };
@@ -251,7 +252,7 @@ export async function setLeague(classId: string, on: boolean) {
 export async function nudgeStudent(studentId: string): Promise<{ ok?: string; error?: string }> {
   const teacher = await requireTeacher();
   const student = await db.user.findFirst({
-    where: { id: z.string().parse(studentId), enrollments: { some: { class: { teacherId: teacher.id } } } },
+    where: { id: z.string().parse(studentId), enrollments: { some: { status: "APPROVED", class: { teacherId: teacher.id } } } },
     select: { name: true, telegramChatId: true },
   });
   if (!student) return { error: "This student is not in one of your classes." };
@@ -262,4 +263,20 @@ export async function nudgeStudent(studentId: string): Promise<{ ok?: string; er
     `${teacher.name.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]!)} is thinking of you: your Lingify homework is waiting. One small step today keeps your streak going.\n${appUrl("/student")}`,
   );
   return sent ? { ok: "Nudge sent on Telegram" } : { error: "Telegram did not take the message. Try again later." };
+}
+
+/** Approves a student's request to join one of this teacher's classes; the bot tells the student they can log in. */
+export async function approveJoin(classId: string, studentId: string) {
+  const teacher = await requireTeacher();
+  await approveRequest(teacher.id, z.string().parse(classId), z.string().parse(studentId));
+  updateTag(`teacher-badge:${teacher.id}`);
+  refresh();
+}
+
+/** Declines a request to join; the bot tells the student. */
+export async function declineJoin(classId: string, studentId: string) {
+  const teacher = await requireTeacher();
+  await declineRequest(teacher.id, z.string().parse(classId), z.string().parse(studentId));
+  updateTag(`teacher-badge:${teacher.id}`);
+  refresh();
 }

@@ -1,10 +1,15 @@
 /**
  * Local development only: polls Telegram for messages so students and teachers can connect their accounts
  * without a public webhook URL. In production, register /api/telegram/webhook with setWebhook instead.
+ *
+ * WARNING: this removes the bot's webhook first (Telegram allows one or the other). Run it only with a separate
+ * test bot, never with the production bot's token, or the live site stops receiving messages until setWebhook is
+ * called again.
  * Usage: npm run telegram:bot
  */
 import "dotenv/config";
-import { handleUpdate, telegramConfigured } from "../src/lib/telegram";
+import { telegramConfigured } from "../src/lib/telegram";
+import { handleUpdate } from "../src/lib/telegram-bot";
 
 async function main() {
   if (!telegramConfigured()) {

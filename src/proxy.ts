@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE, decryptSession } from "@/lib/session";
 
-const PUBLIC_ONLY = ["/", "/login", "/signup"];
+const PUBLIC_ONLY = ["/", "/login"];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -21,5 +21,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/login", "/signup", "/student/:path*", "/teacher/:path*"],
+  matcher: ["/", "/login", "/student/:path*", "/teacher/:path*"],
 };

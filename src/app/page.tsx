@@ -9,7 +9,7 @@ export default function Home() {
       </p>
       <div className="mt-6 space-y-2">
         <ButtonLink href="/login" className="w-full">Log in</ButtonLink>
-        <ButtonLink href="/signup" variant="secondary" className="w-full">Create an account</ButtonLink>
+        <p className="pt-2 text-center text-sm text-muted">Students: log in with Telegram. New? Send your class code to our Telegram bot, and your teacher approves you.</p>
       </div>
     </PublicShell>
   );

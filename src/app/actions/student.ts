@@ -3,6 +3,7 @@
 import { refresh } from "next/cache";
 import { z } from "zod";
 import { requireStudent } from "@/lib/auth";
+import { requestJoin } from "@/lib/enrollments";
 import { db } from "@/lib/db";
 
 export type FormState = { error?: string; ok?: string } | undefined;
@@ -14,13 +15,10 @@ export async function joinClass(_: FormState, formData: FormData): Promise<FormS
   const cls = await db.class.findUnique({ where: { joinCode: code } });
   if (!cls) return { error: "No class found with that code." };
 
-  await db.enrollment.upsert({
-    where: { userId_classId: { userId: user.id, classId: cls.id } },
-    create: { userId: user.id, classId: cls.id },
-    update: {},
-  });
+  // A request: the teacher approves it before the class shows up.
+  const status = await requestJoin(user.id, cls.id);
   refresh();
-  return { ok: `You joined ${cls.name}.` };
+  return { ok: status === "APPROVED" ? `You're already in ${cls.name}.` : `Request sent. You'll see ${cls.name} once your teacher approves you.` };
 }
 
 export async function setUzbekGlosses(on: boolean) {

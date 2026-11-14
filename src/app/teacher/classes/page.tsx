@@ -16,12 +16,13 @@ async function ClassesContent() {
   const teacher = await requireTeacher();
   // Each class with its counts, who was active this week and who is stuck: one statement.
   const since = addDays(new Date(), -7);
-  const rows = await db.$queryRaw<{ id: string; name: string; joinCode: string; leagueEnabled: boolean; enrollments: number; assignments: number; active: number; stuck: number }[]>`
+  const rows = await db.$queryRaw<{ id: string; name: string; joinCode: string; leagueEnabled: boolean; enrollments: number; pending: number; assignments: number; active: number; stuck: number }[]>`
     SELECT c.id, c.name, c."joinCode", c."leagueEnabled",
-      (SELECT count(*) FROM "Enrollment" e WHERE e."classId" = c.id)::int AS enrollments,
+      (SELECT count(*) FROM "Enrollment" e WHERE e."classId" = c.id AND e.status = 'APPROVED')::int AS enrollments,
+      (SELECT count(*) FROM "Enrollment" e WHERE e."classId" = c.id AND e.status = 'PENDING')::int AS pending,
       (SELECT count(*) FROM "Assignment" a WHERE a."classId" = c.id)::int AS assignments,
-      (SELECT count(*) FROM "Enrollment" e JOIN "User" u ON u.id = e."userId" WHERE e."classId" = c.id AND u."lastActiveAt" >= ${utc(since)})::int AS active,
-      (SELECT count(*) FROM "Enrollment" e WHERE e."classId" = c.id AND EXISTS (
+      (SELECT count(*) FROM "Enrollment" e JOIN "User" u ON u.id = e."userId" WHERE e."classId" = c.id AND e.status = 'APPROVED' AND u."lastActiveAt" >= ${utc(since)})::int AS active,
+      (SELECT count(*) FROM "Enrollment" e WHERE e."classId" = c.id AND e.status = 'APPROVED' AND EXISTS (
         SELECT 1 FROM "PassageAttempt" a JOIN "QuestionAnswer" q ON q."attemptId" = a.id
         WHERE a."userId" = e."userId" AND a."invalidatedAt" IS NULL AND a."completedAt" IS NULL AND q.correct = false AND q.tries >= ${STUCK_TRIES}))::int AS stuck
     FROM "Class" c WHERE c."teacherId" = ${teacher.id} ORDER BY c."createdAt" DESC`;
@@ -61,6 +62,7 @@ async function ClassesContent() {
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   <Badge tone="accent">Code {c.joinCode}</Badge>
+                  {c.pending > 0 && <Badge tone="warn">{c.pending} asking to join</Badge>}
                   {stuck > 0 && <Badge tone="bad">{stuck} stuck</Badge>}
                   {!c.leagueEnabled && <Badge>League off</Badge>}
                 </div>
