@@ -17,7 +17,7 @@ async function FlashcardsContent() {
   const rows = decks.map((deck) => ({ deck, counts: summaries.get(deck.id) ?? { new: 0, learn: 0, due: 0, total: 0 } }));
   return (
     <>
-      <PageHeader kicker="Words" title="Words you’ve met in real passages" subtitle={`Anki scheduling · ${OPTIONS.newPerDay} new cards a day · every card returns within ${OPTIONS.maxInterval} days · +2 XP per card when you take your time`} />
+      <PageHeader kicker="Words" title="Words you’ve met in real passages" subtitle={`Anki scheduling · ${OPTIONS.newPerDay} new cards a day · every card returns within ${OPTIONS.maxInterval} days · +0.2 XP per card when you take your time, and −3 XP for a day with none`} />
       <div className="max-w-2xl">
         <div className="overflow-hidden rounded-xl bg-surface shadow-bubble">
           <div className="grid grid-cols-[minmax(0,1fr)_3rem_3rem_3rem] sm:grid-cols-[minmax(0,1fr)_4rem_4rem_4rem] gap-2 border-b border-line px-4 py-2 text-sm text-muted">

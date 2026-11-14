@@ -1,23 +1,24 @@
 /**
- * The fortress: each student's castle, built from their level. It only ever grows (XP is never taken away for
- * missing a day; that is what the streak and shields are for), and the next stages are always in sight, so there is
- * a concrete thing to build towards in every session. Pure functions, shared by server pages and tests.
+ * The fortress: each student's castle, built from their level. Stages are far apart on purpose (a steady student
+ * earns about 35 XP a day, so a Fort is roughly three months of daily work and the Citadel more than a year). Missed
+ * days cost XP, but never a stage: XP cannot fall below where the current stage began, so a built castle stands.
+ * The next stages are always in sight. Pure functions, shared by server pages and tests.
  */
-import { levelOf } from "./xp";
+import { fmtXp, levelOf } from "./xp";
 
 export type Stage = { key: string; name: string; level: number; blurb: string };
 
 /** In order. `level` is the level that completes the stage; XP for level L starts at 40·L·(L−1). */
 export const STAGES: Stage[] = [
   { key: "camp", name: "Camp", level: 1, blurb: "A tent and a fire. Every fortress starts here." },
-  { key: "palisade", name: "Palisade", level: 2, blurb: "A wooden fence: your first real defence." },
-  { key: "watchtower", name: "Watchtower", level: 3, blurb: "Now you can see what is coming." },
-  { key: "tower", name: "Stone Tower", level: 5, blurb: "Stone instead of wood. It will not burn." },
-  { key: "fort", name: "Fort", level: 7, blurb: "Walls and a gate. A place worth defending." },
-  { key: "keep", name: "Keep", level: 10, blurb: "A great hall behind the walls." },
-  { key: "castle", name: "Castle", level: 13, blurb: "Towers on every side." },
-  { key: "fortress", name: "Fortress", level: 17, blurb: "Double walls, banners on every tower." },
-  { key: "citadel", name: "Citadel", level: 22, blurb: "Golden roofs. Few students ever build one." },
+  { key: "palisade", name: "Palisade", level: 3, blurb: "A wooden fence: your first real defence." },
+  { key: "watchtower", name: "Watchtower", level: 5, blurb: "Now you can see what is coming." },
+  { key: "tower", name: "Stone Tower", level: 7, blurb: "Stone instead of wood. It will not burn." },
+  { key: "fort", name: "Fort", level: 9, blurb: "Walls and a gate. A place worth defending." },
+  { key: "keep", name: "Keep", level: 12, blurb: "A great hall behind the walls." },
+  { key: "castle", name: "Castle", level: 15, blurb: "Towers on every side." },
+  { key: "fortress", name: "Fortress", level: 18, blurb: "Double walls, banners on every tower." },
+  { key: "citadel", name: "Citadel", level: 22, blurb: "Golden roofs. Very few students ever build one." },
 ];
 
 /** The XP at which a level starts. */
@@ -29,6 +30,9 @@ export function stageIndex(level: number): number {
   while (i + 1 < STAGES.length && level >= STAGES[i + 1]!.level) i++;
   return i;
 }
+
+/** The XP at which the stage this much XP is in began: the lowest penalties can take the student back to. */
+export const stageFloorXp = (xp: number) => xpForLevel(STAGES[stageIndex(levelOf(xp).level)]!.level);
 
 export type Fortress = {
   stage: number;
@@ -80,11 +84,11 @@ export function rivalLine(rows: { name: string; xp: number; you: boolean }[]): {
     const second = rows[1]!;
     const lead = me.xp - second.xp;
     return lead > 0
-      ? { kind: "lead", text: `You lead by ${lead} XP over ${first(second.name)}. Hold the top spot.` }
+      ? { kind: "lead", text: `You lead by ${fmtXp(lead)} XP over ${first(second.name)}. Hold the top spot.` }
       : { kind: "chase", text: `Tied with ${first(second.name)}. Any XP puts you in front.` };
   }
   const above = rows[at - 1]!;
-  return { kind: "chase", text: `${above.xp - me.xp + 1} XP to pass ${first(above.name)} for #${at}.` };
+  return { kind: "chase", text: `${fmtXp(above.xp - me.xp + 0.1)} XP to pass ${first(above.name)} for #${at}.` };
 }
 
 const first = (name: string) => name.split(/\s+/)[0] ?? name;

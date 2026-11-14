@@ -8,7 +8,16 @@ The plan for the next six changes (assigned-only content, passage decks, listeni
 vocabulary deck and gate, passage decks (core — see PLAN.md for what was deliberately cut from that one), and most
 of the teacher analytics (time per question and answer order, as part of §7). Not started: the vocabulary list.
 
-**Latest (2026-11-12): homework verification, test integrity and deep test analytics** — PLAN.md §7. A proctored
+**Latest (2026-11-14): game economy.** Warfront light theme and a nine-stage fortress per student. XP is small and
+slow on purpose: 3 per answer right at the first try (the most any answer earns), 2 / 1 per proof, 0.5 per reason, 0.2
+per unhurried card, 3 per homework. It can also be lost: -10 for a day with no real action (a shield saves the streak
+and spares this), -3 for a day with no flashcards, -5 for a test walked out of; penalties stop after 7 idle days and
+never take XP below where the current stage began. Stages sit at levels 1, 3, 5, 7, 9, 12, 15, 18, 22 (a Fort is about
+three months of steady work). XP lives in `XpDay` (tenths of a point per student per day, recounted by `refreshXp`,
+which also charges missed days the first time anyone looks after midnight); rules are in `src/lib/xp.ts`,
+`src/lib/fortress.ts`, `src/lib/xp-recount.ts`. The weekly class goal is 150 XP per student.
+
+**Earlier (2026-11-12): homework verification, test integrity and deep test analytics** — PLAN.md §7. A proctored
 first try (fullscreen + tab lock) for Reading and Listening, telemetry sent inside the one Submit request,
 anti-cheating flags, flashcard speed checks, a Homework tab for teachers, "Require retake", soft delete, and the
 retry race fixes. [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) is the engineering overview.

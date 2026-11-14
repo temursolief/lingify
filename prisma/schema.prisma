@@ -416,6 +416,7 @@ model ChunkMeaning {
 model XpDay {
   userId String
   day    DateTime @db.Date
+  /// the day's net change in TENTHS of a point (earned minus what the day cost, floored at the current stage's start)
   xp     Int      @default(0)
   first  Int      @default(0)
   proofs Int      @default(0)

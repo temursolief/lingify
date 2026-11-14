@@ -111,14 +111,14 @@ export async function nextUp(userId: string): Promise<NextUp> {
       case "words":
         return { title: `Study the key words for ${quote(open.title)}`, why: `The questions are done. Clear today's cards from its deck to finish the homework.`, href: "/student/flashcards", cta: "Review", xp: XP.homework };
       case "started":
-        return { title: `Finish your first try at ${quote(open.title)}`, why: `Homework${dueLabel}. You opened it already: the first try is timed like the exam.`, href: open.href, cta: "Continue", xp: XP.firstTry };
+        return { title: `Finish your first try at ${quote(open.title)}`, why: `Homework${dueLabel}. You opened it already: the first try is timed like the exam.`, href: open.href, cta: "Continue", xp: open.total * XP.correct };
       default:
         return {
           title: `Start ${quote(open.title)}`,
           why: `Homework${dueLabel}. ${open.kind === "reading" ? "Reading" : "Listening"} first try in exam mode, then fix your answers with proof.`,
           href: open.href,
           cta: "Start",
-          xp: XP.firstTry,
+          xp: open.total * XP.correct,
         };
     }
   }

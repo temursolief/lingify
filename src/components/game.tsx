@@ -1,12 +1,13 @@
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 import { fortressOf, rivalLine, STAGES, type Fortress } from "@/lib/fortress";
+import { fmtXp, XP_LOSS } from "@/lib/xp";
 import type { ClassGame, Game, LeagueRow } from "@/lib/gamification";
 import type { HomeworkItem } from "@/lib/today";
 import { formatDay } from "@/lib/time";
 import type { Quest } from "@/lib/xp";
 import { Castle } from "./castle";
-import { ArrowRight, BookOpenText, Cards, CheckCircle, Crown, Fire, Headphones, Lightning, LockSimple, MagnifyingGlass, ShieldCheck, UsersThree } from "./icons";
+import { ArrowRight, BookOpenText, Cards, CheckCircle, Crown, Fire, Headphones, Lightning, LockSimple, MagnifyingGlass, ShieldCheck, UsersThree, Warning } from "./icons";
 import { Badge, ButtonLink, ProgressBar, cx, type Tone } from "./ui";
 
 /** A small cream chip with an icon, a number and a word. */
@@ -38,10 +39,10 @@ export function FortressCard({ game, crowns }: { game: Game; crowns: number }) {
           <div className="mt-1 flex flex-col gap-1.5">
             <div className="flex items-baseline justify-between gap-2">
               <span className="caps text-[12px]">
-                Level {game.level} · {game.xp.toLocaleString("en-US")} XP
+                Level {game.level} · {fmtXp(game.xp)} XP
               </span>
               <span className="text-xs text-muted tabular-nums">
-                {game.levelTo - game.xp} XP to level {game.level + 1}
+                {fmtXp(game.levelTo - game.xp)} XP to level {game.level + 1}
               </span>
             </div>
             <ProgressBar value={(game.xp - game.levelFrom) / (game.levelTo - game.levelFrom)} label="Level progress" className="h-2" />
@@ -50,10 +51,11 @@ export function FortressCard({ game, crowns }: { game: Game; crowns: number }) {
             <StatChip icon={<Fire size={16} weight="fill" className={game.todayDone ? "text-flame" : "text-faint"} aria-hidden />} value={game.streak} label={game.todayDone ? "day streak" : "light it today"} />
             <StatChip icon={<ShieldCheck size={16} weight="fill" className="text-olive" aria-hidden />} value={game.shields} label={game.shields === 1 ? "shield" : "shields"} />
             {crowns > 0 && <StatChip icon={<Crown size={16} weight="fill" className="text-gold" aria-hidden />} value={crowns} label={crowns === 1 ? "crown" : "crowns"} />}
-            <StatChip icon={<Lightning size={16} weight="fill" className="text-accent" aria-hidden />} value={`+${game.todayXp}`} label="XP today" />
+            <StatChip icon={<Lightning size={16} weight="fill" className="text-accent" aria-hidden />} value={game.todayXp > 0 ? `+${fmtXp(game.todayXp)}` : fmtXp(game.todayXp)} label="XP today" />
           </div>
         </div>
       </div>
+      <OwedNote game={game} />
       {next && (
         <div className="border-t border-line bg-[color-mix(in_srgb,var(--page)_55%,var(--surface))] px-4 py-3 sm:px-5">
           <div className="mb-2 flex items-baseline justify-between gap-2">
@@ -64,6 +66,35 @@ export function FortressCard({ game, crowns }: { game: Game; crowns: number }) {
         </div>
       )}
     </section>
+  );
+}
+
+/**
+ * What today will cost if left undone, and what yesterday cost: the other half of the game. Shown only when there is
+ * something to say, so a student who is on top of it sees nothing.
+ */
+function OwedNote({ game }: { game: Game }) {
+  const { owed, yesterday } = game;
+  const lines: string[] = [];
+  if (yesterday) {
+    const why = [yesterday.idle ? "no real action" : null, yesterday.noWords ? "no flashcards" : null].filter(Boolean).join(" and ");
+    lines.push(`Yesterday cost you ${fmtXp(-yesterday.xp)} XP${why ? `: ${why}` : ""}.`);
+  }
+  if (owed.streak) {
+    lines.push(owed.shieldCovers ? "No real action yet today: a shield will save your streak at midnight, but a day with none costs a shield." : `No real action yet today: ${XP_LOSS.idleDay} XP and your streak are lost at midnight.`);
+  }
+  if (owed.words) lines.push(`No flashcards yet today: ${XP_LOSS.noWords} XP lost at midnight.`);
+  if (!lines.length) return null;
+  const urgent = owed.streak && !owed.shieldCovers;
+  return (
+    <ul className={cx("flex flex-col gap-1 border-t px-4 py-3 text-[13px] font-semibold sm:px-5", urgent ? "border-accent bg-accent-soft text-accent-ink" : "border-line bg-warn-soft text-warn")}>
+      {lines.map((l) => (
+        <li key={l} className="flex items-start gap-2">
+          <Warning size={16} weight="fill" className="mt-0.5 shrink-0" aria-hidden />
+          {l}
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -79,7 +110,7 @@ export function StageStrip({ ahead }: { ahead: Fortress["ahead"] }) {
             {s.name}
           </span>
           <span className="text-[11px] text-muted tabular-nums">
-            Lv {s.level} · {s.xpLeft.toLocaleString("en-US")} XP
+            Lv {s.level} · {fmtXp(s.xpLeft)} XP
           </span>
         </li>
       ))}
@@ -129,7 +160,7 @@ export function Podium({ rows, compact = false }: { rows: LeagueRow[]; compact?:
             <span className={cx("max-w-full truncate text-center text-[13px] font-semibold", r.you && "text-accent-ink")}>
               {r.you ? "You" : r.name.split(/\s+/)[0]}
             </span>
-            <span className="text-[11px] text-muted tabular-nums">{r.xp} XP</span>
+            <span className="text-[11px] text-muted tabular-nums">{fmtXp(r.xp)} XP</span>
             <div
               className={cx(
                 "flex w-full items-start justify-center rounded-t-md pt-1 font-display text-lg font-bold text-white",
@@ -156,7 +187,7 @@ export function NextUpCard({ title, why, href, cta, xp }: { title: string; why: 
         <span className="text-[13px] text-soft">{why}</span>
       </div>
       <div className="flex items-center gap-3">
-        {xp !== null && <span className="font-display text-lg font-bold text-gold">+{xp} XP</span>}
+        {xp !== null && <span className="font-display text-lg font-bold text-gold">up to +{fmtXp(xp)} XP</span>}
         <ButtonLink href={href}>
           {cta}
           <ArrowRight size={16} weight="bold" aria-hidden />
@@ -281,13 +312,13 @@ export function ClassGoalBar({ game }: { game: ClassGame }) {
       <UsersThree size={22} weight="duotone" className="text-navy" aria-hidden />
       <div className="flex min-w-0 flex-[1_1_220px] flex-col gap-1.5">
         <span className="text-[13px]">
-          Class goal: <b className="font-semibold">{game.goal.toLocaleString("en-US")} XP together by Sunday</b>
+          Class goal: <b className="font-semibold">{fmtXp(game.goal)} XP together by Sunday</b>
           {game.leagueEnabled && game.rank > 0 && <> · you&apos;re #{game.rank} in the league</>}
         </span>
         <ProgressBar value={game.weekXp / game.goal} tone="good" label="Class goal" className="h-2" />
       </div>
       <span className="text-xs text-muted tabular-nums">
-        {game.weekXp.toLocaleString("en-US")} / {game.goal.toLocaleString("en-US")}
+        {fmtXp(game.weekXp)} / {fmtXp(game.goal)}
       </span>
     </Link>
   );

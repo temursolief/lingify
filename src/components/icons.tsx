@@ -52,6 +52,7 @@ export {
   Timer,
   Tray,
   UsersThree,
+  Warning,
   WarningCircle,
   WifiSlash,
   X,

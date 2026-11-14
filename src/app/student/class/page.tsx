@@ -5,6 +5,7 @@ import { Podium } from "@/components/game";
 import { Crown } from "@/components/icons";
 import { Card, EmptyState, PageHeader, PageSkeleton, SectionTitle, cx } from "@/components/ui";
 import { rivalLine, STAGES } from "@/lib/fortress";
+import { fmtXp } from "@/lib/xp";
 import { requireStudent } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { classGame } from "@/lib/gamification";
@@ -42,12 +43,12 @@ async function ClassContent() {
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-2.5 rounded-xl bg-section p-5">
           <span className="kicker text-gold">Class goal this week</span>
-          <span className="font-display text-2xl font-bold sm:text-[28px]">{game.goal.toLocaleString("en-US")} XP together by Sunday</span>
+          <span className="font-display text-2xl font-bold sm:text-[28px]">{fmtXp(game.goal)} XP together by Sunday</span>
           <div className="h-2.5 overflow-hidden rounded-[2px] bg-section-ghost" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Class goal">
             <div className="h-full bg-gold transition-[width] duration-500" style={{ width: `${pct}%` }} />
           </div>
           <span className="text-xs text-soft">
-            {game.weekXp.toLocaleString("en-US")} XP so far · {game.daysLeft} day{game.daysLeft === 1 ? "" : "s"} left · you added {game.myWeekXp.toLocaleString("en-US")}
+            {fmtXp(game.weekXp)} XP so far · {game.daysLeft} day{game.daysLeft === 1 ? "" : "s"} left · you added {fmtXp(game.myWeekXp)}
           </span>
         </div>
 
@@ -87,7 +88,7 @@ async function ClassContent() {
                         {row.crowns}
                       </span>
                     )}
-                    <span className="font-display text-[17px] font-bold tabular-nums">{row.xp}</span>
+                    <span className="font-display text-[17px] font-bold tabular-nums">{fmtXp(row.xp)}</span>
                     <span className="caps text-[10px] text-muted">XP</span>
                   </li>
                 ))}

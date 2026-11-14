@@ -59,7 +59,7 @@ async function PracticeContent() {
           <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-1">
             <span className="text-lg font-medium">Every first try is exam mode</span>
             <span className="text-[13px] text-[var(--color-accent-200)]">
-              Timed, full screen, one band score. Corrections open afterwards: the right answer is never shown, so you find it in the text yourself. +30 XP for an honest first try.
+              Timed, full screen, one band score. Corrections open afterwards: the right answer is never shown, so you find it in the text yourself. +3 XP for every answer you get right at the first try; leaving the test costs XP.
             </span>
           </div>
         </div>

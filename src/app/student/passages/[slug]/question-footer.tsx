@@ -64,7 +64,7 @@ export function QuestionFooter({
         {needsTag && (
           <div className="mt-3 rounded-lg bg-raised p-3">
             <p className="font-medium">
-              Why did you miss this the first time? <span className="text-xs font-normal text-[var(--color-accent-300)]">+5 XP</span>
+              Why did you miss this the first time? <span className="text-xs font-normal text-[var(--color-accent-300)]">+0.5 XP</span>
             </p>
             <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
               {TAGS.map((t) => (
@@ -101,7 +101,7 @@ export function QuestionFooter({
             </>
           ) : (
             <button type="button" className="text-[var(--color-accent-400)] hover:underline" onClick={onActivate}>
-              Prove a new answer · <span className="text-[var(--color-accent-300)]">+20 XP</span>
+              Prove a new answer · <span className="text-[var(--color-accent-300)]">+2 XP</span>
             </button>
           )}
         </p>
