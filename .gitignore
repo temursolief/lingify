@@ -54,3 +54,6 @@ next-env.d.ts
 
 # netlify
 .netlify
+
+# design mockups (local only)
+/design/
