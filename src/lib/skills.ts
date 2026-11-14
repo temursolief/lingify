@@ -23,11 +23,14 @@ function bandOf(rows: { band: number | null; at: Date }[]): SkillBand {
 
 /** Reading and listening bands from first tries that still count (a required retake replaces the old one). */
 export const skillBands = cache(async (userId: string) => {
-  const where = { userId, invalidatedAt: null, firstSubmittedAt: { not: null } };
-  const [reading, listening] = await Promise.all([
-    db.passageAttempt.findMany({ where, orderBy: { firstSubmittedAt: "desc" }, select: { band: true, firstSubmittedAt: true } }),
-    db.listeningAttempt.findMany({ where, orderBy: { firstSubmittedAt: "desc" }, select: { band: true, firstSubmittedAt: true } }),
-  ]);
+  // Both kinds in one query, newest first within each.
+  const rows = await db.$queryRaw<{ kind: "reading" | "listening"; band: number | null; firstSubmittedAt: Date }[]>`
+    SELECT 'reading' AS kind, band, "firstSubmittedAt" FROM "PassageAttempt" WHERE "userId" = ${userId} AND "invalidatedAt" IS NULL AND "firstSubmittedAt" IS NOT NULL
+    UNION ALL
+    SELECT 'listening', band, "firstSubmittedAt" FROM "ListeningAttempt" WHERE "userId" = ${userId} AND "invalidatedAt" IS NULL AND "firstSubmittedAt" IS NOT NULL
+    ORDER BY "firstSubmittedAt" DESC`;
+  const reading = rows.filter((r) => r.kind === "reading");
+  const listening = rows.filter((r) => r.kind === "listening");
   return {
     reading: bandOf(reading.map((r) => ({ band: r.band, at: r.firstSubmittedAt! }))),
     listening: bandOf(listening.map((r) => ({ band: r.band, at: r.firstSubmittedAt! }))),

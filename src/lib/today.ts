@@ -1,8 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { db } from "./db";
-import { dueToday } from "./decks";
-import type { ListeningAnswers } from "./listening";
+import { dueTodayFor } from "./decks";
 import { formatDay } from "./time";
 import { XP } from "./xp";
 
@@ -23,64 +22,79 @@ export type HomeworkItem = {
   completedAt: Date | null;
 };
 
+type HomeworkRow = {
+  completedAt: Date | null;
+  vocabCompletedAt: Date | null;
+  dueAt: Date | null;
+  note: string | null;
+  requireVocabFirst: boolean;
+  passageId: string | null;
+  passageSlug: string | null;
+  passageTitle: string | null;
+  questionCount: number | null;
+  lessonSlug: string | null;
+  lessonTitle: string | null;
+  lessonTotal: number | null;
+  pStarted: boolean;
+  pSubmitted: boolean;
+  pCompleted: boolean;
+  pFirstCorrect: number | null;
+  pTotal: number | null;
+  pBand: number | null;
+  pWrong: number | null;
+  lStarted: boolean;
+  lSubmitted: boolean;
+  lFirstCorrect: number | null;
+  lBand: number | null;
+  lWrong: number | null;
+};
+
 /**
  * Every piece of homework the student has, with where they are in it: not started, first try under way, answers to
- * correct, key words still to study, or done. Unfinished first, soonest due first. Cached for the request: the
- * sidebar badge and the Today screen ask for the same thing.
+ * correct, key words still to study, or done. Unfinished first, soonest due first. One SQL statement (it was about
+ * eight queries): each assignment with its passage or lesson and the student's latest attempt at it, with the red
+ * answers counted by the database. Cached for the request: the sidebar badge and the Today screen ask for it.
  */
 export const studentHomework = cache(async (userId: string): Promise<HomeworkItem[]> => {
-  const recipients = await db.assignmentRecipient.findMany({
-    where: {
-      studentId: userId,
-      OR: [{ assignment: { passageId: { not: null }, passage: { archivedAt: null } } }, { assignment: { lessonId: { not: null }, lesson: { archivedAt: null } } }],
-    },
-    select: {
-      completedAt: true,
-      vocabCompletedAt: true,
-      assignment: {
-        select: {
-          dueAt: true,
-          note: true,
-          requireVocabFirst: true,
-          passage: { select: { id: true, slug: true, title: true, questionCount: true } },
-          lesson: { select: { id: true, slug: true, title: true, total: true } },
-        },
-      },
-    },
-  });
-  const passageIds = recipients.flatMap((r) => (r.assignment.passage ? [r.assignment.passage.id] : []));
-  const lessonIds = recipients.flatMap((r) => (r.assignment.lesson ? [r.assignment.lesson.id] : []));
-  const [attempts, listens] = await Promise.all([
-    db.passageAttempt.findMany({
-      where: { userId, passageId: { in: passageIds }, invalidatedAt: null },
-      orderBy: { startedAt: "desc" },
-      distinct: ["passageId"],
-      select: { passageId: true, firstSubmittedAt: true, completedAt: true, firstCorrect: true, total: true, band: true, _count: { select: { answers: { where: { correct: false } } } } },
-    }),
-    // The latest practice with results first: opening a lesson again starts an empty one that should not hide them.
-    db.listeningAttempt.findMany({
-      where: { userId, lessonId: { in: lessonIds }, invalidatedAt: null },
-      orderBy: [{ firstSubmittedAt: { sort: "desc", nulls: "last" } }, { startedAt: "desc" }],
-      distinct: ["lessonId"],
-      select: { lessonId: true, firstSubmittedAt: true, completedAt: true, firstCorrect: true, band: true, answers: true },
-    }),
-  ]);
+  const rows = await db.$queryRaw<HomeworkRow[]>`
+    SELECT r."completedAt", r."vocabCompletedAt", a."dueAt", a.note, a."requireVocabFirst",
+           p.id AS "passageId", p.slug AS "passageSlug", p.title AS "passageTitle", p."questionCount",
+           l.slug AS "lessonSlug", l.title AS "lessonTitle", l.total AS "lessonTotal",
+           pa.id IS NOT NULL AS "pStarted", pa."firstSubmittedAt" IS NOT NULL AS "pSubmitted", pa."completedAt" IS NOT NULL AS "pCompleted",
+           pa."firstCorrect" AS "pFirstCorrect", pa.total AS "pTotal", pa.band AS "pBand", pa.wrong AS "pWrong",
+           la.id IS NOT NULL AS "lStarted", la."firstSubmittedAt" IS NOT NULL AS "lSubmitted", la."firstCorrect" AS "lFirstCorrect", la.band AS "lBand", la.wrong AS "lWrong"
+    FROM "AssignmentRecipient" r
+    JOIN "Assignment" a ON a.id = r."assignmentId"
+    LEFT JOIN "Passage" p ON p.id = a."passageId" AND p."archivedAt" IS NULL
+    LEFT JOIN "ListeningLesson" l ON l.id = a."lessonId" AND l."archivedAt" IS NULL
+    LEFT JOIN LATERAL (
+      SELECT x.id, x."firstSubmittedAt", x."completedAt", x."firstCorrect", x.total, x.band,
+             (SELECT count(*) FROM "QuestionAnswer" q WHERE q."attemptId" = x.id AND q.correct = false)::int AS wrong
+      FROM "PassageAttempt" x
+      WHERE x."userId" = r."studentId" AND x."passageId" = p.id AND x."invalidatedAt" IS NULL
+      ORDER BY x."startedAt" DESC LIMIT 1
+    ) pa ON true
+    LEFT JOIN LATERAL (
+      -- the latest practice with results first: opening a lesson again starts an empty one that should not hide them
+      SELECT y.id, y."firstSubmittedAt", y."firstCorrect", y.band,
+             (SELECT count(*) FROM jsonb_each(y.answers) e WHERE (e.value->>'correct')::boolean IS NOT TRUE)::int AS wrong
+      FROM "ListeningAttempt" y
+      WHERE y."userId" = r."studentId" AND y."lessonId" = l.id AND y."invalidatedAt" IS NULL
+      ORDER BY y."firstSubmittedAt" DESC NULLS LAST, y."startedAt" DESC LIMIT 1
+    ) la ON true
+    WHERE r."studentId" = ${userId} AND (p.id IS NOT NULL OR l.id IS NOT NULL)`;
 
-  const items: HomeworkItem[] = recipients.map((r) => {
-    const a = r.assignment;
-    const base = { dueAt: a.dueAt, note: a.note, completedAt: r.completedAt };
-    const wordsLeft = a.requireVocabFirst && !r.vocabCompletedAt;
-    if (a.passage) {
-      const t = attempts.find((x) => x.passageId === a.passage!.id);
-      const left = t?.firstSubmittedAt ? t._count.answers : 0;
-      const state: HomeworkState = r.completedAt ? "done" : !t ? "todo" : !t.firstSubmittedAt ? "started" : left > 0 || !t.completedAt ? "correcting" : wordsLeft ? "words" : "done";
-      return { ...base, kind: "reading", title: a.passage.title, href: `/student/passages/${a.passage.slug}`, state, left, firstCorrect: t?.firstCorrect ?? null, total: t?.total ?? a.passage.questionCount, band: t?.band ?? null };
+  const items: HomeworkItem[] = rows.map((r) => {
+    const base = { dueAt: r.dueAt, note: r.note, completedAt: r.completedAt };
+    const wordsLeft = r.requireVocabFirst && !r.vocabCompletedAt;
+    if (r.passageId) {
+      const left = r.pSubmitted ? (r.pWrong ?? 0) : 0;
+      const state: HomeworkState = r.completedAt ? "done" : !r.pStarted ? "todo" : !r.pSubmitted ? "started" : left > 0 || !r.pCompleted ? "correcting" : wordsLeft ? "words" : "done";
+      return { ...base, kind: "reading", title: r.passageTitle!, href: `/student/passages/${r.passageSlug}`, state, left, firstCorrect: r.pFirstCorrect, total: r.pTotal ?? r.questionCount!, band: r.pBand };
     }
-    const l = a.lesson!;
-    const t = listens.find((x) => x.lessonId === l.id);
-    const left = t?.firstSubmittedAt ? Object.values(t.answers as ListeningAnswers).filter((q) => !q.correct).length : 0;
-    const state: HomeworkState = r.completedAt ? "done" : !t ? "todo" : !t.firstSubmittedAt ? "started" : left > 0 ? "correcting" : wordsLeft ? "words" : "done";
-    return { ...base, kind: "listening", title: l.title, href: `/student/listening/${l.slug}`, state, left, firstCorrect: t?.firstCorrect ?? null, total: l.total, band: t?.band ?? null };
+    const left = r.lSubmitted ? (r.lWrong ?? 0) : 0;
+    const state: HomeworkState = r.completedAt ? "done" : !r.lStarted ? "todo" : !r.lSubmitted ? "started" : left > 0 ? "correcting" : wordsLeft ? "words" : "done";
+    return { ...base, kind: "listening", title: r.lessonTitle!, href: `/student/listening/${r.lessonSlug}`, state, left, firstCorrect: r.lFirstCorrect, total: r.lessonTotal!, band: r.lBand };
   });
   const dueKey = (i: HomeworkItem) => i.dueAt?.getTime() ?? Number.MAX_SAFE_INTEGER;
   return items.sort((x, y) => Number(x.state === "done") - Number(y.state === "done") || dueKey(x) - dueKey(y) || x.title.localeCompare(y.title));
@@ -95,7 +109,7 @@ const quote = (s: string) => `“${s}”`;
  * reason is shown with it, so the student knows why this and not something else.
  */
 export async function nextUp(userId: string): Promise<NextUp> {
-  const [homework, due] = await Promise.all([studentHomework(userId), dueToday(userId)]);
+  const [homework, due] = await Promise.all([studentHomework(userId), dueTodayFor(userId)]);
   const open = homework.find((h) => h.state !== "done");
   if (open) {
     const dueLabel = open.dueAt ? `, due ${formatDay(open.dueAt, true)}` : "";

@@ -1,3 +1,4 @@
+import { cache } from "react";
 import "server-only";
 import { Prisma, type CardQueue } from "@/generated/prisma/client";
 import { answer, newSchedule, OPTIONS, type Rating, type Schedule } from "./anki";
@@ -42,11 +43,14 @@ function visibleCardWhere(userId: string): Prisma.CardWhereInput {
   return { OR: [{ ownerId: null }, { ownerId: userId }] };
 }
 
-/** A student's own deck, plus any shared deck linked to a passage or lesson assigned to them. */
+/**
+ * A student's own deck first, plus any shared deck linked to a passage or lesson assigned to them. One query: the
+ * visible decks already include the student's own; only a student who has none yet gets it created (once).
+ */
 export async function studentDecks(userId: string) {
-  const personal = await personalDeck(userId);
-  const shared = await db.deck.findMany({ where: { id: { not: personal.id }, ...visibleDeckWhere(userId) }, orderBy: { createdAt: "asc" }, select: deckFields });
-  return [personal, ...shared];
+  const decks = await db.deck.findMany({ where: visibleDeckWhere(userId), orderBy: { createdAt: "asc" }, select: deckFields });
+  const personal = decks.find((d) => d.ownerId === userId) ?? (await personalDeck(userId));
+  return [personal, ...decks.filter((d) => d.id !== personal.id)];
 }
 
 /** The deck, if this student may study it: their own, or one linked to content assigned to them. */
@@ -94,8 +98,10 @@ export async function deckSummaries(userId: string, deckIds: string[], now = new
   const result = new Map<string, DeckCounts>();
   if (!deckIds.length) return result;
   const soon = new Date(now.getTime() + OPTIONS.learnAheadMinutes * 60_000);
-  const [cards, logs] = await Promise.all([
-    db.$queryRaw<{ deckId: string; total: number; seen: number; fresh: number; learn: number; due: number }[]>`
+  // Card counts and today's answers, in one statement.
+  const [{ cards, logs }] = await db.$queryRaw<{ cards: { deckId: string; total: number; seen: number; fresh: number; learn: number; due: number }[]; logs: { deckId: string; queue: CardQueue; n: number }[] }[]>`
+    SELECT
+      (SELECT coalesce(json_agg(k), '[]') FROM (
       SELECT c."deckId" AS "deckId",
              count(*)::int AS total,
              count(s."cardId")::int AS seen,
@@ -105,14 +111,13 @@ export async function deckSummaries(userId: string, deckIds: string[], now = new
       FROM "Card" c
       LEFT JOIN "CardState" s ON s."cardId" = c."id" AND s."userId" = ${userId}
       WHERE c."deckId" IN (${Prisma.join(deckIds)}) AND (c."ownerId" IS NULL OR c."ownerId" = ${userId})
-      GROUP BY c."deckId"`,
-    db.$queryRaw<{ deckId: string; queue: CardQueue; n: number }[]>`
+      GROUP BY c."deckId") k) AS cards,
+      (SELECT coalesce(json_agg(g), '[]') FROM (
       SELECT c."deckId" AS "deckId", l."queue" AS queue, count(*)::int AS n
       FROM "ReviewLog" l
       JOIN "Card" c ON c."id" = l."cardId"
       WHERE l."userId" = ${userId} AND l."at" >= ${startOfDay(now)} AND l."queue" IN ('NEW', 'REVIEW') AND c."deckId" IN (${Prisma.join(deckIds)})
-      GROUP BY c."deckId", l."queue"`,
-  ]);
+      GROUP BY c."deckId", l."queue") g) AS logs`;
   for (const id of deckIds) {
     const row = cards.find((c) => c.deckId === id);
     const done = (queue: CardQueue) => logs.find((l) => l.deckId === id && l.queue === queue)?.n ?? 0;
@@ -231,6 +236,9 @@ export async function applyReviews(userId: string, reviews: Review[]): Promise<n
   await settleAfterReviews(userId, passageIds);
   return newLogs.length;
 }
+
+/** Today's due count for this student, once per request: the sidebar badge and the page both show it. */
+export const dueTodayFor = cache((userId: string) => dueToday(userId));
 
 /** Flashcards due today across all of a student's decks, for the sidebar badge. */
 export async function dueToday(userId: string, now = new Date()) {

@@ -6,7 +6,6 @@ import { StageUp } from "@/components/stage-up";
 import { Card, EmptyState, SectionTitle, Skeleton } from "@/components/ui";
 import { requireStudent } from "@/lib/auth";
 import { studentSummary } from "@/lib/class-overview";
-import { db } from "@/lib/db";
 import { fortressOf } from "@/lib/fortress";
 import { classGame, studentGame } from "@/lib/gamification";
 import { formatLongDay, hourOf } from "@/lib/time";
@@ -24,8 +23,9 @@ async function TodayContent() {
   const user = await requireStudent();
   const now = new Date();
   const first = user.name.split(/\s+/)[0];
-  const enrolled = await db.enrollment.count({ where: { userId: user.id } });
-  if (!enrolled) {
+  // The class league answers "is this student in a class?" too: no separate count.
+  const [game, cls, homework, next, summary] = await Promise.all([studentGame(user.id), classGame(user.id), studentHomework(user.id), nextUp(user.id), studentSummary(user.id)]);
+  if (!cls) {
     return (
       <div className="flex max-w-xl flex-col gap-5">
         <div className="flex flex-col gap-1">
@@ -44,7 +44,6 @@ async function TodayContent() {
     );
   }
 
-  const [game, cls, homework, next, summary] = await Promise.all([studentGame(user.id), classGame(user.id), studentHomework(user.id), nextUp(user.id), studentSummary(user.id)]);
   // Unfinished homework, then what was finished in the last week.
   const weekAgo = now.getTime() - 7 * 86_400_000;
   const shown = homework.filter((h) => h.state !== "done" || (h.completedAt && h.completedAt.getTime() > weekAgo)).slice(0, 5);

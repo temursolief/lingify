@@ -16,15 +16,23 @@ function levelled(count: number, steps: number[]) {
 /** A card this many days apart counts as remembered for good (Lingify caps intervals at 20 days). */
 const KEPT_INTERVAL = 14;
 
-export async function skillBadges(userId: string, bestStreak: number): Promise<SkillBadge[]> {
-  const counted = { userId, invalidatedAt: null, integrityFlagged: false, firstSubmittedAt: { not: null } };
-  const [evidence, distractors, clean, kept] = await Promise.all([
-    // Right first time with the proof in the paragraph the teacher marked, or fixed with it.
-    db.questionAnswer.count({ where: { correct: true, evidenceOk: true, attempt: counted } }),
-    db.questionAnswer.count({ where: { correct: true, firstCorrect: false, errorTag: "DISTRACTOR", attempt: counted } }),
-    db.passageAttempt.count({ where: { ...counted, submissionReason: "NORMAL", integrityEvents: { equals: [] } } }),
-    db.cardState.count({ where: { userId, queue: "REVIEW", interval: { gte: KEPT_INTERVAL } } }),
-  ]);
+/**
+ * The badges. The streak comes in as a promise so the counts query runs at the same time as the XP read that
+ * provides it, instead of after it.
+ */
+export async function skillBadges(userId: string, bestStreakOf: Promise<number>): Promise<SkillBadge[]> {
+  // All four counts in one statement, over the student's first tries that count (not retaken, not flagged).
+  const [[{ evidence, distractors, clean, kept }], bestStreak] = await Promise.all([db.$queryRaw<{ evidence: number; distractors: number; clean: number; kept: number }[]>`
+    WITH att AS (
+      SELECT id, "submissionReason", "integrityEvents" FROM "PassageAttempt"
+      WHERE "userId" = ${userId} AND "invalidatedAt" IS NULL AND "integrityFlagged" = false AND "firstSubmittedAt" IS NOT NULL
+    )
+    SELECT
+      -- right first time with the proof in the paragraph the teacher marked, or fixed with it
+      (SELECT count(*) FROM "QuestionAnswer" q WHERE q."attemptId" IN (SELECT id FROM att) AND q.correct AND q."evidenceOk" = true)::int AS evidence,
+      (SELECT count(*) FROM "QuestionAnswer" q WHERE q."attemptId" IN (SELECT id FROM att) AND q.correct AND q."firstCorrect" = false AND q."errorTag" = 'DISTRACTOR')::int AS distractors,
+      (SELECT count(*) FROM att WHERE "submissionReason" = 'NORMAL' AND "integrityEvents" = '[]'::jsonb)::int AS clean,
+      (SELECT count(*) FROM "CardState" c WHERE c."userId" = ${userId} AND c.queue = 'REVIEW' AND c.interval >= ${KEPT_INTERVAL})::int AS kept`, bestStreakOf]);
   const badge = (key: string, name: string, desc: string, icon: SkillBadge["icon"], count: number, steps: number[]): SkillBadge => ({ key, name, desc, icon, count, ...levelled(count, steps) });
   return [
     badge("evidence", "Evidence Finder", "Answers proven in the right paragraph", "evidence", evidence, [10, 50, 150]),

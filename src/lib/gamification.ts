@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { Prisma } from "@/generated/prisma/client";
 import { db } from "./db";
+import { dayFromJson } from "./sql";
 import { addDays, dayKey, dayOf, startOfDayValue, weekStart } from "./time";
 import { crownsFrom, fortressOf } from "./fortress";
 import { recount } from "./xp-recount";
@@ -116,15 +117,22 @@ export async function xpEvents(userIds: string[], since?: Date): Promise<Map<str
  * while the days are replaced, so two pages recounting the same student at once take turns, and the second one skips
  * a student the first already brought up to date.
  */
+/** Days have passed since a student's last stored day (given as Date or "YYYY-MM-DD"), so missed days may be owed. */
+function isStale(last: Date | string | null, today: Date) {
+  if (!last) return false;
+  const day = typeof last === "string" ? dayFromJson(last) : last;
+  return day < addDays(today, -1);
+}
+
 export async function refreshXp(userIds: string[]) {
   if (!userIds.length) return;
   const today = dayOf(new Date());
   const yesterday = addDays(today, -1);
-  const [users, lasts] = await Promise.all([
-    db.user.findMany({ where: { id: { in: userIds } }, select: { id: true, xpDirtyFrom: true, xpDirtySeq: true } }),
-    db.xpDay.groupBy({ by: ["userId"], where: { userId: { in: userIds } }, _max: { day: true } }),
-  ]);
-  const lastDay = new Map(lasts.map((l) => [l.userId, l._max.day!]));
+  // Who is marked, and each one's last stored day: one query.
+  const users = await db.$queryRaw<{ id: string; xpDirtyFrom: Date | null; xpDirtySeq: number; last: Date | null }[]>`
+    SELECT u.id, u."xpDirtyFrom", u."xpDirtySeq", (SELECT max(d.day) FROM "XpDay" d WHERE d."userId" = u.id) AS last
+    FROM "User" u WHERE u.id IN (${Prisma.join(userIds)})`;
+  const lastDay = new Map(users.filter((u) => u.last).map((u) => [u.id, u.last!]));
 
   // Marked by a change, or days have passed since the last row (nothing marks those, so it is noticed here).
   const todo = users
@@ -206,9 +214,23 @@ export type Game = {
 
 /** One student's XP, level, streak, shields and today's quests, from their XpDay rows. Cached for the request. */
 export const studentGame = cache(async (userId: string): Promise<Game> => {
-  await refreshXp([userId]);
-  const rows = await db.xpDay.findMany({ where: { userId }, select: { day: true, xp: true, first: true, proofs: true, cards: true } });
   const today = dayOf(new Date());
+  // One query reads the rows and whether they are up to date; only when they are not (a change, or a new day to
+  // charge) is the student recounted and read again.
+  const read = async () =>
+    (
+      await db.$queryRaw<{ dirty: boolean; rows: { day: string; xp: number; first: number; proofs: number; cards: number }[] }[]>`
+        SELECT u."xpDirtyFrom" IS NOT NULL AS dirty,
+               coalesce((SELECT json_agg(json_build_object('day', d.day, 'xp', d.xp, 'first', d.first, 'proofs', d.proofs, 'cards', d.cards) ORDER BY d.day)
+                         FROM "XpDay" d WHERE d."userId" = u.id), '[]') AS rows
+        FROM "User" u WHERE u.id = ${userId}`
+    )[0];
+  let state = await read();
+  if (state && (state.dirty || isStale(state.rows.at(-1)?.day ?? null, today))) {
+    await refreshXp([userId]);
+    state = await read();
+  }
+  const rows = (state?.rows ?? []).map((r) => ({ ...r, day: dayFromJson(r.day) }));
   const monday = weekStart(today);
   // Only days with real activity start and shape the streak: rows that only carry a charge or a marker do not.
   const days = new Map<string, DayCounts>(rows.filter((r) => r.first || r.proofs || r.cards).map((r) => [dayKey(r.day), { first: r.first, proofs: r.proofs, cards: r.cards }]));
@@ -265,31 +287,49 @@ export type ClassGame = {
 };
 
 /** The weekly class goal and league for the student's class (the most recently joined, if they are in several). */
+type ClassRow = {
+  id: string;
+  name: string;
+  leagueEnabled: boolean;
+  teacherName: string;
+  members: { id: string; name: string; dirty: boolean; last: string | null; week: number; total: number }[];
+  weeks: { userId: string; week: string; xp: number }[];
+};
+
 export const classGame = cache(async (userId: string): Promise<ClassGame | null> => {
-  const enrollment = await db.enrollment.findFirst({
-    where: { userId },
-    orderBy: { joinedAt: "desc" },
-    select: { class: { select: { id: true, name: true, leagueEnabled: true, teacher: { select: { name: true } }, enrollments: { select: { user: { select: { id: true, name: true } } } } } } },
-  });
-  if (!enrollment) return null;
-  const cls = enrollment.class;
-  const members = cls.enrollments.map((e) => e.user);
   const today = dayOf(new Date());
   const monday = weekStart(today);
-  const ids = members.map((m) => m.id);
-  await refreshXp(ids);
-  const [week, total, weeks] = await Promise.all([
-    db.xpDay.groupBy({ by: ["userId"], where: { userId: { in: ids }, day: { gte: monday } }, _sum: { xp: true } }),
-    db.xpDay.groupBy({ by: ["userId"], where: { userId: { in: ids } }, _sum: { xp: true } }),
-    // Every finished week's XP per student (weeks start on Monday, like the league), for crowns.
-    db.$queryRaw<{ userId: string; week: Date; xp: bigint }[]>`
-      SELECT "userId", date_trunc('week', "day")::date AS "week", SUM("xp") AS "xp"
-      FROM "XpDay" WHERE "userId" IN (${Prisma.join(ids)}) AND "day" < ${dayKey(monday)}::date
-      GROUP BY 1, 2`,
-  ]);
+  // The class, its members with their week and all-time XP, and every finished week for crowns: one statement.
+  // Members whose XP is not up to date are recounted first and the statement read again (the uncommon path).
+  const read = async () =>
+    (
+      await db.$queryRaw<ClassRow[]>`
+        WITH me AS (SELECT e."classId" FROM "Enrollment" e WHERE e."userId" = ${userId} ORDER BY e."joinedAt" DESC LIMIT 1),
+        mem AS (SELECT u.id, u.name, u."xpDirtyFrom" IS NOT NULL AS dirty FROM "Enrollment" e JOIN "User" u ON u.id = e."userId" WHERE e."classId" = (SELECT "classId" FROM me))
+        SELECT c.id, c.name, c."leagueEnabled", t.name AS "teacherName",
+          (SELECT coalesce(json_agg(json_build_object(
+             'id', m.id, 'name', m.name, 'dirty', m.dirty,
+             'last', (SELECT max(d.day) FROM "XpDay" d WHERE d."userId" = m.id),
+             'week', (SELECT coalesce(sum(d.xp), 0) FROM "XpDay" d WHERE d."userId" = m.id AND d.day >= ${dayKey(monday)}::date),
+             'total', (SELECT coalesce(sum(d.xp), 0) FROM "XpDay" d WHERE d."userId" = m.id))), '[]') FROM mem m) AS members,
+          (SELECT coalesce(json_agg(w), '[]') FROM (
+             SELECT d."userId", date_trunc('week', d.day)::date AS week, sum(d.xp)::int AS xp
+             FROM "XpDay" d WHERE d."userId" IN (SELECT id FROM mem) AND d.day < ${dayKey(monday)}::date GROUP BY 1, 2) w) AS weeks
+        FROM "Class" c JOIN "User" t ON t.id = c."teacherId" WHERE c.id = (SELECT "classId" FROM me)`
+    )[0] ?? null;
+  let cls = await read();
+  if (!cls) return null;
+  if (cls.members.some((m) => m.dirty || isStale(m.last, today))) {
+    await refreshXp(cls.members.map((m) => m.id));
+    cls = (await read())!;
+  }
+  const members = cls.members.map((m) => ({ id: m.id, name: m.name }));
+  const week = cls.members.map((m) => ({ userId: m.id, _sum: { xp: m.week } }));
+  const total = cls.members.map((m) => ({ userId: m.id, _sum: { xp: m.total } }));
+  const weeks = cls.weeks;
   const weekXpOf = new Map(week.map((w) => [w.userId, fromTenths(w._sum.xp ?? 0)]));
   const totalOf = new Map(total.map((w) => [w.userId, fromTenths(w._sum.xp ?? 0)]));
-  const weekRows = weeks.map((w) => ({ userId: w.userId, week: dayKey(w.week), xp: fromTenths(Number(w.xp)) }));
+  const weekRows = weeks.map((w) => ({ userId: w.userId, week: w.week.slice(0, 10), xp: fromTenths(Number(w.xp)) }));
   const crowns = crownsFrom(weekRows);
   const lastKey = dayKey(addDays(monday, -7));
   const lastChampionIds = crownsFrom(weekRows.filter((w) => w.week === lastKey));
@@ -313,7 +353,7 @@ export const classGame = cache(async (userId: string): Promise<ClassGame | null>
   return {
     classId: cls.id,
     className: cls.name,
-    teacherName: cls.teacher.name,
+    teacherName: cls.teacherName,
     leagueEnabled: cls.leagueEnabled,
     students: members.length,
     goal: classGoal(members.length),

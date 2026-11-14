@@ -28,12 +28,16 @@ async function ClassContent() {
       </>
     );
   }
-  const notes = await db.assignment.findMany({
-    where: { classId: game.classId, note: { not: null }, recipients: { some: { studentId: user.id } } },
-    orderBy: { createdAt: "desc" },
-    take: 4,
-    select: { id: true, note: true, createdAt: true, passage: { select: { title: true } }, lesson: { select: { title: true } } },
-  });
+  // The teacher's latest notes on this student's homework, with what each was for: one query.
+  const notes = (
+    await db.$queryRaw<{ id: string; note: string; createdAt: Date; title: string | null }[]>`
+      SELECT a.id, a.note, a."createdAt", coalesce(p.title, l.title) AS title
+      FROM "Assignment" a
+      LEFT JOIN "Passage" p ON p.id = a."passageId" LEFT JOIN "ListeningLesson" l ON l.id = a."lessonId"
+      WHERE a."classId" = ${game.classId} AND a.note IS NOT NULL
+        AND EXISTS (SELECT 1 FROM "AssignmentRecipient" r WHERE r."assignmentId" = a.id AND r."studentId" = ${user.id})
+      ORDER BY a."createdAt" DESC LIMIT 4`
+  ).map((n) => ({ ...n, passage: n.title ? { title: n.title } : null, lesson: null as { title: string } | null }));
   const pct = Math.min(100, Math.round((game.weekXp / game.goal) * 100));
   const line = rivalLine(game.league);
 

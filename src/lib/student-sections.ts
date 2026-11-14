@@ -1,7 +1,7 @@
 import "server-only";
 import { studentSummary } from "./class-overview";
 import { db } from "./db";
-import { dueToday } from "./decks";
+import { dueTodayFor } from "./decks";
 
 export type Section = { href: string; label: string; subtitle: string; badge?: number; peek: string };
 
@@ -10,7 +10,7 @@ export async function studentSections(userId: string): Promise<Section[]> {
   const [assignedPassages, assignedLessons, due, summary] = await Promise.all([
     db.assignmentRecipient.count({ where: { studentId: userId, completedAt: null, assignment: { passageId: { not: null }, passage: { archivedAt: null } } } }),
     db.assignmentRecipient.count({ where: { studentId: userId, completedAt: null, assignment: { lessonId: { not: null }, lesson: { archivedAt: null } } } }),
-    dueToday(userId),
+    dueTodayFor(userId),
     studentSummary(userId),
   ]);
   return [

@@ -12,23 +12,42 @@ export const metadata: Metadata = { title: "Listening" };
 /** The library of video lessons assigned to this student, one row each, with their progress. */
 async function LibraryContent() {
   const user = await requireStudent();
-  const [assigned, attempts] = await Promise.all([
-    db.assignmentRecipient.findMany({
-      where: { studentId: user.id, assignment: { lessonId: { not: null }, lesson: { archivedAt: null } } },
-      include: { assignment: { include: { lesson: { select: { id: true, slug: true, title: true, videoId: true, total: true, wordCount: true } } } } },
-      orderBy: [{ completedAt: { sort: "asc", nulls: "first" } }, { assignment: { dueAt: { sort: "asc", nulls: "last" } } }],
-    }),
-    db.listeningAttempt.findMany({
-      where: { userId: user.id, invalidatedAt: null },
-      // The latest practice with results first: each visit starts a fresh one, which should not hide them.
-      orderBy: [{ firstSubmittedAt: { sort: "desc", nulls: "last" } }, { startedAt: "desc" }],
-      select: { lessonId: true, firstSubmittedAt: true, completedAt: true, firstCorrect: true, band: true, answers: true },
-    }),
-  ]);
-  const latest = new Map<string, (typeof attempts)[number]>();
-  for (const a of attempts) if (!latest.has(a.lessonId)) latest.set(a.lessonId, a);
+  // Each assigned lesson with the student's latest practice (the latest with results first: each visit starts a fresh
+  // one, which should not hide them): one statement.
+  const rows = await db.$queryRaw<
+    {
+      id: string;
+      slug: string;
+      title: string;
+      videoId: string;
+      total: number;
+      wordCount: number;
+      dueAt: Date | null;
+      note: string | null;
+      done: Date | null;
+      started: boolean;
+      firstSubmittedAt: Date | null;
+      completedAt: Date | null;
+      firstCorrect: number | null;
+      band: number | null;
+      answers: unknown;
+    }[]
+  >`
+    SELECT l.id, l.slug, l.title, l."videoId", l.total, l."wordCount", a."dueAt", a.note, r."completedAt" AS done,
+           x."lessonId" IS NOT NULL AS started, x."firstSubmittedAt", x."completedAt", x."firstCorrect", x.band, x.answers
+    FROM "AssignmentRecipient" r
+    JOIN "Assignment" a ON a.id = r."assignmentId"
+    JOIN "ListeningLesson" l ON l.id = a."lessonId" AND l."archivedAt" IS NULL
+    LEFT JOIN LATERAL (
+      SELECT y."lessonId", y."firstSubmittedAt", y."completedAt", y."firstCorrect", y.band, y.answers
+      FROM "ListeningAttempt" y WHERE y."userId" = r."studentId" AND y."lessonId" = l.id AND y."invalidatedAt" IS NULL
+      ORDER BY y."firstSubmittedAt" DESC NULLS LAST, y."startedAt" DESC LIMIT 1
+    ) x ON true
+    WHERE r."studentId" = ${user.id}
+    ORDER BY r."completedAt" ASC NULLS FIRST, a."dueAt" ASC NULLS LAST`;
+  const latest = new Map(rows.filter((r) => r.started).map((r) => [r.id, r]));
   const now = new Date();
-  const lessons = assigned.map((r) => ({ ...r.assignment.lesson!, dueAt: r.assignment.dueAt, note: r.assignment.note, done: r.completedAt }));
+  const lessons = rows.map((r) => ({ id: r.id, slug: r.slug, title: r.title, videoId: r.videoId, total: r.total, wordCount: r.wordCount, dueAt: r.dueAt, note: r.note, done: r.done }));
 
   return (
     <>

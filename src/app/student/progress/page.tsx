@@ -39,18 +39,22 @@ function BandTile({ name, skill, target }: { name: string; skill: SkillBand; tar
 
 async function JourneyContent() {
   const user = await requireStudent();
-  const [game, bands, breakdown, history] = await Promise.all([
-    studentGame(user.id),
+  const gameP = studentGame(user.id);
+  // Everything at once: no query waits for another.
+  const [game, bands, breakdown, history, badges] = await Promise.all([
+    gameP,
     skillBands(user.id),
     errorBreakdown([user.id]),
-    db.passageAttempt.findMany({
-      where: { userId: user.id, invalidatedAt: null, firstSubmittedAt: { not: null } },
-      orderBy: { firstSubmittedAt: "desc" },
-      take: 10,
-      include: { passage: { select: { title: true, slug: true } } },
-    }),
+    db.$queryRaw<{ id: string; firstCorrect: number | null; total: number; band: number | null; firstSubmittedAt: Date; title: string; slug: string }[]>`
+      SELECT a.id, a."firstCorrect", a.total, a.band, a."firstSubmittedAt", p.title, p.slug
+      FROM "PassageAttempt" a JOIN "Passage" p ON p.id = a."passageId"
+      WHERE a."userId" = ${user.id} AND a."invalidatedAt" IS NULL AND a."firstSubmittedAt" IS NOT NULL
+      ORDER BY a."firstSubmittedAt" DESC LIMIT 10`.then((rows) => rows.map((r) => ({ ...r, passage: { title: r.title, slug: r.slug } }))),
+    skillBadges(
+      user.id,
+      gameP.then((g) => g.bestStreak),
+    ),
   ]);
-  const badges = await skillBadges(user.id, game.bestStreak);
   const fortress = fortressOf(game.xp);
   const band = bands.reading.band ?? bands.listening.band;
   const tagged = Object.values(breakdown.tags).reduce((a, b) => a + b, 0);

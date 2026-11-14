@@ -30,13 +30,14 @@ export type ErrorBreakdown = {
 
 /** Root causes of first-attempt mistakes for one student or a group of students. */
 export async function errorBreakdown(userIds: string[]): Promise<ErrorBreakdown> {
-  const [rows, passages] = await Promise.all([
-    db.questionAnswer.findMany({
-      where: { firstCorrect: false, attempt: { ...counted, userId: { in: userIds }, firstSubmittedAt: { not: null } } },
-      select: { type: true, errorTag: true, evidenceOk: true, correct: true },
-    }),
-    db.passageAttempt.count({ where: { ...counted, userId: { in: userIds }, firstSubmittedAt: { not: null } } }),
-  ]);
+  // The first-try misses and the number of passages tried, in one statement.
+  const [{ rows, passages }] = userIds.length
+    ? await db.$queryRaw<{ rows: { type: string; errorTag: ErrorTag | null; evidenceOk: boolean | null; correct: boolean }[]; passages: number }[]>`
+        WITH att AS (SELECT id FROM "PassageAttempt" WHERE "userId" IN (${Prisma.join(userIds)}) AND "invalidatedAt" IS NULL AND "firstSubmittedAt" IS NOT NULL)
+        SELECT (SELECT coalesce(json_agg(json_build_object('type', q.type, 'errorTag', q."errorTag", 'evidenceOk', q."evidenceOk", 'correct', q.correct)), '[]')
+                FROM "QuestionAnswer" q WHERE q."attemptId" IN (SELECT id FROM att) AND q."firstCorrect" = false) AS rows,
+               (SELECT count(*) FROM att)::int AS passages`
+    : [{ rows: [], passages: 0 }];
   const tags: Record<ErrorTag, number> = { VOCAB: 0, DISTRACTOR: 0, LOGIC: 0, CARELESS: 0 };
   const byType = new Map<GroupType, { mistakes: number; tags: Partial<Record<ErrorTag, number>>; wrongParagraph: number; rightParagraph: number }>();
   let location = 0;

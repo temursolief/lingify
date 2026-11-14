@@ -24,21 +24,48 @@ const dueLabel = (d: Date) => formatDay(d, true);
 async function PassagesContent() {
   const user = await requireStudent();
   const now = new Date();
-  const [assigned, attempts, summary] = await Promise.all([
-    db.assignmentRecipient.findMany({
-      where: { studentId: user.id, assignment: { passageId: { not: null }, passage: { archivedAt: null } } },
-      include: { assignment: { include: { passage: { select: { id: true, slug: true, title: true, timeLimit: true } } } } },
-      orderBy: [{ completedAt: { sort: "asc", nulls: "first" } }, { assignment: { dueAt: { sort: "asc", nulls: "last" } } }],
-    }),
-    db.passageAttempt.findMany({
-      where: { userId: user.id, invalidatedAt: null },
-      orderBy: { startedAt: "desc" },
-      select: { passageId: true, firstSubmittedAt: true, completedAt: true, firstCorrect: true, total: true, band: true, answers: { where: { correct: false }, select: { number: true } } },
-    }),
+  // Each assigned passage with the student's latest attempt at it and its red answers counted: one statement.
+  const [rows, summary] = await Promise.all([
+    db.$queryRaw<
+      {
+        assignmentId: string;
+        completedAt: Date | null;
+        dueAt: Date | null;
+        note: string | null;
+        id: string;
+        slug: string;
+        title: string;
+        timeLimit: number;
+        aFirstSubmittedAt: Date | null;
+        aCompletedAt: Date | null;
+        aFirstCorrect: number | null;
+        aTotal: number | null;
+        aBand: number | null;
+        aRed: number | null;
+        started: boolean;
+      }[]
+    >`
+      SELECT r."assignmentId", r."completedAt", a."dueAt", a.note, p.id, p.slug, p.title, p."timeLimit",
+             x."firstSubmittedAt" AS "aFirstSubmittedAt", x."completedAt" AS "aCompletedAt", x."firstCorrect" AS "aFirstCorrect", x.total AS "aTotal", x.band AS "aBand", x.red AS "aRed",
+             x.id IS NOT NULL AS started
+      FROM "AssignmentRecipient" r
+      JOIN "Assignment" a ON a.id = r."assignmentId"
+      JOIN "Passage" p ON p.id = a."passageId" AND p."archivedAt" IS NULL
+      LEFT JOIN LATERAL (
+        SELECT t.id, t."firstSubmittedAt", t."completedAt", t."firstCorrect", t.total, t.band,
+               (SELECT count(*) FROM "QuestionAnswer" q WHERE q."attemptId" = t.id AND q.correct = false)::int AS red
+        FROM "PassageAttempt" t WHERE t."userId" = r."studentId" AND t."passageId" = p.id AND t."invalidatedAt" IS NULL
+        ORDER BY t."startedAt" DESC LIMIT 1
+      ) x ON true
+      WHERE r."studentId" = ${user.id}
+      ORDER BY r."completedAt" ASC NULLS FIRST, a."dueAt" ASC NULLS LAST`,
     studentSummary(user.id),
   ]);
+  const assigned = rows.map((r) => ({ assignmentId: r.assignmentId, completedAt: r.completedAt, assignment: { dueAt: r.dueAt, note: r.note, passage: { id: r.id, slug: r.slug, title: r.title, timeLimit: r.timeLimit } } }));
   const latest = new Map<string, AttemptInfo>();
-  for (const a of attempts) if (!latest.has(a.passageId)) latest.set(a.passageId, { ...a, red: a.answers.length });
+  for (const r of rows) {
+    if (r.started) latest.set(r.id, { firstSubmittedAt: r.aFirstSubmittedAt, completedAt: r.aCompletedAt, firstCorrect: r.aFirstCorrect, total: r.aTotal!, band: r.aBand, red: r.aRed ?? 0 });
+  }
 
   const Row = ({ p, extra }: { p: { slug: string; title: string; timeLimit: number; id: string }; extra?: React.ReactNode }) => {
     const s = status(latest.get(p.id));

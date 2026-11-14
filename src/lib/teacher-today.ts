@@ -3,6 +3,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { cache } from "react";
 import { Prisma } from "@/generated/prisma/client";
 import { db } from "./db";
+import { ms, utc } from "./sql";
 import { STUCK_TRIES } from "./insights";
 import { addDays, formatDay } from "./time";
 
@@ -49,10 +50,6 @@ type Due = { id: string; classId: string; className: string; title: string; pass
 type Magnet = { classId: string; passageId: string; title: string; number: number; answer: string; count: number };
 type Today = { members: Member[]; stuck: Stuck[]; flagged: Flagged[]; due: Due[]; magnets: Magnet[]; submitted: { classId: string; submitted: number }[] };
 
-/** A JavaScript time as a timestamp column compares it (they are stored in UTC, without a zone). */
-const utc = (d: Date) => Prisma.sql`(to_timestamp(${d.getTime() / 1000}) AT TIME ZONE 'UTC')`;
-/** A timestamp column as milliseconds, so JSON carries it without the zone guesswork of a bare date string. */
-const ms = (col: Prisma.Sql) => Prisma.sql`(extract(epoch FROM ${col}) * 1000)::float8`;
 
 /**
  * Everything the Today page needs, in one SQL statement: one round trip to the database however many classes the

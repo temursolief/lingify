@@ -12,7 +12,13 @@ export const metadata: Metadata = { title: "Settings" };
 
 async function SettingsContent() {
   const user = await requireStudent();
-  const classes = await db.enrollment.findMany({ where: { userId: user.id }, include: { class: { include: { teacher: { select: { name: true } } } } } });
+  // The student's classes with their teachers: one query.
+  const classes = (
+    await db.$queryRaw<{ classId: string; name: string; teacher: string }[]>`
+      SELECT c.id AS "classId", c.name, t.name AS teacher
+      FROM "Enrollment" e JOIN "Class" c ON c.id = e."classId" JOIN "User" t ON t.id = c."teacherId"
+      WHERE e."userId" = ${user.id} ORDER BY e."joinedAt"`
+  ).map((c) => ({ classId: c.classId, class: { name: c.name, teacher: { name: c.teacher } } }));
   return (
     <>
       <PageHeader kicker="Account" title="Settings" subtitle={user.email} action={<LogoutButton />} />
