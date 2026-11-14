@@ -3,7 +3,9 @@
 _Written 2026-11-12 from the code on `main` (commit `fbaa551`); updated the same day for the homework verification
 and test integrity work (PLAN.md §7). Audience: an engineer who has never seen the repo and is asked to review its
 structure, design principles and feature direction. Sections 1–9 describe what exists; sections 10–13 are review
-notes and open questions. Review items fixed since are marked **[fixed]**._
+notes and open questions. Review items fixed since are marked **[fixed]**. Since then: the game layer (XP rollup,
+fortress, leagues, XP losses), the Warfront light theme, single-statement page queries, and Telegram log-in with
+teacher approval (no public sign-up). See TASK.md "Where things stand" for the current state._
 
 ---
 
@@ -17,7 +19,7 @@ Lingify is an installable web app (PWA) for **Uzbek students preparing for IELTS
 | **Listening** (YouTube lessons, e.g. TED-Ed) | Read key vocabulary first (gate), then IELTS Listening questions; same "never show the answer" correction loop. | Admins upload lesson JSON; teachers assign. |
 | **Flashcards** (Anki) | AnkiWeb-like study (SM-2, max interval 20 days); time per card recorded to spot click-through. Decks: personal deck, one shared deck per assigned passage/lesson. One-click card from a highlighted phrase in a passage. Works offline. | Upload `.apkg` decks for their own passages (admins: decks for everyone). |
 | **Progress** | Biggest bottleneck ("57% of mistakes are distractors in Matching Headings"), mistakes by type/cause. | Same breakdown per class; activity, streak, band per student. |
-| **Telegram** (optional) | Link account → evening reminders. | Weekly class summary. |
+| **Telegram** | Sign up (class code + name) and log in through the bot; reminders. | Approve or decline join requests with bot buttons; weekly class summary. |
 
 **Hard product constraints** (these drive most technical decisions):
 
@@ -43,7 +45,7 @@ Lingify is an installable web app (PWA) for **Uzbek students preparing for IELTS
 | Auth | Hand-rolled: bcryptjs + `jose` HS256 JWT in an httpOnly cookie | No auth library. |
 | Anki import | `node:sqlite` (built-in) + `zlib` zstd + `fflate` (zip) | Reads legacy `collection.anki2/.anki21` and current `collection.anki21b`. |
 | Tests | Vitest (unit only) | |
-| Hosting | Netlify (Next adapter, AWS Lambda underneath, US-East) + Neon Postgres (US-East-2) | Every push to `main` deploys; migrations run in the build. |
+| Hosting | Netlify (Next adapter, AWS Lambda underneath, US-East) + Neon Postgres (US-East-2) | Every push to `main` deploys (work goes to `experiment` first); migrations run in the build. |
 | Runtime deps | 13 total | Deliberately small. |
 
 Size: ~8.6k lines of TS/TSX in `src/`, `scripts/`, `tests/`; 146 tracked files; 23 commits.
@@ -68,7 +70,7 @@ scripts/
 src/
   proxy.ts                Route guard: redirects by session + role
   app/
-    (auth)/login, signup  Public pages
+    (auth)/login          Public page (Telegram log-in; email for teachers)
     actions/              Server Actions — the main write API (§6.1)
     api/                  Route handlers — heartbeat, media, offline pack/sync, deck import, Telegram webhook (§6.2)
     student/              Student area: passages, listening, flashcards, progress, settings
@@ -196,7 +198,7 @@ erDiagram
 
 | File | Actions | Guard |
 |---|---|---|
-| `auth.ts` | `signup`, `login` (rate-limited, constant-time unknown email), `logout` | public |
+| `auth.ts` | `startTelegramLogin`, `logInWithLink`, `login` (email; rate-limited, constant-time unknown email; approved accounts only), `createTeacher` (admin), `logout` | public / admin |
 | `passage.ts` | `startAttempt`, `startTest` (stamps `testStartedAt`, returns the questions), `restartAttempt`, `submitPassage` (answers + `meta: {reason, events, telemetry}`), `retryAnswer`, `tagMistake` | student + visibility |
 | `listening.ts` | `startListeningTest`, `submitLesson` (same `meta`), `recheckAnswer`, `markVocabularySeen`, `restartLesson` | student + visibility |
 | `cards.ts` | `loadStudyQueue`, `addChunkCard` (+ background meaning via `after()`), `explainChunkCard`, `deleteOwnCard` | student |
@@ -329,7 +331,7 @@ From `TASK.md` / `PLAN.md`:
 
 1. **Local `.env` points at the production database**; the latest migration was hand-written and never run with
    `prisma migrate dev`.
-2. **Anyone can sign up as a teacher**; emails are not verified.
+2. ~~Anyone can sign up as a teacher~~ **[fixed]**: no public sign-up; students join through Telegram with teacher approval, admins add teachers.
 3. Login rate limit is per server copy.
 4. ~~Deleting a passage hard-deletes its deck and history~~ **[fixed]**: archived instead (`archivedAt`).
 5. Deck media is capped per deck but not deduplicated across decks; media lives in Postgres.
@@ -351,7 +353,7 @@ Prioritised. File references are where to look; line numbers omitted where they 
 | # | Issue | Where | Suggestion |
 |---|---|---|---|
 | 1 | **Prod DB used for development.** One wrong `prisma migrate dev` or `db:seed` wipes live data. | `.env`, README | Separate local Postgres (Docker) or a Neon branch per developer; make `db:seed` refuse to run when `DATABASE_URL` host matches prod. |
-| 2 | **Admin = unverified email.** Admin rights come from `ADMIN_EMAILS`, but signup does not verify email, so whoever registers that address first becomes admin. Same for teacher self-signup. | `src/lib/auth.ts` `isAdmin`, `src/app/actions/auth.ts` | Teacher signup behind an invite code or admin approval; store `isAdmin` in DB set by a one-off script; optionally email verification (magic link). |
+| 2 | **[fixed: no public sign-up]** **Admin = unverified email.** Admin rights come from `ADMIN_EMAILS`, but signup does not verify email, so whoever registers that address first becomes admin. Same for teacher self-signup. | `src/lib/auth.ts` `isAdmin`, `src/app/actions/auth.ts` | Teacher signup behind an invite code or admin approval; store `isAdmin` in DB set by a one-off script; optionally email verification (magic link). |
 | 3 | **No CI gate.** Netlify deploys whatever is on `main`; tests and typecheck are not enforced. | — | GitHub Actions: `tsc --noEmit`, lint, vitest, `prisma migrate diff --exit-code` against schema; branch protection on `main`. |
 | 4 | **[fixed]** **Destructive cascades on content delete.** Now soft delete (`archivedAt` on passage, lesson, deck). | `deletePassage` in `src/app/actions/teacher.ts`; `onDelete: Cascade` on `Deck.passage`, `Card.deck`, `CardState`, `ReviewLog` | Soft delete (`archivedAt`) on `Passage`/`ListeningLesson`/`Deck`; filter in the visibility helpers (already centralised, so the change is small). |
 

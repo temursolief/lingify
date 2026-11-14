@@ -1,6 +1,6 @@
 # Lingify — status
 
-_Updated 2026-11-12._ IELTS Academic Reading practice and Anki flashcards for Uzbek students (B1+) and their
+_Updated 2026-11-14._ IELTS Academic Reading practice and Anki flashcards for Uzbek students (B1+) and their
 teachers. The original specification (graded reading with the 95% rule) is in git history, commit `ad6decf`.
 
 The plan for the next six changes (assigned-only content, passage decks, listening vocabulary, analytics) is in
@@ -8,7 +8,44 @@ The plan for the next six changes (assigned-only content, passage decks, listeni
 vocabulary deck and gate, passage decks (core — see PLAN.md for what was deliberately cut from that one), and most
 of the teacher analytics (time per question and answer order, as part of §7). Not started: the vocabulary list.
 
-**Latest (2026-11-14): game economy.** Warfront light theme and a nine-stage fortress per student. XP is small and
+**Where things stand (2026-11-14, end of day).**
+
+- **Git workflow changed.** All work now goes to the `experiment` branch (created from `main` @ `05fc88f`). Commit
+  locally, push `experiment` once per batch of work (end of a session, or when the owner says "push"). Nothing is
+  pushed or merged to `main` until the owner says so. Reason: every push to `main` is a Netlify production deploy,
+  and the ten or so pushes on 2026-11-14 used up the team's Netlify credits.
+- **Netlify production deploys are paused** (credits used up for this billing cycle). The live site still runs
+  `9348802` (email log-in, the "Create an account" page). It works with the migrated database. `05fc88f` (Telegram
+  log-in) is on `main` but not live. To ship: upgrade the Netlify team or wait for the credit reset, then
+  **Deploys → Trigger deploy → Deploy site**.
+- **Unpushed on `experiment`:** `986e0b1` Telegram fixes. The webhook always answers 200 (an error made Telegram
+  resend the update and repeat the bot's messages). `appUrl` falls back to Netlify's `URL`. The bot greeting and the
+  login page tell students who already have an email account to log in with email and use Settings → Connect
+  Telegram instead of sending the class code, which would create a second, empty account.
+- **Telegram rollout checklist** (in order, once a deploy is possible):
+  1. On Netlify, check that `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET` and
+     `APP_URL=https://lingify.netlify.app` are set and `TELEGRAM_DRY_RUN` is not set.
+  2. Deploy the version with Telegram log-in (`main`, or `experiment` once merged).
+  3. Register the webhook: `setWebhook` to `https://lingify.netlify.app/api/telegram/webhook` with
+     `secret_token` = `TELEGRAM_WEBHOOK_SECRET`. Check with `getWebhookInfo`. The bot is `@the_lingify_bot`, and on
+     2026-11-14 it had no webhook. Never run `npm run telegram:bot` with the production token: polling deletes the
+     webhook.
+  4. Test: `/start`, website "Log in with Telegram", `/login`, and a teacher Approve button.
+  5. Teachers connect their Telegram in Settings (on 2026-11-14 neither teacher had, so join requests only show
+     on the website). Existing students (all 15 have email and password, none linked Telegram) log in with email
+     once and connect Telegram in Settings.
+- **Neon accounts (2026-11-14):** 2 teachers and 15 students, 14 of them approved. "Shaxboz" has no class, so he
+  can't log in until he asks to join again through the bot or a teacher adds him.
+- **Decided against for now:** scheduling the Telegram reminders. `npm run telegram:remind` still runs only by hand.
+
+**Gamification direction (owner's decisions).** No war map: it would be too heavy for the site. Each student has
+one fortress that grows stronger through nine stages as XP builds, with the next stages always in sight. Competition
+happens only in each class's leaderboard (the league, with weekly crowns and a "rival line" naming the person just
+above you). Students never see where every classmate's fortress stands, on refresh or anywhere else. Progress is
+meant to be slow: stages take weeks to months. Losing XP for missed duties is part of the design. The Nocturne dark
+theme was dropped for the Warfront light theme.
+
+**2026-11-14: game economy.** Warfront light theme and a nine-stage fortress per student. XP is small and
 slow on purpose: 3 per answer right at the first try (the most any answer earns), 2 / 1 per proof, 0.5 per reason, 0.2
 per unhurried card, 3 per homework. It can also be lost: -10 for a day with no real action (a shield saves the streak
 and spares this), -3 for a day with no flashcards, -5 for a test walked out of; penalties stop after 7 idle days and
@@ -73,8 +110,13 @@ retry race fixes. [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) is the engineering 
   - "Delete" on a passage, lesson or deck archives it: attempts, decks and review history are kept.
 - **Admins** (`ADMIN_EMAILS`): upload passages and listening lessons (JSON) for everyone, and the old kind of Anki
   deck shared with every student regardless of assignment (`/teacher/decks`).
-- Optional Telegram link and reminders.
-- **Hosting:** Netlify (free) and a Neon Postgres database (free, US East). Every push to `main` deploys.
+- **Telegram:** students sign up through the bot (class code + name), the teacher approves them, and students log
+  in with Telegram (website button confirmed in the bot, or a one-time `/login` link). The bot also carries approval
+  messages and reminders. Teachers log in with email and can approve join requests with bot buttons.
+- **Game:** XP, levels, streaks with shields, daily quests, a nine-stage fortress per student, a class league with
+  weekly crowns, a class goal, and XP losses for missed days, missed flashcards and walking out of a test.
+- **Hosting:** Netlify (free) and a Neon Postgres database (free, US East). Every push to `main` deploys, which is
+  why work now goes to `experiment` first.
 
 ## Key decisions
 
@@ -95,6 +137,14 @@ retry race fixes. [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) is the engineering 
 - Content is archived, never hard-deleted, once students may have work on it.
 - No paid AI: card meanings come from the project glossary and dictionaryapi.dev.
 - Minimal UI: home folders and a top bar (the Telegram-style side list was dropped). Must work on phones.
+- Warfront light theme only. Nocturne dark was removed.
+- Game: one growing fortress per student, and the class leaderboard is the only place students compete (see
+  "Gamification direction" above). XP values are small and slow, decimals are fine, and XP can be lost but never
+  below the start of the current stage.
+- Built for 10,000 students: the XP rollup (`XpDay`) instead of recounting history, and every page's data in a few
+  SQL statements (about 180 ms per round trip to Neon). New pages should follow the single-statement pattern.
+- Students have no password sign-up: Telegram plus teacher approval. Only admins add teachers.
+- Work goes to `experiment` and is pushed once per batch. `main` only when the owner says so.
 
 ## Known issues
 
@@ -105,16 +155,23 @@ retry race fixes. [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) is the engineering 
   - servers in the US, adding about 0.2–0.3 s per page from Uzbekistan;
   - a monthly credit allowance;
   - the Neon database sleeps after 5 minutes without use.
-- **Accounts:** anyone can sign up as a teacher, and emails aren't verified (the admin should sign up first).
-  Failed-login limits are counted per server copy.
-- **Telegram reminders** don't run on a schedule.
+- **Netlify credits:** used up on 2026-11-14, and production deploys are paused until the cycle resets or the team
+  upgrades. Push less often (see Key decisions).
+- **Accounts:** the public sign-up page is gone, and admins add teachers. Failed-login and wrong-class-code limits
+  are kept per server copy, so on Netlify they are weak. A guessed code only creates a join request the teacher must
+  approve.
+- **Telegram:** the webhook isn't registered yet, and the Telegram version isn't live (see "Where things stand"). A
+  student with an email account who sends the bot a class code instead of connecting Telegram gets a second, empty
+  account. The bot and the login page now warn about this (unpushed); the teacher can decline the duplicate.
+- **Telegram reminders** don't run on a schedule (decided: not now).
 - **"Check question N" not working (student report):** no bug was reproduced. The button now always explains what's
   missing; this still needs confirming with students.
 - **Local development:** the local `.env` points to the live database. Work on 2026-11-12 used a throwaway local
   PostgreSQL instead (`DATABASE_URL=… npx prisma migrate dev`, then `npm run db:seed`), where the new migration
-  `20261112160139_homework_integrity_and_analytics` was generated and applied. It has not yet run on Neon: it goes
-  live at the next Netlify deploy. It adds a CHECK that every assignment has exactly one of passage/lesson; a row
-  breaking that would stop the deploy (the old version keeps running).
+  `20261112160139_homework_integrity_and_analytics` was generated and applied. Later migrations
+  (`20261114120000_xp_rollup`, `20261115090000_telegram_login`) were applied to Neon directly, after the owner
+  approved each one. Always ask before migrating Neon. Never run `npm run db:seed` against it (it deletes the
+  `@lingify.test` users).
 - **Proctoring is a deterrent, not a guarantee.** It runs in the student's browser: a determined student can use a
   second device, or a modified browser that never reports leaving. The pace and "Prove it" flags are there for the
   second device; nothing detects a modified browser. Fullscreen is not available on iPhones.
@@ -135,11 +192,15 @@ retry race fixes. [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) is the engineering 
 
 ## Next steps
 
+0. **Ship Telegram log-in:** follow the rollout checklist in "Where things stand" once Netlify can deploy again.
+   Merge `experiment` into `main` only when the owner says so.
 1. Confirm on the live site: deck upload and the Check button, on phones.
 2. Give local development its own database.
 3. Better card meanings without paid AI: a bigger glossary, or meanings teachers can edit.
-4. Control teacher sign-up (an invite code) before sharing widely.
-5. If wanted: send Telegram reminders from a Netlify scheduled function.
+4. ~~Control teacher sign-up~~ done: no public sign-up, and admins add teachers.
+5. Later, if wanted: send Telegram reminders from a Netlify scheduled function (declined on 2026-11-14).
+5a. Keep tuning the game economy with real data (the owner wants stages to feel slow), and watch whether XP
+    losses motivate students or discourage them.
 6. When it becomes commercial: an always-on server in Europe, for speed and larger uploads.
 7. From PLAN.md: the vocabulary list (plain-text word + meaning per card, sortable A–Z or by deck) is not started;
    of the teacher analytics, time online per session is not started (time per question and answer order are done).

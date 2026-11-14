@@ -280,7 +280,8 @@ The service worker is registered only in production builds (`npm run build && np
 ## Deploying
 
 Lingify is hosted on **Netlify** (the app) with a **Neon** PostgreSQL database, both on their free plans. Netlify
-builds the app from GitHub and deploys every push to `main`; its settings are in `netlify.toml` (Node 24, database
+builds the app from GitHub and deploys every push to `main` (day-to-day work goes to the `experiment` branch and
+is merged into `main` only when ready, since each production deploy costs Netlify credits); its settings are in `netlify.toml` (Node 24, database
 migrations, then the build). Everything, including deck images and sounds, is stored in the database, so nothing is
 lost between deploys.
 
@@ -300,8 +301,8 @@ lost between deploys.
    | `SESSION_SECRET` | the output of `openssl rand -hex 32`, kept secret |
    | `APP_URL` | `https://your-site.netlify.app`, the address Netlify gives the site (update it if you rename the site) |
    | `APP_TIMEZONE` | `Asia/Tashkent` |
-   | `ADMIN_EMAILS` | your own teacher email(s), comma-separated. **Not** `teacher@lingify.test`: anyone could sign up with it |
-   | `TELEGRAM_*` | optional, see [Telegram reminders](#telegram-reminders) |
+   | `ADMIN_EMAILS` | your own teacher email(s), comma-separated. **Not** `teacher@lingify.test` (a demo account from the seed) |
+   | `TELEGRAM_*` | optional, see [Telegram log-in](#telegram-log-in-join-requests-and-reminders) |
 
 4. **Deploy.** **Deploys → Trigger deploy**. The build applies the migrations to Neon, then builds the app.
 5. **Built-in passages, once.** On your computer, with Neon's **direct** string:
@@ -312,10 +313,12 @@ lost between deploys.
 
    Run it **only once**: running it again deletes and recreates the demo deck, with the students' progress on it.
    Never run plain `npm run db:seed` against this database: it creates the demo accounts.
-6. **Check** on a phone: open the `netlify.app` address, sign up as a student, study a few cards, turn on airplane
-   mode and reopen the app (offline mode), then sign up with an `ADMIN_EMAILS` address and upload a passage.
+6. **Check** on a phone: open the `netlify.app` address and join a class through the Telegram bot as a student
+   (see [Telegram log-in](#telegram-log-in-join-requests-and-reminders); register the webhook first), approve
+   yourself as the teacher, study a few cards, turn on airplane mode and reopen the app (offline mode). Then log in
+   with an `ADMIN_EMAILS` teacher account and upload a passage.
 
-After that, every `git push` to `main` deploys again. A failed migration stops the deploy, and the live version keeps
+After that, every `git push` to `main` deploys again, so push to `main` sparingly. A failed migration stops the deploy, and the live version keeps
 running.
 
 ### Free plan limits
