@@ -142,12 +142,62 @@ export function checkGroups(groups: AnyGroup[], ctx: z.RefinementCtx, lastLetter
   });
 }
 
+/** Most flashcards one passage file may carry. */
+export const MAX_DECK_CARDS = 500;
+
+const text = (max: number) => z.string().trim().max(max);
+
+/**
+ * One flashcard in a passage file's `deck`. Either a word card (`word` and `meaning`, optionally an `example`
+ * sentence that contains the word, and an Uzbek gloss `uz`) or a free card (`front` and `back`, simple HTML allowed).
+ */
+const deckCard = z
+  .object({
+    word: text(80).optional(),
+    meaning: text(400).optional(),
+    example: text(400).optional(),
+    uz: text(400).optional(),
+    front: text(4000).optional(),
+    back: text(4000).optional(),
+  })
+  .superRefine((c, ctx) => {
+    const free = c.front !== undefined || c.back !== undefined;
+    const word = c.word !== undefined || c.meaning !== undefined || c.example !== undefined || c.uz !== undefined;
+    if (free && word) ctx.addIssue({ code: "custom", message: "Use either word + meaning or front + back in one card, not both" });
+    else if (free) {
+      if (!c.front) ctx.addIssue({ code: "custom", path: ["front"], message: "A card with a back needs a front" });
+      if (!c.back) ctx.addIssue({ code: "custom", path: ["back"], message: "A card with a front needs a back" });
+    } else {
+      if (!c.word) ctx.addIssue({ code: "custom", path: ["word"], message: "Give the card a word (and a meaning), or a front and a back" });
+      if (!c.meaning) ctx.addIssue({ code: "custom", path: ["meaning"], message: "Give the word a meaning" });
+    }
+  });
+
+/** The optional flashcards that come with a passage, so no .apkg file has to be uploaded afterwards. */
+export const deckSchema = z
+  .object({
+    /** shown to students; the passage title when left out */
+    name: text(120).optional(),
+    cards: z.array(deckCard).min(1).max(MAX_DECK_CARDS),
+  })
+  .superRefine((d, ctx) => {
+    const seen = new Map<string, number>();
+    d.cards.forEach((c, i) => {
+      const key = c.word?.toLowerCase();
+      if (!key) return;
+      if (seen.has(key)) ctx.addIssue({ code: "custom", path: ["cards", i, "word"], message: `“${c.word}” is already card ${seen.get(key)! + 1}` });
+      else seen.set(key, i);
+    });
+  });
+
 export const passageSchema = z
   .object({
     title: z.string().min(1).max(160),
     timeLimit: z.number().int().min(5).max(60).default(20),
     paragraphs: z.array(z.string().min(1).max(4000)).min(1).max(26),
     questionGroups: z.array(questionGroup).min(1),
+    /** optional: flashcards for this passage, instead of uploading an Anki export later */
+    deck: deckSchema.optional(),
   })
   .superRefine((p, ctx) => checkGroups(p.questionGroups, ctx, paragraphLetter(p.paragraphs.length - 1)));
 
@@ -162,6 +212,7 @@ export function youtubeId(input: string): string | null {
 
 
 export type PassageInput = z.input<typeof passageSchema>;
+export type DeckData = z.output<typeof deckSchema>;
 export type PassageData = z.output<typeof passageSchema>;
 export type QuestionGroup = z.output<typeof questionGroup>;
 export type GroupType = QuestionGroup["type"];
@@ -347,4 +398,18 @@ export const EXAMPLE_PASSAGE: PassageInput = {
       ],
     },
   ],
+};
+
+/** The same passage with its flashcards in the file: what a teacher sends to skip the Anki export. */
+export const EXAMPLE_PASSAGE_WITH_DECK: PassageInput = {
+  ...EXAMPLE_PASSAGE,
+  deck: {
+    name: "The History of Glass: key words",
+    cards: [
+      { word: "luxury", meaning: "something expensive that you enjoy but do not really need", example: "For centuries glass remained a luxury.", uz: "hashamat" },
+      { word: "household", meaning: "all the people who live together in one home", example: "Glass became cheap enough for ordinary households.", uz: "xonadon, oila" },
+      { word: "fibre-optic", meaning: "made of very thin glass threads that carry light signals" },
+      { front: "<b>Mesopotamia</b>: where were the first glass beads made?", back: "In Mesopotamia, around 3,500 years ago (paragraph A)." },
+    ],
+  },
 };

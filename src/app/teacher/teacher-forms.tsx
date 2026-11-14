@@ -52,6 +52,89 @@ function HomeworkRules({ vocabLabel }: { vocabLabel: string }) {
   );
 }
 
+/**
+ * A checklist for choosing one or many passages or lessons: each box submits its id under `name`, so the action reads
+ * them all. Long libraries scroll inside the box; "Select all" and "Clear" act on what is shown after the filter.
+ */
+function ItemPicker({
+  name,
+  noun,
+  groups,
+  picked,
+  onChange,
+}: {
+  name: string;
+  noun: string;
+  groups: { label?: string; items: { id: string; title: string }[] }[];
+  picked: Set<string>;
+  onChange: (next: Set<string>) => void;
+}) {
+  const [filter, setFilter] = useState("");
+  const q = filter.trim().toLowerCase();
+  const shown = groups.map((g) => ({ ...g, items: g.items.filter((i) => !q || i.title.toLowerCase().includes(q)) })).filter((g) => g.items.length);
+  const shownIds = shown.flatMap((g) => g.items.map((i) => i.id));
+  const total = groups.reduce((n, g) => n + g.items.length, 0);
+  const toggle = (id: string) => {
+    const next = new Set(picked);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    onChange(next);
+  };
+  return (
+    <fieldset className="w-full text-sm">
+      <legend className="mb-1 flex w-full flex-wrap items-baseline gap-x-3 text-muted">
+        <span>
+          {noun[0].toUpperCase() + noun.slice(1)}s <span className="text-faint">(tick one or more)</span>
+        </span>
+        <span className="ml-auto flex gap-3">
+          <button type="button" className="text-accent-ink hover:underline" onClick={() => onChange(new Set([...picked, ...shownIds]))}>Select all</button>
+          <button type="button" className="text-accent-ink hover:underline" onClick={() => onChange(new Set())}>Clear</button>
+        </span>
+      </legend>
+      {total > 8 && <input type="search" value={filter} onChange={(e) => setFilter(e.target.value)} placeholder={`Filter ${noun}s…`} aria-label={`Filter ${noun}s`} className={`${inputClass} mb-2 w-full py-1.5`} />}
+      <div className="max-h-56 overflow-y-auto rounded-md border border-line bg-paper p-2">
+        {shown.length === 0 && <p className="px-1 py-2 text-muted">{total ? `No ${noun} matches.` : `No ${noun}s yet.`}</p>}
+        {shown.map((g, i) => (
+          <div key={g.label ?? i} className={i ? "mt-2" : ""}>
+            {g.label && <p className="caps mb-0.5 px-1 text-[11px] text-muted">{g.label}</p>}
+            {g.items.map((it) => (
+              <label key={it.id} className="flex cursor-pointer items-start gap-2 rounded px-1 py-1 hover:bg-hover">
+                <input type="checkbox" name={name} value={it.id} checked={picked.has(it.id)} onChange={() => toggle(it.id)} className="mt-0.5 accent-[var(--accent)]" />
+                <span>{it.title}</span>
+              </label>
+            ))}
+          </div>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
+/** Whole class or some students: the checkboxes submit as `students`; none ticked means everyone. */
+function StudentChoice({ students, some, setSome }: { students: { id: string; name: string }[]; some: boolean; setSome: (v: boolean) => void }) {
+  return (
+    <fieldset className="w-full text-sm">
+      <label className="mr-4 inline-flex items-center gap-1.5">
+        <input type="radio" checked={!some} onChange={() => setSome(false)} className="accent-[var(--accent)]" /> Whole class
+      </label>
+      <label className="inline-flex items-center gap-1.5">
+        <input type="radio" checked={some} onChange={() => setSome(true)} className="accent-[var(--accent)]" /> Some students
+      </label>
+      {some && (
+        <div className="mt-2 grid grid-cols-2 gap-1 rounded-md bg-paper p-2">
+          {students.map((s) => (
+            <label key={s.id} className="inline-flex items-center gap-1.5">
+              <input type="checkbox" name="students" value={s.id} className="accent-[var(--accent)]" /> {s.name}
+            </label>
+          ))}
+        </div>
+      )}
+    </fieldset>
+  );
+}
+
+const countLabel = (n: number, noun: string) => (n === 0 ? `Choose a ${noun} to assign` : n === 1 ? `Assign 1 ${noun}` : `Assign ${n} ${noun}s`);
+
 export function AssignPassageForm({
   classId,
   passages,
@@ -63,40 +146,27 @@ export function AssignPassageForm({
 }) {
   const [state, action, pending] = useActionState(assignPassage, undefined);
   const [some, setSome] = useState(false);
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [seen, setSeen] = useState(state);
+  // After a successful assignment the ticks are cleared (a second click must not assign them again); after an error they stay.
+  if (state !== seen) {
+    setSeen(state);
+    if (state?.ok) setPicked(new Set());
+  }
   return (
     <form action={action} className="flex flex-wrap items-end gap-2">
       <input type="hidden" name="classId" value={classId} />
-      <label className="w-full text-sm">
-        <span className="mb-1 block text-muted">Passage</span>
-        <select name="passageId" required className={`${inputClass} w-full`} defaultValue="">
-          <option value="" disabled>Choose a passage…</option>
-          {passages.some((p) => p.mine) && (
-            <optgroup label="My passages">
-              {passages.filter((p) => p.mine).map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
-            </optgroup>
-          )}
-          <optgroup label="Lingify passages">
-            {passages.filter((p) => !p.mine).map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
-          </optgroup>
-        </select>
-      </label>
-      <fieldset className="w-full text-sm">
-        <label className="mr-4 inline-flex items-center gap-1.5">
-          <input type="radio" checked={!some} onChange={() => setSome(false)} className="accent-[var(--accent)]" /> Whole class
-        </label>
-        <label className="inline-flex items-center gap-1.5">
-          <input type="radio" checked={some} onChange={() => setSome(true)} className="accent-[var(--accent)]" /> Some students
-        </label>
-        {some && (
-          <div className="mt-2 grid grid-cols-2 gap-1 rounded-md bg-paper p-2">
-            {students.map((s) => (
-              <label key={s.id} className="inline-flex items-center gap-1.5">
-                <input type="checkbox" name="students" value={s.id} className="accent-[var(--accent)]" /> {s.name}
-              </label>
-            ))}
-          </div>
-        )}
-      </fieldset>
+      <ItemPicker
+        name="passageId"
+        noun="passage"
+        picked={picked}
+        onChange={setPicked}
+        groups={[
+          { label: passages.some((p) => p.mine) ? "My passages" : undefined, items: passages.filter((p) => p.mine) },
+          { label: "Lingify passages", items: passages.filter((p) => !p.mine) },
+        ].filter((g) => g.items.length)}
+      />
+      <StudentChoice students={students} some={some} setSome={setSome} />
       <label className="text-sm">
         <span className="mb-1 block text-muted">Due date</span>
         <input name="dueAt" type="date" className={inputClass} />
@@ -106,7 +176,7 @@ export function AssignPassageForm({
         <input name="note" maxLength={200} className={`${inputClass} w-full`} placeholder="Focus on the headings" />
       </label>
       <HomeworkRules vocabLabel="Done only after today's cards in the passage's deck are studied" />
-      <Button type="submit" disabled={pending}>Assign</Button>
+      <Button type="submit" disabled={pending || picked.size === 0}>{countLabel(picked.size, "passage")}</Button>
       <Feedback state={state} />
     </form>
   );
@@ -123,33 +193,18 @@ export function AssignLessonForm({
 }) {
   const [state, action, pending] = useActionState(assignLesson, undefined);
   const [some, setSome] = useState(false);
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [seen, setSeen] = useState(state);
+  // After a successful assignment the ticks are cleared (a second click must not assign them again); after an error they stay.
+  if (state !== seen) {
+    setSeen(state);
+    if (state?.ok) setPicked(new Set());
+  }
   return (
     <form action={action} className="flex flex-wrap items-end gap-2">
       <input type="hidden" name="classId" value={classId} />
-      <label className="w-full text-sm">
-        <span className="mb-1 block text-muted">Lesson</span>
-        <select name="lessonId" required className={`${inputClass} w-full`} defaultValue="">
-          <option value="" disabled>Choose a lesson…</option>
-          {lessons.map((l) => <option key={l.id} value={l.id}>{l.title}</option>)}
-        </select>
-      </label>
-      <fieldset className="w-full text-sm">
-        <label className="mr-4 inline-flex items-center gap-1.5">
-          <input type="radio" checked={!some} onChange={() => setSome(false)} className="accent-[var(--accent)]" /> Whole class
-        </label>
-        <label className="inline-flex items-center gap-1.5">
-          <input type="radio" checked={some} onChange={() => setSome(true)} className="accent-[var(--accent)]" /> Some students
-        </label>
-        {some && (
-          <div className="mt-2 grid grid-cols-2 gap-1 rounded-md bg-paper p-2">
-            {students.map((s) => (
-              <label key={s.id} className="inline-flex items-center gap-1.5">
-                <input type="checkbox" name="students" value={s.id} className="accent-[var(--accent)]" /> {s.name}
-              </label>
-            ))}
-          </div>
-        )}
-      </fieldset>
+      <ItemPicker name="lessonId" noun="lesson" picked={picked} onChange={setPicked} groups={[{ items: lessons }]} />
+      <StudentChoice students={students} some={some} setSome={setSome} />
       <label className="text-sm">
         <span className="mb-1 block text-muted">Due date</span>
         <input name="dueAt" type="date" className={inputClass} />
@@ -159,7 +214,7 @@ export function AssignLessonForm({
         <input name="note" maxLength={200} className={`${inputClass} w-full`} placeholder="Listen twice before answering" />
       </label>
       <HomeworkRules vocabLabel="Done only after the key words are read" />
-      <Button type="submit" disabled={pending}>Assign</Button>
+      <Button type="submit" disabled={pending || picked.size === 0}>{countLabel(picked.size, "lesson")}</Button>
       <Feedback state={state} />
     </form>
   );
@@ -230,7 +285,7 @@ export function UploadPassageForm({ lesson = false }: { lesson?: boolean }) {
       </label>
       <details className="text-sm">
         <summary className="cursor-pointer text-accent">or paste the JSON</summary>
-        <textarea name="json" rows={8} className={`${inputClass} mt-2 w-full font-mono text-xs`} placeholder={lesson ? '{ "title": "…", "video": "https://www.youtube.com/watch?v=…", "questionGroups": [ … ], "vocabulary": [ … ] }' : '{ "title": "…", "paragraphs": [ … ], "questionGroups": [ … ] }'} />
+        <textarea name="json" rows={8} className={`${inputClass} mt-2 w-full font-mono text-xs`} placeholder={lesson ? '{ "title": "…", "video": "https://www.youtube.com/watch?v=…", "questionGroups": [ … ], "vocabulary": [ … ] }' : '{ "title": "…", "paragraphs": [ … ], "questionGroups": [ … ], "deck": { "cards": [ … ] } }'} />
       </details>
       <Button type="submit" disabled={!!progress}>
         {progress ? `Checking ${Math.min(progress.done + 1, progress.total)} of ${progress.total}…` : lesson ? "Upload lessons" : "Upload passages"}

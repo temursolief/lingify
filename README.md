@@ -150,6 +150,24 @@ written as `{{number}}`). Uploads are validated by the schema in `src/lib/passag
 list, e.g. `questionGroups → 1 → questions → 0 → answer: Answer F is not one of the options`. The six built-in passages
 in `content/ielts/` use the same format.
 
+**Two shapes are accepted.** The file above is the passage on its own. Add a `deck` and the passage is saved with its
+flashcards in the same write, so no `.apkg` has to be uploaded afterwards (example: `public/samples/passage-with-deck-example.json`):
+
+```json
+"deck": {
+  "name": "optional, the passage title if left out",
+  "cards": [
+    { "word": "luxury", "meaning": "something expensive you do not really need", "example": "For centuries glass remained a luxury.", "uz": "hashamat" },
+    { "front": "<b>Free card</b>: question", "back": "answer (simple HTML, scripts removed)" }
+  ]
+}
+```
+
+A word card (`word` + `meaning`, optional `example` containing the word, optional `uz`) shows the example with the word blanked
+out, like a card a student makes from a highlight; a free card has its own `front` and `back`. 1–500 cards, each word once.
+Cards are stored like any passage deck (`noteType` `chunk` or `basic`, `ankiNoteId` `json:N`), so scheduling, homework
+vocabulary and students' own highlight cards work as before; an `.apkg` can still be uploaded on the passage for images and sounds.
+
 ### Listening Comprehension
 
 A separate library of video lessons, e.g. TED-Ed. Admin teachers upload one JSON file per lesson on **Listening**
@@ -232,7 +250,8 @@ Each file becomes a lesson page:
   paragraph and the reason. Each column header shows the percentage of the class that got that question wrong on the
   first try, and each row the time and integrity badge. **Mistake magnets** lists the 3 questions where most students
   chose the same wrong answer. Assigning is done here too, to the whole class or to chosen students, with an optional
-  due date, note, test lock rule and vocabulary requirement.
+  due date, note, test lock rule and vocabulary requirement. Tick one or many passages (or lessons) and they are
+  assigned in one go, each as its own assignment with the same settings.
 - **Class → Mistakes.** The same breakdown as a student's Progress page, for the whole class, plus a question type ×
   cause matrix (the four reasons, wrong paragraph, misread).
 - **Student page.** Every answer given to each question, seconds on it and answer order, the sentence highlighted as

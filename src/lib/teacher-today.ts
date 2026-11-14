@@ -1,4 +1,5 @@
 import "server-only";
+import { cacheLife, cacheTag } from "next/cache";
 import { cache } from "react";
 import { db } from "./db";
 import { passageHeatmap, stuckStudents } from "./insights";
@@ -26,6 +27,19 @@ const ago = (d: Date | null) => {
   const days = Math.floor((Date.now() - d.getTime()) / 86_400_000);
   return days === 0 ? "today" : days === 1 ? "yesterday" : `${days} days ago`;
 };
+
+/**
+ * The count beside "Today" in the sidebar. It is on every teacher page, and working it out takes about thirty
+ * queries (stuck students, flagged tries, class heatmaps), which on a small connection pool queue up in front of the
+ * page's own query: every teacher page felt slow, the Listening page most, since it has almost nothing else to do.
+ * So it is worked out at most once a minute per teacher; the Today page itself always reads fresh.
+ */
+export async function teacherBadge(teacherId: string): Promise<number> {
+  "use cache";
+  cacheLife({ stale: 30, revalidate: 60, expire: 600 });
+  cacheTag(`teacher-badge:${teacherId}`);
+  return (await teacherToday(teacherId)).items.length;
+}
 
 /**
  * What needs this teacher today, worst first: students stuck on a question, flagged first tries, questions that

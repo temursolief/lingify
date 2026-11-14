@@ -10,12 +10,15 @@ import { DeleteLessonButton, UploadPassageForm } from "../teacher-forms";
 export const metadata: Metadata = { title: "Listening" };
 
 async function LessonsContent() {
-  await requireAdmin();
-  const lessons = await db.listeningLesson.findMany({
-    where: { archivedAt: null },
-    orderBy: { createdAt: "desc" },
-    select: { id: true, title: true, videoId: true, total: true, wordCount: true, _count: { select: { attempts: true } } },
-  });
+  // The check and the list do not depend on each other: one round trip to the database, not two in a row.
+  const [, lessons] = await Promise.all([
+    requireAdmin(),
+    db.listeningLesson.findMany({
+      where: { archivedAt: null },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, title: true, videoId: true, total: true, wordCount: true, _count: { select: { attempts: true } } },
+    }),
+  ]);
   return (
     <>
       <PageHeader

@@ -17,6 +17,12 @@ three months of steady work). XP lives in `XpDay` (tenths of a point per student
 which also charges missed days the first time anyone looks after midnight); rules are in `src/lib/xp.ts`,
 `src/lib/fortress.ts`, `src/lib/xp-recount.ts`. The weekly class goal is 150 XP per student.
 
+**2026-11-14: teacher side.** The sidebar's Today count (about 30 queries) was computed on every teacher page and
+queued in front of each page's own query, which is why Listening felt slow; it is now cached for a minute per teacher
+(`teacherBadge`). Homework can be given as many passages or lessons at once (a checklist; one assignment each). A
+passage JSON may carry its own flashcards in a `deck` (word cards or free front/back cards), so no `.apkg` is needed;
+the plain shape still works. Examples: `public/samples/passage-example.json` and `passage-with-deck-example.json`.
+
 **Earlier (2026-11-12): homework verification, test integrity and deep test analytics** — PLAN.md §7. A proctored
 first try (fullscreen + tab lock) for Reading and Listening, telemetry sent inside the one Submit request,
 anti-cheating flags, flashcard speed checks, a Homework tab for teachers, "Require retake", soft delete, and the

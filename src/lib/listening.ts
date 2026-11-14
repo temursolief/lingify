@@ -3,6 +3,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { recordFirstSubmit, settleHomework } from "./assignments";
 import { markXpDirty } from "./xp-store";
 import { db } from "./db";
+import { wordCardHtml } from "./vocab-cards";
 import type { VocabItem } from "./listening-format";
 import { answerKey, estimateBand, type QuestionGroup } from "./passage-format";
 import { assessFirstTry, type SubmissionMeta, type SubmissionReason } from "./telemetry";
@@ -63,8 +64,6 @@ export function viewOf(
   };
 }
 
-const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-
 /**
  * The one shared deck for a lesson's key words, named "{title} Vocabulary" and linked by lesson ID: created once,
  * when the lesson is first uploaded or (for a lesson that already existed) the first time it is opened after this
@@ -77,19 +76,7 @@ export async function ensureLessonDeck(lesson: { id: string; title: string; voca
   if (!vocab.length) return null;
   const deck = await db.deck.create({ data: { name: `${lesson.title} Vocabulary`, lessonId: lesson.id } });
   await db.card.createMany({
-    data: vocab.map((v, position) => {
-      const pattern = new RegExp(`\\b${v.word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\w*`, "i");
-      const front = v.example && pattern.test(v.example)
-        ? `<div class="sentence">${esc(v.example).replace(pattern, '<span class="cloze">[...]</span>')}</div>`
-        : `<div class="chunk">${esc(v.word)}</div>`;
-      const back = [
-        v.example ? `<div class="sentence">${esc(v.example)}</div><hr>` : "",
-        `<div class="chunk">${esc(v.word)}</div>`,
-        `<div class="meaning">${esc(v.meaning)}</div>`,
-        v.uz ? `<div class="uz">O‘zbekcha: ${esc(v.uz)}</div>` : "",
-      ].join("");
-      return { deckId: deck.id, front, back, noteType: "lesson-vocab", position };
-    }),
+    data: vocab.map((v, position) => ({ deckId: deck.id, ...wordCardHtml(v), noteType: "lesson-vocab", position })),
   });
   return deck;
 }

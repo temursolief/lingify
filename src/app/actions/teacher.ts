@@ -1,12 +1,13 @@
 "use server";
 
 import { randomInt } from "node:crypto";
-import { refresh } from "next/cache";
+import { refresh, updateTag } from "next/cache";
 import { z } from "zod";
 import { requireAdmin, requireTeacher } from "@/lib/auth";
 import type { ProctoringPolicy } from "@/generated/prisma/client";
 import { teacherClass } from "@/lib/class-overview";
 import { markXpDirty } from "@/lib/xp-store";
+import { deckCardRows } from "@/lib/vocab-cards";
 import { db } from "@/lib/db";
 import { parsePassageJson } from "@/lib/passage-format";
 import { appUrl, sendMessage } from "@/lib/telegram";
@@ -72,15 +73,27 @@ export async function uploadPassage(raw: string): Promise<FormState> {
   if (raw.length > MAX_PASSAGE_CHARS) return { error: "That file is too large for one passage." };
   const parsed = parsePassageJson(raw);
   if (!parsed.ok) return { error: "Not saved. Fix these points and upload again:", errors: parsed.errors };
-  const { title, timeLimit, paragraphs, questionGroups } = parsed.data;
+  const { title, timeLimit, paragraphs, questionGroups, deck } = parsed.data;
   // The same file chosen twice (easy to do with many files) must not make a second copy.
   const same = await db.passage.findFirst({ where: { ownerId: teacher.id, archivedAt: null, title: { equals: title, mode: "insensitive" } }, select: { id: true } });
   if (same) return { error: `You already have a passage called “${title}”. Delete it first if you want to replace it.` };
   const questionCount = questionGroups.reduce((n, g) => n + g.questions.length, 0);
+  const cards = deck ? deckCardRows(deck) : [];
+  // The passage and its deck are saved together (one write, the cards in one insert): all or nothing.
   await db.passage.create({
-    data: { slug: slugify(title), title, timeLimit, paragraphs, groups: questionGroups, paragraphCount: paragraphs.length, questionCount, ownerId: teacher.id },
+    data: {
+      slug: slugify(title),
+      title,
+      timeLimit,
+      paragraphs,
+      groups: questionGroups,
+      paragraphCount: paragraphs.length,
+      questionCount,
+      ownerId: teacher.id,
+      ...(cards.length ? { deck: { create: { name: deck?.name?.trim() || title, cards: { createMany: { data: cards } } } } } : {}),
+    },
   });
-  return { ok: `“${title}” saved: ${paragraphs.length} paragraphs, ${questionCount} questions.` };
+  return { ok: `“${title}” saved: ${paragraphs.length} paragraphs, ${questionCount} questions${cards.length ? `, ${cards.length} flashcard${cards.length === 1 ? "" : "s"}` : ""}.` };
 }
 
 /**
@@ -105,43 +118,59 @@ const assignSchema = z.object({
   requireVocabFirst: z.literal("on").optional(),
 });
 
+/** Most items one "Assign" may hand out at once. */
+const MAX_ASSIGN_ITEMS = 30;
+
 /**
- * Assigns a passage or a lesson to the whole class or to the students ticked in the form, with its due date, note,
- * proctoring rule and vocabulary requirement. One code path for both kinds of homework.
+ * Assigns one or several passages (or lessons) to the whole class or to the students ticked in the form, with one
+ * due date, note, proctoring rule and vocabulary requirement for all of them. Each item becomes its own assignment,
+ * so each is tracked, due and retaken on its own. One code path for both kinds of homework; all or nothing.
  */
 async function assign(formData: FormData, content: "passage" | "lesson"): Promise<FormState> {
   const idField = content === "passage" ? "passageId" : "lessonId";
-  const fields = Object.fromEntries([...formData.entries()].filter(([k]) => k !== "students"));
-  const parsed = assignSchema.extend({ [idField]: z.string().min(1, content === "passage" ? "Choose a passage." : "Choose a lesson.") }).safeParse(fields);
+  const noun = content === "passage" ? "passage" : "lesson";
+  const ids = [...new Set(formData.getAll(idField).map(String).filter(Boolean))];
+  if (!ids.length) return { error: `Choose at least one ${noun}.` };
+  if (ids.length > MAX_ASSIGN_ITEMS) return { error: `Choose at most ${MAX_ASSIGN_ITEMS} ${noun}s at a time.` };
+  const fields = Object.fromEntries([...formData.entries()].filter(([k]) => k !== "students" && k !== idField));
+  const parsed = assignSchema.safeParse(fields);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
-  const data = parsed.data as z.infer<typeof assignSchema> & Record<string, string>;
+  const data = parsed.data;
   const dueAt = data.dueAt ? endOfDayOn(data.dueAt) : null;
   if (data.dueAt && !dueAt) return { error: "Choose a real due date." };
   const cls = await ownClass(data.classId);
-  const item =
+  const items =
     content === "passage"
-      ? await db.passage.findFirst({ where: { id: data[idField], archivedAt: null, OR: [{ ownerId: null }, { ownerId: cls.teacherId }] }, select: { id: true, title: true } })
-      : await db.listeningLesson.findFirst({ where: { id: data[idField], archivedAt: null }, select: { id: true, title: true } });
-  if (!item) return { error: content === "passage" ? "Choose a passage." : "Choose a lesson." };
+      ? await db.passage.findMany({ where: { id: { in: ids }, archivedAt: null, OR: [{ ownerId: null }, { ownerId: cls.teacherId }] }, select: { id: true, title: true } })
+      : await db.listeningLesson.findMany({ where: { id: { in: ids }, archivedAt: null }, select: { id: true, title: true } });
+  if (items.length !== ids.length) return { error: `One of the ${noun}s is no longer available. Reload the page and choose again.` };
 
   const enrolled = (await db.enrollment.findMany({ where: { classId: cls.id }, select: { userId: true } })).map((e) => e.userId);
   const picked = formData.getAll("students").map(String).filter((id) => enrolled.includes(id));
   const students = picked.length ? picked : enrolled;
   if (!students.length) return { error: "This class has no students yet." };
 
-  await db.assignment.create({
-    data: {
-      classId: cls.id,
-      ...(content === "passage" ? { passageId: item.id } : { lessonId: item.id }),
-      note: data.note?.trim() || null,
-      dueAt,
-      proctoringPolicy: data.proctoringPolicy as ProctoringPolicy,
-      requireVocabFirst: data.requireVocabFirst === "on",
-      recipients: { create: students.map((studentId) => ({ studentId })) },
-    },
-  });
+  // In the order the teacher ticked them (the browser sends checkboxes in page order, which is the list order).
+  const order = new Map(ids.map((id, i) => [id, i]));
+  items.sort((a, b) => order.get(a.id)! - order.get(b.id)!);
+  await db.$transaction(
+    items.map((item) =>
+      db.assignment.create({
+        data: {
+          classId: cls.id,
+          ...(content === "passage" ? { passageId: item.id } : { lessonId: item.id }),
+          note: data.note?.trim() || null,
+          dueAt,
+          proctoringPolicy: data.proctoringPolicy as ProctoringPolicy,
+          requireVocabFirst: data.requireVocabFirst === "on",
+          recipients: { create: students.map((studentId) => ({ studentId })) },
+        },
+      }),
+    ),
+  );
   refresh();
-  return { ok: `Assigned “${item.title}” to ${students.length === enrolled.length ? "the whole class" : `${students.length} student${students.length === 1 ? "" : "s"}`}.` };
+  const to = students.length === enrolled.length ? "the whole class" : `${students.length} student${students.length === 1 ? "" : "s"}`;
+  return { ok: items.length === 1 ? `Assigned “${items[0].title}” to ${to}.` : `Assigned ${items.length} ${noun}s to ${to}: ${items.map((i) => `“${i.title}”`).join(", ")}.` };
 }
 
 export async function assignPassage(_: FormState, formData: FormData): Promise<FormState> {
@@ -195,6 +224,8 @@ export async function resetAttemptForRetake(input: { kind: "passage" | "lesson";
   ]);
   // The set-aside try, everything done on it and its homework stop counting; the next try may become the first.
   await markXpDirty(attempt.userId, attempt.firstSubmittedAt!);
+  // The flagged try leaves the Today list: show it in the sidebar count now, not within the minute.
+  updateTag(`teacher-badge:${teacher.id}`);
   refresh();
   return { ok: "Retake required. The student will see a fresh, proctored test." };
 }
