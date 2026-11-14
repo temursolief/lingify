@@ -14,7 +14,7 @@ const TYPES: { type: string; name: string; fields: string; answer: string }[] = 
   { type: "headings", name: "Matching headings", fields: "paragraph (letter); the group has headings (without numerals)", answer: 'roman numeral: "iii"' },
   { type: "matching", name: "Matching information", fields: "statement", answer: 'paragraph letter: "C"' },
   { type: "completion", name: "Sentence completion", fields: "text with the gap as ___ ; the group has maxWords", answer: 'answers: ["weaker"] (every accepted spelling)' },
-  { type: "summary", name: "Summary completion", fields: "the group has text with gaps {{12}}, maxWords, optional title", answer: 'answers: ["luxury"]' },
+  { type: "summary", name: "Summary completion", fields: "the group has text with gaps {{12}}, maxWords, optional title; lines with | become a table (first line is the header)", answer: 'answers: ["luxury"]' },
 ];
 
 /** What teachers read before preparing a passage file. The example below is validated by the same code as uploads. */

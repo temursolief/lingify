@@ -7,6 +7,7 @@ import { ActivityTracker } from "@/components/activity-tracker";
 import { IntegrityBanner } from "@/components/integrity-banner";
 import { LiteVideo } from "@/components/lite-video";
 import { NotesText } from "@/components/notes-text";
+import { SummaryText } from "@/components/summary-text";
 import { PreTestGateModal } from "@/components/pre-test-gate-modal";
 import { ProctorWarningOverlay, SubmittingOverlay } from "@/components/test-proctor";
 import { Button, cx } from "@/components/ui";
@@ -296,13 +297,7 @@ export function ListeningLesson({
             {g.type === "notes" ? (
               <NotesText title={g.title} text={g.text} gap={(n) => <span id={`q${n}`}><b className="text-sm">{n}</b>{gap(n)}</span>} />
             ) : (
-              <div className="rounded-lg bg-paper p-4 leading-loose">
-                {g.title && <p className="mb-1 font-semibold">{g.title}</p>}
-                {g.text.split(/(\{\{\d+\}\})/).map((part, i) => {
-                  const m = part.match(/^\{\{(\d+)\}\}$/);
-                  return m ? <span key={i} id={`q${m[1]}`}><b className="text-sm">({m[1]})</b>{gap(Number(m[1]))}</span> : <span key={i}>{part}</span>;
-                })}
-              </div>
+              <SummaryText title={g.title} text={g.text} gap={(n) => <span id={`q${n}`}><b className="text-sm">({n})</b>{gap(n)}</span>} />
             )}
             {view.submitted && (
               <div className="mt-2 space-y-3">

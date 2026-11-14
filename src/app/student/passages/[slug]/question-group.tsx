@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { NotesText } from "@/components/notes-text";
+import { SummaryText } from "@/components/summary-text";
 import { cx } from "@/components/ui";
 import { paragraphLetter, ROMAN, type PublicGroup } from "@/lib/passage-format";
 import type { QuestionState } from "@/lib/passages";
@@ -175,15 +176,7 @@ export function Group({
     case "summary":
       return (
         <div>
-          <div className="rounded-lg bg-paper p-4 leading-loose">
-            {g.title && <p className="mb-1 font-semibold">{g.title}</p>}
-            {g.text.split(/(\{\{\d+\}\})/).map((part, i) => {
-              const m = part.match(/^\{\{(\d+)\}\}$/);
-              if (!m) return <span key={i}>{part}</span>;
-              const n = Number(m[1]);
-              return <span key={i} id={`q${n}`}><b className="text-sm">({n})</b>{renderGap(n)}</span>;
-            })}
-          </div>
+          <SummaryText title={g.title} text={g.text} gap={(n) => <span id={`q${n}`}><b className="text-sm">({n})</b>{renderGap(n)}</span>} />
           <div className="mt-2 space-y-3">
             {g.questions.map((q) => (
               <div key={q.number} onClick={() => onFocus(q.number)}>
